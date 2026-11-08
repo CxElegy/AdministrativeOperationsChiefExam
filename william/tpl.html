@@ -45,7 +45,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .tower > * { position: relative; }
 .bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 env(safe-area-inset-bottom, 0px); background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
 /* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
-.bldg { --k: .5; position: relative; flex: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 7%); mask-image: linear-gradient(transparent, #000 7%); }
+.bldg { --k: .5; position: relative; flex: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 3%); mask-image: linear-gradient(transparent, #000 3%); }
 .ftag { position: absolute; z-index: 3; left: .6%; width: 8.4%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
 .ftag b { font-family: var(--latin); font-size: max(10px, calc(var(--k) * 22px)); line-height: 1.1; color: var(--gold-hi); }
 .ftag small { font-size: max(7px, calc(var(--k) * 13px)); line-height: 1.1; white-space: nowrap; overflow: hidden; max-width: 96%; }
@@ -328,9 +328,11 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.irow { grid-template-columns: 78px 1fr; }
 	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
 	.credit { font-size: 8px; bottom: 3px; }
-	/* スマホ：ブラウザの下のバーに隠れないよう、マンションを上に上げる（下は道路の色で続ける） */
-	.bldgwrap { --gpad: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--gpad); background: linear-gradient(to top, #0b070d var(--gpad), transparent var(--gpad)); }
-	.tower > .credit { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+	/* スマホ：縦の場所をマンションに回す（案内は低く、階の説明の2行目は出さない） */
+	.finfo .all { display: none; }
+	.guide { padding: 8px 10px 9px; margin-bottom: 6px; } .guide h2 { font-size: 14px; margin-bottom: 4px; } .guide ol { font-size: 12.5px; margin-bottom: 6px; }
+	.guide .bar2 { margin: 2px 0 6px; } .guide .gbtns { gap: 5px; }
+	.gbtn { padding: 5px 9px; } .gbtn .d { font-size: 12.5px; } .gbtn .d small { display: none; }
 	.tidx { display: inline-flex; position: absolute; right: 12px; top: 14px; border: 1px solid var(--gold); background: rgba(13, 24, 56, .6); color: var(--gold-hi); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
 	.hud { top: 10px; left: 12px; right: 12px; gap: 5px; flex-wrap: nowrap; }
 	.util { gap: 4px; } .util button { width: 28px; height: 28px; font-size: 12px; }
