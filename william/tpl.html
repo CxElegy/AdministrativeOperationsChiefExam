@@ -77,6 +77,20 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .res.curtain { background: linear-gradient(90deg, hsl(var(--h) 45% 58%) 0 38%, transparent 38% 62%, hsl(var(--h) 45% 58%) 62%), radial-gradient(ellipse at 50% 60%, hsl(var(--h) 100% 80%), hsl(var(--h) 80% 55%)); }
 .res.tv { background: radial-gradient(ellipse at var(--x) 70%, #cfe3ff, #6f8fd6 55%, #2b3a6b); opacity: calc(var(--a) * .8); }
 .res::after { content: ""; position: absolute; top: 0; bottom: 0; left: 49%; width: 2px; background: rgba(60, 30, 20, .55); }
+/* 学習の案内（建物の上の空のところ）：はじめて → 101号室から。記録があれば → 続きから・次の部屋・まちがえた相談の復習 */
+.guide { position: relative; z-index: 2; margin: 0 14px 8px; padding: 10px 12px 12px; border-radius: 12px; background: linear-gradient(rgba(42, 34, 68, .78), rgba(20, 22, 48, .78)); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .6), 0 6px 18px rgba(0, 0, 0, .3); color: #efe6d4; font-size: 13px; line-height: 1.6; }
+.guide:empty { display: none; }
+.guide h2 { margin: 0 0 6px; font-family: var(--mincho); font-weight: 800; font-size: 15px; color: var(--gold-hi); letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
+.guide h2 small { margin-left: auto; font-family: var(--maru); font-weight: 700; font-size: 11px; color: #cfc6b4; letter-spacing: 0; }
+.guide ol { margin: 0 0 8px; padding-left: 1.3em; } .guide ol li { margin: 1px 0; }
+.guide .bar2 { height: 6px; border-radius: 4px; background: rgba(255, 255, 255, .12); overflow: hidden; margin: 2px 0 8px; } .guide .bar2 b { display: block; height: 100%; background: linear-gradient(90deg, #ffe08a, #f2a54f); box-shadow: 0 0 8px #ffd27e; }
+.guide .gbtns { display: flex; flex-direction: column; gap: 6px; }
+.gbtn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 10px; padding: 7px 10px; cursor: pointer; font: inherit; color: var(--ink); background: linear-gradient(#fff8e6, #f1dfb6); box-shadow: 0 0 0 1px var(--gold-lo), 0 2px 0 var(--gold-lo); }
+.gbtn.main { background: linear-gradient(#fff3cf, #f0c873); }
+.gbtn .k { flex: none; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--night); color: var(--gold-hi); }
+.gbtn .d { min-width: 0; flex: 1; font-weight: 700; font-size: 13px; line-height: 1.35; } .gbtn .d small { display: block; font-weight: 500; font-size: 11.5px; color: var(--ink-soft); }
+.gbtn .go { flex: none; font-weight: 800; }
+.gbtn:active { transform: translateY(2px); box-shadow: 0 0 0 1px var(--gold-lo); }
 .finfo { position: relative; z-index: 2; margin: 0 14px 8px; padding: 6px 12px; border-radius: 10px; background: rgba(13, 24, 56, .55); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .55); font-size: 12px; line-height: 1.55; color: #e9e2d2; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
 .finfo b { font-family: var(--mincho); color: var(--gold-hi); font-size: 13.5px; }
 .finfo .lg { display: inline-flex; gap: 4px; align-items: center; }
@@ -354,6 +368,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 			<button type="button" class="tidx" id="idxBtn2">≡ 記録</button>
 		</div>
 		<div class="finfo" id="floorinfo" aria-live="polite"></div>
+		<div class="guide" id="guide"></div>
 		<div class="bldgwrap" id="bldgwrap"><div class="bldg" id="bldg"></div></div>
 		<p class="credit">William のモデルは Live2D Inc. が権利を有するサンプルデータ（Tororo）を使用しています</p>
 	</aside>
@@ -513,7 +528,39 @@ function paintWindows() {
 	paintInfo();
 }
 function floorStats(fi) { const ids = DATA.floors[fi].qids; return { total: ids.length, ok: ids.filter((id) => ST.q[id]?.last).length, ng: ids.filter((id) => ST.q[id] && !ST.q[id].last).length, done: ids.filter((id) => ST.q[id]).length, rooms: DATA.floors[fi].rooms.length, lit: DATA.floors[fi].rooms.filter((_, r) => isLit(roomStats(fi, r))).length }; }
+function paintGuide() {
+	const el = $('guide'); if (!el) return;
+	const all = Object.keys(DATA.q), done = all.filter((id) => ST.q[id]).length, okN = all.filter((id) => ST.q[id]?.last).length;
+	let rooms = 0, lit = 0; DATA.floors.forEach((_, i) => { const t = floorStats(i); rooms += t.rooms; lit += t.lit; });
+	const at = (fi, k) => { const r = roomOf(k, fi), f = DATA.floors[fi]; return { no: roomNo(fi, r), title: f.rooms[r].title, n: k - rstart(fi, r) + 1 }; };
+	// 次の部屋：1F から順に、まだ答えていない相談がある最初の部屋
+	let next = null; for (let fi = 0; fi < DATA.floors.length && !next; fi++) DATA.floors[fi].rooms.forEach((_, r) => { if (!next && roomStats(fi, r).st.includes('none')) next = { fi, r }; });
+	// まちがえた相談：1F から順に
+	const wrong = []; DATA.floors.forEach((f, fi) => f.qids.forEach((id, k) => { if (ST.q[id] && !ST.q[id].last) wrong.push({ fi, k }); }));
+	const btn = (g, k, d, sub, main) => `<button type="button" class="gbtn${main ? ' main' : ''}" data-g="${g}"><span class="k">${k}</span><span class="d">${d}${sub ? `<small>${sub}</small>` : ''}</span><span class="go">›</span></button>`;
+	let html;
+	if (!done) {
+		const t = at(0, 0);
+		html = `<h2>はじめての方へ</h2><ol><li>まずは <b>${t.no}号室「${esc(t.title)}」</b> から入ろう</li><li>部屋の相談に順に答えて、管理人さんの解説を読む</li><li>部屋の相談の 8 割に正解すると、窓に明かりがつく</li></ol><div class="gbtns">${btn('start', 'START', `${t.no}号室から始める`, `1F ${esc(DATA.floors[0].label)}`, true)}</div>`;
+	} else {
+		const h = ST.here ? DATA.floors.findIndex((f) => f.id === ST.here.f) : -1, c = h >= 0 ? at(h, Math.min(ST.here.k || 0, DATA.floors[h].qids.length - 1)) : null;
+		html = `<h2>つぎの一歩<small>明かり ${lit} / ${rooms} 室 ・ 正解 ${okN} / ${all.length} 問</small></h2><div class="bar2"><b style="width:${(okN / all.length * 100).toFixed(1)}%"></b></div><div class="gbtns">`
+			+ (c ? btn('cont', '続きから', `${c.no}号室「${esc(c.title)}」 相談 ${c.n}`, '前回の続き', true) : '')
+			+ (next ? btn('next', '次の部屋', `${roomNo(next.fi, next.r)}号室「${esc(DATA.floors[next.fi].rooms[next.r].title)}」`, `まだの相談 ${roomStats(next.fi, next.r).st.filter((x) => x === 'none').length} 問`) : '')
+			+ (wrong.length ? btn('wrong', '復習', `まちがえた相談 ${wrong.length} 問`, `${at(wrong[0].fi, wrong[0].k).no}号室から順に`) : '')
+			+ '</div>';
+	}
+	el.innerHTML = html;
+	el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
+		se('tap'); const g = b.dataset.g;
+		if (g === 'start') goQ(0, 0, true);
+		if (g === 'cont') { const h = DATA.floors.findIndex((f) => f.id === ST.here.f); goQ(h, Math.min(ST.here.k || 0, DATA.floors[h].qids.length - 1), true); }
+		if (g === 'next') goRoom(next.fi, next.r);
+		if (g === 'wrong') { const i = wrong.findIndex((w) => w.fi > cur.f || (w.fi === cur.f && w.k > cur.k)); const w = wrong[i < 0 ? 0 : i]; goQ(w.fi, w.k, false); }
+	}));
+}
 function paintInfo() {
+	paintGuide();
 	const f = curFloor(), s = floorStats(cur.f);
 	let rooms = 0, lit = 0; DATA.floors.forEach((_, i) => { const t = floorStats(i); rooms += t.rooms; lit += t.lit; });
 	$('floorinfo').innerHTML = `<b>${f.floor}F ${esc(f.label)}</b><span>明かり ${s.lit} / ${s.rooms} 室 ・ 正解 ${s.ok} / ${s.total} 問</span><span class="all">マンション全体 ${lit} / ${rooms} 室 ・ 部屋＝同じテーマの相談。8割正解で明かりがつく</span>`;
