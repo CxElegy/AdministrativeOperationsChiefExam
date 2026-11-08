@@ -22,7 +22,7 @@ html, body { height: 100%; overflow: hidden; }
 body { background: var(--night-2); color: var(--ink); font-family: var(--maru); line-height: 1.7; overflow-x: hidden; }
 button { font: inherit; }
 button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
-.app { height: 100%; display: grid; grid-template-columns: clamp(300px, min(46vw, (100vh - 150px) * .91 + 24px), 760px) minmax(0, 1fr); }  /* 左の欄は建物の絵が高さいっぱいに入る幅 */
+.app { height: 100%; display: grid; grid-template-columns: minmax(280px, 3fr) minmax(0, 7fr); }  /* マンション：相談票と部屋 ＝ 3：7 */
 /* 楼的上下和题卡对齐：标题在上面 64px 的带里，楼从 64px 到底下 24px */
 
 /* ---------- 左：マンション ---------- */
@@ -420,7 +420,8 @@ const FNAME = { 1: '適正化法', 2: '会計', 3: '委託契約', 4: '民法', 
 DATA.floors.forEach((f) => { f.qids = f.rooms.flatMap((r) => r.qids); f.ridx = []; f.rstart = []; let k = 0; f.rooms.forEach((r, i) => { f.rstart[i] = k; r.qids.forEach(() => { f.ridx[k++] = i; }); }); });
 const roomOf = (k, fi = cur.f) => DATA.floors[fi].ridx[k];
 const rstart = (fi, r) => DATA.floors[fi].rstart[r];
-const roomNo = (fi, r) => DATA.floors[fi].floor * 100 + r + 1;
+// 部屋番号は窓の列で決まる（x01 はいつも左端の窓）。住人の窓の番号は飛ばす。上下の階で同じ番号の部屋が縦にそろう
+const roomNo = (fi, r) => DATA.floors[fi].floor * 100 + DATA.floors[fi].pos[r] + 1;
 const WIN_STATE = (id) => { const r = ST.q[id]; return !r ? 'none' : r.last ? 'ok' : 'ng'; };
 function roomStats(fi, r) { const ids = DATA.floors[fi].rooms[r].qids; const st = ids.map(WIN_STATE); return { ids, st, n: ids.length, ok: st.filter((s) => s === 'ok').length, ng: st.filter((s) => s === 'ng').length, done: st.filter((s) => s !== 'none').length }; }
 const need = (n) => Math.ceil(n * 0.8);  // 8割正解で点灯
@@ -435,7 +436,7 @@ DATA.floors.forEach((f, fi) => {
 	el.setAttribute('aria-label', `${f.floor}階 ${f.label}へ`);
 	el.addEventListener('click', () => { se('tap'); goRoom(fi, firstOpenRoom(fi)); });
 	$('bldg').appendChild(el); FLOOR_EL[fi] = el;
-	const L = layoutFloor(fi, f.rooms.length);
+	const L = layoutFloor(fi, f.rooms.length); f.pos = L.rooms;
 	L.res.forEach((p) => {
 		const d = document.createElement('div'); d.className = 'res'; d.setAttribute('aria-hidden', 'true');
 		const k = L.rnd(), kind = k < 0.18 ? 'tv' : k < 0.45 ? 'curtain' : k < 0.6 ? 'dim' : 'warm';
