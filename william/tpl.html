@@ -348,6 +348,11 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.head .t b { font-size: 16px; } .head .t span { font-size: 12.5px; }
 	.rt { min-width: 34px; height: 32px; font-size: 14px; }
 	.bar .hint { font-size: 13px; } .door { width: 46px; height: 32px; font-size: 15px; }
+	/* スマホ：全問正解の帯。William の丸いアイコンは画面の幅に合わせて帯の右側に収める */
+	.cutin .band { top: 32%; height: 26%; }
+	.cutin .icon { height: auto; width: min(36vw, 24vh); top: calc(32% + 13% - min(18vw, 12vh)); right: 5%; box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--gold), 0 0 24px rgba(255, 210, 130, .9); }
+	.cutin b { left: 6%; top: 36%; font-size: 40px; -webkit-text-stroke: 7px var(--ink); }
+	.cutin small { left: 7%; top: 47%; font-size: 15px; }
 	.bar .hint { display: none; }
 	/* スマホ：下の帯は 1 行（左にスタンプ、右にボタン）で、いつも一番下に固定 */
 	.bar { flex-wrap: nowrap; gap: 8px; justify-content: flex-start; }
@@ -860,7 +865,30 @@ async function pushNow() {
 	else if (g.status !== 404) throw new Error('HTTP ' + g.status);
 	const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status);
 }
-function schedulePush() { if (!SYNC) return; clearTimeout(syncT); syncT = setTimeout(() => pushNow().then(() => setSyncMsg('ok', `保存しました（${hhmm()}）`), (e) => setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`)), 900); }
+// 答えたらすぐ保存（同じ瞬間に何回か呼ばれても 1 回にまとめ、送っている途中なら終わってからもう 1 回送る）
+let pushing = false, pushAgain = false;
+function schedulePush() {
+	if (!SYNC) return; clearTimeout(syncT);
+	syncT = setTimeout(async () => {
+		if (pushing) { pushAgain = true; return; }
+		pushing = true;
+		try { do { pushAgain = false; await pushNow(); } while (pushAgain); setSyncMsg('ok', `保存しました（${hhmm()}）`); }
+		catch (e) { setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`); }
+		pushing = false;
+	}, 50);
+}
+// ほかの端末で解いた分を取り込む（今の相談は開き直さず、窓の明かりと案内だけ更新）
+async function pullQuiet() {
+	if (!SYNC || pushing || document.hidden) return;
+	try {
+		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' }); if (!r.ok) return;
+		const m = (await r.json()).data?.main; if (!m) return;
+		const before = JSON.stringify(ST.q), merged = mergeStore(ST, m);
+		if (JSON.stringify(merged.q) !== before) { ST = { ...merged, here: ST.here || merged.here }; saveLocal(); paintWindows(); }
+	} catch (e) {}
+}
+setInterval(pullQuiet, 15000);
+addEventListener('focus', pullQuiet);
 async function pullSync() {
 	if (!SYNC) return; setSyncMsg('syncing', '読み込み中…');
 	try {
@@ -871,7 +899,7 @@ async function pullSync() {
 	} catch (e) { setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`); }
 }
 // ほかの端末で解いてから、この画面に戻ってきたときも読み込み直す（答えた直後は除く）
-document.addEventListener('visibilitychange', () => { if (!document.hidden && SYNC && Date.now() - (ST.here?.t || 0) > 3000) pullSync(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pullQuiet(); });
 function newId() { const b = new Uint8Array(12); crypto.getRandomValues(b); return Array.from(b, (x) => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + Date.now().toString(36).slice(-4); }
 function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}${SYNC.api === location.origin ? '' : `&api=${encodeURIComponent(SYNC.api)}`}`; }
 
