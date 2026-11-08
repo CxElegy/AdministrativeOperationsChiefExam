@@ -22,7 +22,7 @@ html, body { height: 100%; overflow: hidden; }
 body { background: var(--night-2); color: var(--ink); font-family: var(--maru); line-height: 1.7; overflow-x: hidden; }
 button { font: inherit; }
 button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
-.app { height: 100%; display: grid; grid-template-columns: clamp(300px, 36vw, 600px) minmax(0, 1fr); }
+.app { height: 100%; display: grid; grid-template-columns: clamp(300px, min(46vw, (100vh - 150px) * .91 + 24px), 760px) minmax(0, 1fr); }  /* 左の欄は建物の絵が高さいっぱいに入る幅 */
 /* 楼的上下和题卡对齐：标题在上面 64px 的带里，楼从 64px 到底下 24px */
 
 /* ---------- 左：マンション ---------- */
@@ -36,63 +36,44 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .rule::before, .rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
 .rule::after { transform: scaleX(-1); }
 .rule i { width: 7px; height: 7px; transform: rotate(45deg); border: 1px solid currentColor; background: var(--gold-hi); }
-.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; padding: 0 14px 22px; }
-/* 建物は CSS で描く：屋上の看板 → 8F … 1F（各階に問題の数だけ窓）→ 玄関 */
-.bldg { --lab: 11px; position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; border-radius: 10px 10px 4px 4px; overflow: hidden; background: linear-gradient(90deg, #3c3256, #54466f 18%, #5e4f78 50%, #54466f 82%, #3c3256); box-shadow: 0 0 0 1px rgba(201, 164, 92, .45), 0 0 0 4px rgba(13, 24, 56, .6), 0 18px 40px rgba(0, 0, 0, .45); }
-.bldg::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255, 190, 140, .16), transparent 40%), radial-gradient(120% 60% at 100% 0%, rgba(255, 170, 120, .18), transparent 60%); }
-.roof { flex: none; height: 34px; display: grid; place-items: center; background: linear-gradient(#2a2244, #3a3058); border-bottom: 2px solid var(--gold-lo); position: relative; }
-.roof span { font-family: var(--latin); font-weight: 700; font-size: 12px; letter-spacing: .32em; color: var(--gold-hi); text-shadow: 0 0 10px rgba(255, 210, 140, .7); padding: 2px 12px; border: 1px solid rgba(201, 164, 92, .6); border-radius: 3px; background: rgba(13, 24, 56, .5); }
-.floors { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.floor { position: relative; flex: 1 1 0; min-height: 0; display: flex; gap: 8px; align-items: stretch; padding: 6px 10px 7px 0; border-bottom: 4px solid #2c2442; box-shadow: 0 1px 0 rgba(201, 164, 92, .25); }
-.floor::after { content: ""; position: absolute; left: 48px; right: 0; bottom: 0; height: 5px; background: repeating-linear-gradient(90deg, rgba(201, 164, 92, .35) 0 2px, transparent 2px 9px); pointer-events: none; }  /* ベランダの手すり */
-.floor.cur { background: linear-gradient(90deg, rgba(255, 220, 160, .06), rgba(255, 220, 160, .12)); }
-.fbtn { position: relative; flex: none; width: 48px; border: 0; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: linear-gradient(90deg, #2a2244, #342b4f); color: #efe4cf; cursor: pointer; border-right: 1px solid rgba(201, 164, 92, .35); }
-.fbtn b { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-family: var(--latin); font-size: 12px; color: var(--ink); background: linear-gradient(var(--gold-hi), var(--gold)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6); flex: none; }
-.fbtn small { font-size: 9px; line-height: 1.15; letter-spacing: .02em; text-align: center; white-space: nowrap; overflow: hidden; max-width: 100%; }
-.floor.cur .fbtn { background: linear-gradient(90deg, #fff1d0, #ecc77d); color: var(--ink); }
-.floor.cur .fbtn b { background: var(--night); color: var(--gold-hi); }
-.floor.star .fbtn::after { content: "★"; position: absolute; right: 3px; top: 2px; font-size: 10px; color: var(--gold-hi); text-shadow: 0 0 6px rgba(255, 220, 140, .9); }
-.fbtn:hover b, .fbtn:focus-visible b { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 12px rgba(243, 223, 162, .8); }
-.tidx { display: none; }
-.wins { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(var(--cols, 8), minmax(0, 1fr)); gap: 6px; }
-/* 窓＝部屋：正解が増えるほど明るく（--lv）、8割で点灯。下のバーは 金＝正解・赤＝まちがい */
-.win { --lv: 0; --ok: 0; --ng: 0; position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 3px 3px 2px 2px; cursor: pointer; overflow: hidden; background: linear-gradient(160deg, #26304f, #141a33 70%); box-shadow: inset 0 0 0 2px #2c2442, inset 0 0 0 3px rgba(201, 164, 92, .35); transition: transform .15s, box-shadow .4s; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(233, 226, 210, .7); }
+.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; padding: 0 10px 20px; }
+/* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
+.bldg { --k: .5; position: relative; flex: none; background: url(__BLDG__) center / 100% 100% no-repeat; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px rgba(201, 164, 92, .35); }
+.ftag { position: absolute; z-index: 3; left: .6%; width: 8.4%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
+.ftag b { font-family: var(--latin); font-size: max(10px, calc(var(--k) * 22px)); line-height: 1.1; color: var(--gold-hi); }
+.ftag small { font-size: max(7px, calc(var(--k) * 13px)); line-height: 1.1; white-space: nowrap; overflow: hidden; max-width: 96%; }
+.ftag.cur { background: linear-gradient(#fff5d9, #f0d08a); color: var(--ink); box-shadow: 0 0 0 1px var(--gold-lo), 0 0 14px rgba(255, 210, 140, .7); }
+.ftag.cur b { color: var(--ink); }
+.ftag.star b::after { content: "★"; font-size: .7em; margin-left: 1px; color: #e9b44c; }
+.ftag:hover { filter: brightness(1.15); }
+.win { --lv: 0; --ok: 0; --ng: 0; position: absolute; z-index: 1; padding: 0; border: 0; border-radius: 1px; cursor: pointer; background: transparent; display: grid; place-items: center; color: rgba(233, 226, 210, .55); transition: transform .15s, box-shadow .5s; }
 .win .glow { position: absolute; inset: 0; opacity: var(--lv); background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 45%, #f2a54f); transition: opacity .6s; }
-.win::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent calc(50% - 1px), rgba(44, 36, 66, .55) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(120deg, rgba(255, 255, 255, .14), transparent 45%); pointer-events: none; }
-.win i, .win em { position: relative; z-index: 1; font-style: normal; line-height: 1.15; max-width: 92%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.win i { font-family: var(--latin); font-weight: 700; font-size: 12px; }
-.win em { font-size: 9px; white-space: normal; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: center; word-break: break-all; margin-top: 2px; }
-.win .meter { position: absolute; z-index: 1; left: 4px; right: 4px; bottom: 3px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, .35); overflow: hidden; }
+.win::after { content: ""; position: absolute; top: 0; bottom: 0; left: 49%; width: 2px; background: rgba(60, 30, 20, .55); pointer-events: none; }
+.win i { position: relative; z-index: 1; font-style: normal; font-family: var(--latin); font-weight: 700; font-size: max(8px, calc(var(--k) * 20px)); line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.win .meter { position: absolute; z-index: 1; left: 8%; right: 8%; bottom: 6%; height: max(2px, calc(var(--k) * 5px)); border-radius: 2px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 .win .meter .o, .win .meter .x { position: absolute; top: 0; bottom: 0; }
 .win .meter .o { left: 0; width: calc(var(--ok) * 100%); background: #ffe08a; box-shadow: 0 0 4px #ffd27e; }
 .win .meter .x { left: calc(var(--ok) * 100%); width: calc(var(--ng) * 100%); background: #e0758f; }
-.win.lit { box-shadow: inset 0 0 0 2px #2c2442, 0 0 12px 2px rgba(255, 200, 110, .55), 0 0 30px 6px rgba(255, 180, 90, .2); color: rgba(80, 48, 18, .9); }
+.win.lit { box-shadow: 0 0 14px 4px rgba(255, 200, 110, .6), 0 0 40px 10px rgba(255, 180, 90, .22); color: rgba(90, 52, 18, .85); }
+.win.lit i { text-shadow: none; }
 .win.lit .meter { background: rgba(120, 70, 20, .25); } .win.lit .meter .o { background: #fff7d8; }
-.win.full i::after { content: " ★"; color: #b5741c; }
-.win.here { outline: 2px solid var(--gold-hi); outline-offset: 2px; z-index: 1; animation: herePulse 1.6s ease-in-out infinite; }
+.win.full i::after { content: "★"; font-size: .8em; color: #b5741c; }
+.win.here { outline: 2px solid var(--gold-hi); outline-offset: 2px; z-index: 2; animation: herePulse 1.6s ease-in-out infinite; }
 @keyframes herePulse { 50% { outline-color: rgba(243, 223, 162, .3); } }
-.win:hover { transform: translateY(-2px); z-index: 2; }
+.win:hover { transform: scale(1.08); z-index: 2; }
 .win.glint { animation: glint .9s var(--ease-quint); }
-@keyframes glint { 0% { filter: brightness(2.2); transform: scale(1.12); } 100% { filter: none; transform: none; } }
+@keyframes glint { 0% { filter: brightness(2.2); transform: scale(1.15); } 100% { filter: none; transform: none; } }
 .win.nudge { animation: nudge .45s; }
 @keyframes nudge { 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
-/* 相談票：部屋の中の番号 701-1 … */
-.rtwrap { margin-top: -4px; }
-.rtabs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 0 8px; border-bottom: 1px solid rgba(201, 164, 92, .45); }
-.rt { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 8px; border: 1px solid rgba(138, 106, 53, .45); background: #fffaf0; color: var(--ink); font-family: var(--latin); font-weight: 700; font-size: 13px; cursor: pointer; }
-.rt.ok { background: linear-gradient(#fff4c9, #ffd27e); border-color: #e0a64f; } .rt.ng { background: #f6dde5; border-color: #c27a92; color: #8a3550; }
-.rt.on { box-shadow: 0 0 0 2px var(--night); }
-.rlight { margin-left: auto; font-size: 11.5px; color: var(--ink-soft); }
-.rtitle { margin: -6px 0 0; text-align: center; font-family: var(--mincho); font-weight: 700; color: var(--ink-soft); }
-.item.dim { filter: grayscale(.7) brightness(.9); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #bba; }
-.item.dim::before { display: none; }
-.irow { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: start; margin: 4px 0; }
-.ino { display: flex; flex-direction: column; align-items: flex-start; border: 1px solid rgba(138, 106, 53, .45); background: linear-gradient(160deg, #26304f, #141a33); color: #e9e2d2; border-radius: 6px; padding: 4px 8px; cursor: pointer; line-height: 1.2; text-align: left; }
-.ino b { font-family: var(--latin); font-size: 13px; } .ino small { font-size: 10px; }
-.ino.lit { background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 60%, #f2a54f); color: var(--ink); }
-.ground { flex: none; height: 26px; display: flex; justify-content: center; align-items: flex-end; background: linear-gradient(#3a3058, #251e3a); border-top: 2px solid var(--gold-lo); }
-.ground span { width: 46px; height: 20px; border-radius: 6px 6px 0 0; background: linear-gradient(#ffe6ad, #e7b066); box-shadow: 0 0 16px rgba(255, 200, 120, .6); position: relative; }
-.ground span::before { content: ""; position: absolute; left: 50%; top: 3px; bottom: 0; width: 1px; background: rgba(90, 55, 20, .5); }
+.tidx { display: none; }
+/* ほかの住人の部屋：最初から明かりがついている（窓ごとに明るさ・色・カーテンが違う） */
+.res { position: absolute; z-index: 1; pointer-events: none; opacity: var(--a); }
+.res.warm { background: radial-gradient(ellipse at var(--x) 65%, hsl(var(--h) 100% 82%), hsl(var(--h) 85% 62%) 55%, hsl(calc(var(--h) - 6) 70% 45%)); }
+.res.dim { background: radial-gradient(ellipse at var(--x) 80%, hsl(var(--h) 90% 66%), hsl(calc(var(--h) - 8) 60% 32%) 70%); opacity: calc(var(--a) * .75); }
+.res.curtain { background: linear-gradient(90deg, hsl(var(--h) 45% 58%) 0 38%, transparent 38% 62%, hsl(var(--h) 45% 58%) 62%), radial-gradient(ellipse at 50% 60%, hsl(var(--h) 100% 80%), hsl(var(--h) 80% 55%)); }
+.res.tv { background: radial-gradient(ellipse at var(--x) 70%, #cfe3ff, #6f8fd6 55%, #2b3a6b); opacity: calc(var(--a) * .8); animation: tv 3.2s steps(1) infinite; }
+@keyframes tv { 30% { filter: brightness(1.25); } 55% { filter: brightness(.85); } 80% { filter: brightness(1.1); } }
+.res::after { content: ""; position: absolute; top: 0; bottom: 0; left: 49%; width: 2px; background: rgba(60, 30, 20, .55); }
 .finfo { position: relative; z-index: 2; margin: 0 14px 8px; padding: 6px 12px; border-radius: 10px; background: rgba(13, 24, 56, .55); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .55); font-size: 12px; line-height: 1.55; color: #e9e2d2; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
 .finfo b { font-family: var(--mincho); color: var(--gold-hi); font-size: 13.5px; }
 .finfo .lg { display: inline-flex; gap: 4px; align-items: center; }
@@ -248,6 +229,20 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .bldg.sweep::before { content: ""; position: absolute; z-index: 4; left: 0; right: 0; height: 30%; bottom: -30%; background: linear-gradient(transparent, rgba(255, 230, 170, .35), transparent); animation: sweep2 1.4s var(--ease-io) forwards; pointer-events: none; }
 @keyframes sweep2 { to { bottom: 110%; } }
 
+/* 相談票：部屋の中の番号 701-1 … */
+.rtwrap { margin-top: -4px; }
+.rtabs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 0 8px; border-bottom: 1px solid rgba(201, 164, 92, .45); }
+.rt { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 8px; border: 1px solid rgba(138, 106, 53, .45); background: #fffaf0; color: var(--ink); font-family: var(--latin); font-weight: 700; font-size: 13px; cursor: pointer; }
+.rt.ok { background: linear-gradient(#fff4c9, #ffd27e); border-color: #e0a64f; } .rt.ng { background: #f6dde5; border-color: #c27a92; color: #8a3550; }
+.rt.on { box-shadow: 0 0 0 2px var(--night); }
+.rlight { margin-left: auto; font-size: 11.5px; color: var(--ink-soft); }
+.rtitle { margin: -6px 0 0; text-align: center; font-family: var(--mincho); font-weight: 700; color: var(--ink-soft); }
+.item.dim { filter: grayscale(.7) brightness(.9); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #bba; }
+.item.dim::before { display: none; }
+.irow { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: start; margin: 4px 0; }
+.ino { display: flex; flex-direction: column; align-items: flex-start; border: 1px solid rgba(138, 106, 53, .45); background: linear-gradient(160deg, #26304f, #141a33); color: #e9e2d2; border-radius: 6px; padding: 4px 8px; cursor: pointer; line-height: 1.2; text-align: left; }
+.ino b { font-family: var(--latin); font-size: 13px; } .ino small { font-size: 10px; }
+.ino.lit { background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 60%, #f2a54f); color: var(--ink); }
 /* 相談票の中身（記述ア〜エ・図・解説） */
 .head .qnav { margin-left: auto; display: flex; gap: 6px; flex: none; }
 .nb { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--gold); background: linear-gradient(#fffaf0, #f3e6c8); color: var(--ink); font-size: 18px; font-weight: 700; line-height: 1; cursor: pointer; display: grid; place-items: center; }
@@ -306,13 +301,10 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.app.show-tower .room, .app.show-room .tower { display: none; }
 	.tower { padding-right: env(safe-area-inset-right, 0px); }
 	.brand { height: 56px; }
-	.bldgwrap { padding: 0 10px 18px; }
 	.finfo { margin: 0 10px 6px; font-size: 11px; padding: 5px 10px; }
-	.fbtn { width: 40px; } .fbtn small { font-size: 8px; } .floor::after { left: 40px; }
-	.wins { gap: 4px; } .win em { display: none; } .win i { font-size: 11px; }
 	.irow { grid-template-columns: 78px 1fr; }
 	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
-	.credit { font-size: 8px; bottom: 3px; } .bldgwrap { padding-bottom: 22px; }
+	.credit { font-size: 8px; bottom: 3px; }
 	.tidx { display: inline-flex; position: absolute; right: 12px; top: 14px; border: 1px solid var(--gold); background: rgba(13, 24, 56, .6); color: var(--gold-hi); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
 	.hud { top: 10px; left: 12px; right: 12px; gap: 5px; flex-wrap: nowrap; }
 	.util { gap: 4px; } .util button { width: 28px; height: 28px; font-size: 12px; }
@@ -344,7 +336,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 			<button type="button" class="tidx" id="idxBtn2">≡ 記録</button>
 		</div>
 		<div class="finfo" id="floorinfo" aria-live="polite"></div>
-		<div class="bldgwrap"><div class="bldg" id="bldg"><div class="roof"><span>MAISON WILLIAM</span></div><div class="floors" id="floors"></div><div class="ground"><span></span></div></div></div>
+		<div class="bldgwrap" id="bldgwrap"><div class="bldg" id="bldg"></div></div>
 		<p class="credit">William のモデルは Live2D Inc. が権利を有するサンプルデータ（Tororo）を使用しています</p>
 	</aside>
 	<section class="room" id="room" aria-label="William の部屋">
@@ -382,7 +374,7 @@ const app = document.querySelector('.app');
 // スマホは ① マンションの画面から始める（窓をタップすると ② 相談票＋William の画面）
 if (isMobile()) app.classList.add('show-tower');
 function openRoom() { if (!isMobile()) return; app.classList.remove('show-tower'); app.classList.add('show-room'); requestAnimationFrame(() => layout()); }
-function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(flushPendingLights); }
+function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(() => { fitBldg(); flushPendingLights(); }); }
 addEventListener('resize', () => { if (!isMobile()) app.classList.remove('show-tower', 'show-room'); else if (!app.classList.contains('show-room')) app.classList.add('show-tower'); });
 
 // ---------------- 効果音（WebAudio で合成） ----------------
@@ -413,8 +405,16 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const QN = (id) => DATA.q[id];
 // 問題・解説の文：**太字** と改行だけ HTML にする（ほかはそのまま文字として出す）
 const fmt = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-const COLS = Math.max(...DATA.floors.map((f) => f.rooms.length));
-$('bldg').style.setProperty('--cols', COLS);
+// 絵（william/assets/bldg.webp、1168×1280）の窓の位置。各階 8 か所（中央の柱の下が玄関）。部屋は左から順に入る
+const BW = 1168, BH = 1280, WX = [125, 230, 336, 441, 652, 757, 863, 968], WY = [259, 377, 495, 613, 732, 850, 968, 1087], WW = 71, WH = 69;
+const pct = (v, t) => (v / t * 100) + '%';
+// 部屋の少ない階は、余った窓を「ほかの住人の部屋」にする（最初から明かりがついている。明るさや色は窓ごとに少しずつ違う。押せない）
+const rand = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+function layoutFloor(fi, n) {
+	const rnd = rand(97 + fi * 131), pos = [0, 1, 2, 3, 4, 5, 6, 7], res = [];
+	while (res.length < WX.length - n) { const p = pos.splice(Math.floor(rnd() * pos.length), 1)[0]; res.push(p); }
+	return { rooms: [0, 1, 2, 3, 4, 5, 6, 7].filter((p) => !res.includes(p)), res, rnd };
+}
 const FNAME = { 1: '適正化法', 2: '会計', 3: '委託契約', 4: '民法', 5: '区分所有', 6: '管理規約', 7: '建築設備', 8: 'その他' };
 // 階の問題は部屋の順に並べる。k（階の中の通し番号）→ 部屋、部屋 → 最初の k
 DATA.floors.forEach((f) => { f.qids = f.rooms.flatMap((r) => r.qids); f.ridx = []; f.rstart = []; let k = 0; f.rooms.forEach((r, i) => { f.rstart[i] = k; r.qids.forEach(() => { f.ridx[k++] = i; }); }); });
@@ -427,18 +427,34 @@ const need = (n) => Math.ceil(n * 0.8);  // 8割正解で点灯
 const isLit = (s) => s.ok >= need(s.n);
 const FLOOR_EL = [], WINS = [];  // WINS[fi][r] = 部屋の窓
 DATA.floors.forEach((f, fi) => {
-	const el = document.createElement('div'); el.className = 'floor'; el.dataset.f = fi;
-	el.innerHTML = `<button type="button" class="fbtn" aria-label="${f.floor}階 ${esc(f.label)}へ"><b>${f.floor}</b><small>${esc(FNAME[f.floor] || f.short)}</small></button><div class="wins"></div>`;
-	const wins = el.querySelector('.wins');
+	const y = WY[DATA.floors.length - 1 - fi];  // 1F が一番下
+	// 階の札（建物の左の空のところ）。押すとその階のまだ明かりのない部屋へ
+	const el = document.createElement('button'); el.type = 'button'; el.className = 'ftag'; el.dataset.f = fi;
+	Object.assign(el.style, { top: pct(y + WH / 2, BH) });
+	el.innerHTML = `<b>${f.floor}F</b><small>${esc(FNAME[f.floor] || f.short)}</small>`;
+	el.setAttribute('aria-label', `${f.floor}階 ${f.label}へ`);
+	el.addEventListener('click', () => { se('tap'); goRoom(fi, firstOpenRoom(fi)); });
+	$('bldg').appendChild(el); FLOOR_EL[fi] = el;
+	const L = layoutFloor(fi, f.rooms.length);
+	L.res.forEach((p) => {
+		const d = document.createElement('div'); d.className = 'res'; d.setAttribute('aria-hidden', 'true');
+		const k = L.rnd(), kind = k < 0.18 ? 'tv' : k < 0.45 ? 'curtain' : k < 0.6 ? 'dim' : 'warm';
+		d.classList.add(kind);
+		Object.assign(d.style, { left: pct(WX[p], BW), top: pct(y, BH), width: pct(WW, BW), height: pct(WH, BH) });
+		d.style.setProperty('--a', (0.42 + L.rnd() * 0.4).toFixed(2)); d.style.setProperty('--h', Math.round(28 + L.rnd() * 18)); d.style.setProperty('--x', Math.round(25 + L.rnd() * 50) + '%');
+		$('bldg').appendChild(d);
+	});
 	WINS[fi] = f.rooms.map((room, r) => {
 		const w = document.createElement('button'); w.type = 'button'; w.className = 'win';
-		w.innerHTML = `<span class="glow"></span><i>${roomNo(fi, r)}</i><em>${esc(room.title)}</em><span class="meter"><b class="o"></b><b class="x"></b></span>`;
+		Object.assign(w.style, { left: pct(WX[L.rooms[r]], BW), top: pct(y, BH), width: pct(WW, BW), height: pct(WH, BH) });
+		w.innerHTML = `<span class="glow"></span><i>${roomNo(fi, r)}</i><span class="meter"><b class="o"></b><b class="x"></b></span>`;
 		w.addEventListener('click', () => { se('tap'); goRoom(fi, r); });
-		wins.appendChild(w); return w;
+		$('bldg').appendChild(w); return w;
 	});
-	el.querySelector('.fbtn').addEventListener('click', () => { se('tap'); const r = firstOpenRoom(fi); goRoom(fi, r); });
-	$('floors').prepend(el); FLOOR_EL[fi] = el;  // 上から 8F → 1F
 });
+// 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
+function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const k = Math.min(wr.clientWidth / BW, wr.clientHeight / BH); const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
+new ResizeObserver(fitBldg).observe($('bldgwrap'));
 function towerVisible() { const t = document.querySelector('.tower'); return t && t.offsetParent !== null; }
 const pending = new Map();  // 光の玉が着くまで、前の明るさのままにしておく窓 → 着いたときの演出
 const shown = new Map();    // 窓ごとに今表示している { ok, st }（光の玉が着くまでは前の状態）

@@ -5,7 +5,7 @@
 
 - 問題は src/data（過去問 kakomon/*.json とオリジナル問題 drills/*.json）から読む
 - 階＝出題分野（1F 適正化法 … 8F その他）、部屋（窓）＝同じテーマの相談のまとまり（src/data/rooms.json）
-- 絵（部屋・キャットタワー・カットイン）は william/assets から埋め込む
+- 絵（マンション・部屋・キャットタワー・カットイン）は william/assets から埋め込む
 - William の Live2D モデルは public/w/（テクスチャだけ William の柄に塗り替えた公式サンプル Tororo）
 """
 import base64, glob, json, os, re
@@ -60,7 +60,7 @@ def main():
     data = json.dumps(build_data(), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     s = s.replace('__DATA__', data)
     s = s.replace('__ROOM__', json.dumps(data_uri('room.webp'))).replace('__TALL__', json.dumps(data_uri('tall.webp')))
-    s = s.replace('__CUTIN__', json.dumps(data_uri('cutin.webp'))).replace('__POSES__', '{}')
+    s = s.replace('__BLDG__', data_uri('bldg.webp')).replace('__CUTIN__', json.dumps(data_uri('cutin.webp'))).replace('__POSES__', '{}')
     i = s.index('</style>') + len('</style>')
     head = ('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
