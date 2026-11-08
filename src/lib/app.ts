@@ -605,6 +605,7 @@ export class App {
 			<a href="#/soukai" class="${this.view.name === 'soukai' || this.view.name === 'exam' ? 'on' : ''}">総会（模試）</a>
 			<a href="#/record" class="${this.view.name === 'record' ? 'on' : ''}">記録</a>
 			<a href="${this.data.base}guide/">ガイド・ノート</a>
+			<a href="${this.data.base}william/">William の部屋（新デザイン）</a>
 		</nav>`;
 		let body = '';
 		switch (this.view.name) {
