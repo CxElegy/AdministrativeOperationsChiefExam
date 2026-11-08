@@ -336,7 +336,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.util { gap: 4px; } .util button { width: 28px; height: 28px; font-size: 12px; }
 	.pill { font-size: 11px; padding: 2px 8px; white-space: nowrap; }
 	.back { display: inline-flex; border: 0; cursor: pointer; font: inherit; }
-	.card { left: 10px; right: 10px; top: calc(var(--treeH, 20%) + 4px); bottom: calc(60px + env(safe-area-inset-bottom, 0px));  /* 下はブラウザのバーに隠れないよう余白 */ padding: 14px 14px 10px; gap: 8px; }  /* スマホ：上が William の場所（キャットタワー）、下が題卡 */
+	.card { left: 10px; right: 10px; top: calc(var(--treeH, 20%) + 4px); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 14px 14px 10px; gap: 8px; }  /* スマホ：上が William の場所（キャットタワー）、下が題卡 */
 	/* スマホ：猫は小さく、文字は大きく読みやすく */
 	.stem { font-size: 16.5px; line-height: 1.75; }
 	.choices button { font-size: 15px; padding: 8px 10px 8px 8px; line-height: 1.6; grid-template-columns: 28px 1fr; }
@@ -682,7 +682,7 @@ const SCENES = {
 let SCN = SCENES.tall, IW = 512, IH = 1024, IMG_PL = SCN.pl, IMG_HOLE = SCN.hole, IMG_TOY = SCN.toy;
 const room = $('room'), card = $('card'), bg = $('bg'), fg = $('fg'), bctx = bg.getContext('2d'), ctx = fg.getContext('2d');
 const catLayer = document.createElement('canvas'), cctx = catLayer.getContext('2d');
-let W = 0, H = 0, DPR = 1, SC = 1, OX = 0, OY = 0, PX = 0, PY = 0, catH = 170, stacked = false, sceneTop = 0, stripX = 0;
+let HUDB = 48, W = 0, H = 0, DPR = 1, SC = 1, OX = 0, OY = 0, PX = 0, PY = 0, catH = 170, stacked = false, sceneTop = 0, stripX = 0;
 const toy = { a: 0.3, v: 0 };
 const M = (x, y) => ({ x: OX + PX + x * SC, y: OY + PY + y * SC });
 function layout() {
@@ -695,13 +695,16 @@ function layout() {
 	if (stacked) {
 		// 画面の上の帯 = William の場所。上の2つの台（top / mid）だけを使い、猫の頭から mid の台までが帯に入る大きさ
 		// スマホ：上の 2 割が William の場所、下の 8 割が題卡。絵は帯いっぱいに敷き、一番上の台を帯の下のほうに置く
-		const th = Math.round(Math.max(112, H * 0.15));  // スマホ：上の William の帯は 15%（猫は小さめ、題卡を広く） room.style.setProperty('--treeH', th + 'px'); sceneTop = 0;
+		// スマホ：上の William の帯。上のボタンの下端（HUDB）より猫の頭が下に来るようにする（猫は小さめ、題卡を広く）
+		const hud = room.querySelector('.hud'); HUDB = hud ? hud.offsetTop + hud.offsetHeight : 48;
+		const th = Math.round(Math.max(HUDB + 80, H * 0.16));
+		room.style.setProperty('--treeH', th + 'px'); sceneTop = 0;
 		SC = Math.max(W / 468, 0.6); OX = W / 2 - SCN.fx * SC; OY = th - 12 - 252 * SC; stripX = 0;
 	} else {
 		stripX = Math.round(W * 0.8); const sw = W - stripX;
 		SC = Math.max(sw / 380, H / IH); OX = stripX + sw / 2 - SCN.fx * SC; OY = H - IH * SC; sceneTop = 0;
 	}
-	catH = stacked ? Math.max(70, (parseFloat(room.style.getPropertyValue('--treeH')) || 150) - 44 - 20) : 172 * SC;
+	catH = stacked ? Math.max(56, (parseFloat(room.style.getPropertyValue('--treeH')) || 150) - 12 - HUDB - 8) : 172 * SC;  // 台の上に立った猫の頭が、上のボタンにかからない高さ
 	drawBg();
 }
 function drawBg() {
