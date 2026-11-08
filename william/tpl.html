@@ -1023,8 +1023,8 @@ function showAnswer(i, quiet) {
 	if (q.statementNotes) card.querySelectorAll('.stmts li').forEach((li) => { const sn = q.statementNotes.find((x) => x.label === li.dataset.l); if (sn) { li.classList.add(sn.correct ? 't' : 'f'); li.insertAdjacentHTML('beforeend', `<span class="note"><em>${sn.correct ? '○' : '×'}</em>${fmt(sn.note)}</span>`); } });
 	$('xp').innerHTML = (q.explanation ? `<div class="pt"><b>ポイント</b>${fmt(q.explanation)}</div>` : '') + (q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : '') + (q.amendment ? `<div class="amd"><b>法改正の注意</b>${fmt(q.amendment)}</div>` : '') + (q.needsCheck ? `<div class="chk"><b>要確認</b>${fmt(q.needsCheck)}</div>` : '') + (q.source ? `<p class="src">${esc(q.source)}</p>` : '');
 	const ans = q.answer.join('・'), n = neighbor(1), nextLabel = n.f !== cur.f || roomOf(n.k, n.f) !== roomOf(cur.k) ? `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ` : '次の相談へ';
-	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${quiet ? `前回の回答です（正解は ${ans}）` : ok ? '管理人さんの解説を読んでおこう' : `正解は ${ans}。どこが違うか、解説を確認しよう`}</span>${quiet ? '<button class="cta sub" type="button" id="retry"><i></i>もう一度<i></i></button>' : ''}<button class="cta" type="button" id="next"><i></i>${nextLabel}<i></i></button>`;
-	if (quiet) $('retry').addEventListener('click', () => { se('tap'); renderQ(false); });
+	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${quiet ? `前回の回答です（正解は ${ans}）` : ok ? '管理人さんの解説を読んでおこう' : `正解は ${ans}。どこが違うか、解説を確認しよう`}</span>${quiet || !ok ? '<button class="cta sub" type="button" id="retry"><i></i>もう一度<i></i></button>' : ''}<button class="cta" type="button" id="next"><i></i>${nextLabel}<i></i></button>`;
+	if ($('retry')) $('retry').addEventListener('click', () => { se('tap'); renderQ(false); });  // まちがえたとき・前の回答を見ているとき：もう一度答える
 	$('next').addEventListener('click', () => { se('tap'); const m = neighbor(1); goQ(m.f, m.k, true); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); });
 	requestAnimationFrame(layout);
 }
@@ -1046,7 +1046,10 @@ function answer(i) {
 		setTimeout(() => burst(st.left - rr.left + st.width / 2, st.top - rr.top + st.height / 2, 26), 120);
 		S.wrongRun = 0;
 		const msg = lights ? `${roomNo(fi, r)}号室に明かりがついたにゃ！` : 'せいかいにゃ！';
-		const perfect = after.done === after.n && after.ok === after.n && before.done < after.n;
+		const firstPass = after.done === after.n && before.done < after.n;               // 部屋の相談をはじめて全部答えた（このときは報酬の画面が まじ!! を出す）
+		const nowPerfect = after.ok === after.n && before.ok < after.n;                     // この答えで全問正解になった（答え直しも含む）
+		if (nowPerfect && !firstPass) cutin('loaf', 'まじ!!', '全問正解', MAJI[Math.floor(Math.random() * MAJI.length)]);
+		const perfect = nowPerfect;
 		if (lights && !perfect) cutin('loaf', '点灯!!', `${roomNo(fi, r)}号室に明かり`, MAJI[Math.floor(Math.random() * MAJI.length)]);  // 部屋に明かりがついた瞬間の帯（全問正解なら あとで まじ!! を出す）
 		if (!lights && S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'すごいにゃ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('♪♪', { size: 34, dx: -0.6, dy: -0.95, rot: -0.1, dur: 2.6, color: '#e8457a' }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say(lights ? msg : 'すごいにゃ！ れんぞくにゃ♪', 2); }), 900); }
 		else if (S.on === 'card') jumpTo('top', () => { start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); });
