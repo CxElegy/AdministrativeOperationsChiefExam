@@ -715,8 +715,11 @@ function star4(c, x, y, r, rot) { c.save(); c.translate(x, y); c.rotate(rot); c.
 const KEY = 'kangyo-mansion-v1', DAY = 86400000, INTERVALS = [1, 3, 7, 14, 30];
 const emptyStore = () => ({ v: 1, q: {}, rooms: {}, days: {}, exams: [] });
 const dayKey = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-let ST = (() => { try { return { ...emptyStore(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) { return emptyStore(); } })();
-function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) {} }
+// このブラウザの中の記録。進度リンク（?u=ID）で開いているときは ID ごとに別の場所に持つ（テスト1とテスト2が混ざらない）
+const storeKey = () => (SYNC ? `${KEY}:${SYNC.id}` : KEY);  // SYNC は下で決まる（それより前には呼ばない）
+function loadLocal() { try { return { ...emptyStore(), ...JSON.parse(localStorage.getItem(storeKey()) || '{}') }; } catch (e) { return emptyStore(); } }
+let ST = emptyStore();
+function saveLocal() { try { localStorage.setItem(storeKey(), JSON.stringify(ST)); } catch (e) {} }
 function saveStore() { saveLocal(); schedulePush(); }
 const todayCount = () => ST.days[dayKey()] || 0;
 function dayStreak() { let n = 0, t = Date.now(); if (!ST.days[dayKey(t)]) t -= DAY; while (ST.days[dayKey(t)]) { n++; t -= DAY; } return n; }
@@ -744,13 +747,18 @@ function mergeStore(a, b) {
 const SYNC_KEY = 'kangyo-sync-v1';
 function readSync() {
 	let c = {}; try { c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); } catch (e) {}
+	PREV_ID = c.id || null;
 	const p = new URLSearchParams(location.search), u = p.get('u'), api = p.get('api');
-	if (u && /^[A-Za-z0-9_-]{12,64}$/.test(u)) c.id = u; if (api) c.api = api.replace(/\/+$/, '');
+	if (u && /^[A-Za-z0-9_-]{12,64}$/.test(u)) { if (u !== c.id && !api) delete c.api; c.id = u; } if (api) c.api = api.replace(/\/+$/, '');
 	if (u || api) { try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} }
 	const same = /^https?:$/.test(location.protocol) && !location.hostname.endsWith('github.io') && !location.hostname.endsWith('claude.ai') && location.port !== '4321' ? location.origin : '';
 	const base = c.api || same; return c.id && base ? { id: c.id, api: base } : null;
 }
+var PREV_ID = null;
 let SYNC = readSync(), syncT = 0, syncMsg = '', syncSt = 'off';
+ST = loadLocal();
+// 前はこのブラウザの記録を1つにまとめて持っていた。同じリンクで開き直したときは、その記録をこのリンクの記録として引き継ぐ
+if (SYNC && SYNC.id === PREV_ID && !Object.keys(ST.q).length) { try { ST = { ...emptyStore(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) {} saveLocal(); }
 function setSyncMsg(st, m) { syncSt = st; syncMsg = m; const el = document.querySelector('[data-sync-status]'); if (el) { el.textContent = m; el.className = 'sync-status ' + st; } }
 const hhmm = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 async function pushNow() { if (!SYNC) return; const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status); }
@@ -977,8 +985,8 @@ function openIndex(tab) {
 		act('copy', () => { const inp = sc.querySelector('[data-sync-link]'); navigator.clipboard?.writeText(inp.value).then(() => setSyncMsg(syncSt, 'リンクをコピーしました。ほかの端末で開くと同じ記録になります。'), () => inp.select()); inp.select(); });
 		act('reccopy', () => { const inp = sc.querySelector('[data-rec-link]'); inp.select(); const done = () => { const e = sc.querySelector('[data-rec-status]'); if (e) e.textContent = 'コピーしました。ほかの端末でこのリンクを開いてください。'; }; if (navigator.clipboard) navigator.clipboard.writeText(inp.value).then(done, () => document.execCommand('copy') && done()); else if (document.execCommand('copy')) done(); });
 		act('sync', () => pullSync());
-		act('unsync', () => { try { localStorage.setItem(SYNC_KEY, '{}'); } catch (e) {} SYNC = null; setSyncMsg('off', 'このブラウザでの進度リンクを止めました（サーバーの記録は残っています）。'); draw(); });
-		act('create', () => { const api = (sc.querySelector('[data-sync-api]').value || '').trim().replace(/\/+$/, ''); if (!/^https?:\/\//.test(api)) { setSyncMsg('error', '進度サーバーの URL を http:// か https:// から入れてください。'); return; } let c = {}; try { c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); } catch (e) {} c.id = c.id || newId(); c.api = api; try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} SYNC = { id: c.id, api }; draw(); pullSync(); });
+		act('unsync', () => { try { localStorage.setItem(SYNC_KEY, '{}'); } catch (e) {} SYNC = null; ST = loadLocal(); restorePos(); paintWindows(); renderQ(true); setSyncMsg('off', 'このブラウザでの進度リンクを止めました（サーバーの記録は残っています）。'); draw(); });
+		act('create', () => { const api = (sc.querySelector('[data-sync-api]').value || '').trim().replace(/\/+$/, ''); if (!/^https?:\/\//.test(api)) { setSyncMsg('error', '進度サーバーの URL を http:// か https:// から入れてください。'); return; } let c = {}; try { c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); } catch (e) {} c.id = c.id || newId(); c.api = api; try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} SYNC = { id: c.id, api }; saveLocal(); draw(); pullSync(); });  // 今の記録を、このリンクの記録の始まりにする
 	};
 	draw(); document.body.appendChild(sc);
 	sc.addEventListener('click', (e) => { if (e.target === sc) sc.remove(); });
