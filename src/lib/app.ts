@@ -8,6 +8,7 @@
  */
 import { CATEGORIES } from '../data/categories';
 import * as S from './store';
+import * as Y from './sync';
 import type { AppData, Exam, Floor, QItem, Room } from './types';
 
 /* ---------- 小さな道具 ---------- */
@@ -179,6 +180,10 @@ export class App {
 	private mood: 'smile' | 'happy' | 'think' = 'smile';
 	private stage: HTMLElement;
 	private panel: HTMLElement;
+	private sync: Y.SyncConfig | null = null;
+	private syncState: Y.SyncState = 'off';
+	private syncMsg = '';
+	private pushTimer: number | undefined;
 
 	constructor(
 		private root: HTMLElement,
@@ -190,6 +195,58 @@ export class App {
 		document.addEventListener('keydown', (e) => this.onKey(e));
 		window.addEventListener('hashchange', () => this.route());
 		this.route();
+		this.startSync();
+	}
+
+	/* ----- 進度リンク（自分の進度サーバーと同期） ----- */
+
+	private startSync() {
+		this.sync = Y.syncConfig();
+		S.setOnSave((s) => this.schedulePush(s));
+		if (this.sync) this.pullNow();
+	}
+
+	private async pullNow() {
+		if (!this.sync) return;
+		this.setSync('syncing', '読み込み中…');
+		try {
+			const remote = await Y.pull(this.sync);
+			if (remote?.main) {
+				this.store = Y.mergeStore(this.store, remote.main);
+				S.setOnSave(null);
+				S.save(this.store);
+				S.setOnSave((s) => this.schedulePush(s));
+			}
+			await Y.push(this.sync, { main: this.store });
+			this.setSync('ok', `同期しました（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）`);
+			this.render();
+		} catch (e) {
+			this.setSync('error', `進度サーバーにつながりません（${(e as Error).message}）。このブラウザには保存しています。`);
+		}
+	}
+
+	private schedulePush(s: S.Store) {
+		if (!this.sync) return;
+		clearTimeout(this.pushTimer);
+		this.pushTimer = window.setTimeout(async () => {
+			if (!this.sync) return;
+			try {
+				await Y.push(this.sync, { main: s });
+				this.setSync('ok', `保存しました（${new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}）`);
+			} catch (e) {
+				this.setSync('error', `進度サーバーにつながりません（${(e as Error).message}）。このブラウザには保存しています。`);
+			}
+		}, 1200);
+	}
+
+	private setSync(st: Y.SyncState, msg: string) {
+		this.syncState = st;
+		this.syncMsg = msg;
+		const el = this.root.querySelector('[data-sync-status]');
+		if (el) {
+			el.textContent = msg;
+			el.className = `sync-status ${st}`;
+		}
 	}
 
 	/* ----- データの取り出し ----- */
@@ -314,6 +371,33 @@ export class App {
 				return this.finishExam();
 			case 'export':
 				return this.exportRecord();
+			case 'sync-create': {
+				const api = ((this.root.querySelector('[data-sync-api]') as HTMLInputElement)?.value || '').trim().replace(/\/+$/, '');
+				if (!/^https?:\/\//.test(api)) {
+					this.setSync('error', '進度サーバーの URL を http:// か https:// から入れてください。');
+					return;
+				}
+				Y.setConfig({ id: Y.savedConfig().id || Y.newId(), api });
+				this.sync = Y.syncConfig();
+				this.render();
+				return this.pullNow();
+			}
+			case 'sync-copy': {
+				const t = this.sync ? Y.shareLink(this.sync) : '';
+				navigator.clipboard?.writeText(t).then(() => this.setSync(this.syncState, 'リンクをコピーしました。ほかの端末で開くと同じ記録になります。'), () => {});
+				(this.root.querySelector('[data-sync-link]') as HTMLInputElement)?.select();
+				return;
+			}
+			case 'sync-now':
+				return this.pullNow();
+			case 'sync-off':
+				if (confirm('このブラウザでの進度リンクを止めます（サーバーの記録は消えません）。よろしいですか？')) {
+					Y.clearConfig();
+					this.sync = null;
+					this.syncState = 'off';
+					this.render();
+				}
+				return;
 			case 'import':
 				return (this.root.querySelector('[data-import-file]') as HTMLInputElement)?.click();
 			case 'clear':
@@ -899,6 +983,27 @@ export class App {
 			<section class="card"><h2 class="h2">問題ごとの結果（押すと解説）</h2><div class="cells">${cells}</div></section>`;
 	}
 
+	private renderSyncCard() {
+		if (!this.sync) {
+			const saved = Y.savedConfig();
+			return `<section class="card">
+				<h2 class="h2">進度リンク</h2>
+				<p class="muted small">自分のパソコンで進度サーバー（<code>node server/progress-server.mjs</code>）を動かし、その URL を入れると、専用のリンクができます。同じリンクで開けば、どの端末でも続きから解けます。</p>
+				<div class="sync-form"><input type="url" class="sync-input" data-sync-api value="${esc(saved.api || 'http://localhost:8787')}" aria-label="進度サーバーの URL"><button type="button" class="btn btn-go" data-act="sync-create">進度リンクを作る</button></div>
+				<p class="sync-status ${this.syncState}" data-sync-status>${esc(this.syncMsg)}</p>
+			</section>`;
+		}
+		const link = Y.shareLink(this.sync);
+		return `<section class="card">
+				<h2 class="h2">進度リンク</h2>
+				<p class="muted small">このリンクで開くと、どの端末でも同じ記録になります。リンクを知っている人は記録を見たり変えたりできるので、ほかの人には教えないでください。</p>
+				<div class="sync-form"><input type="text" class="sync-input" readonly data-sync-link value="${esc(link)}" aria-label="進度リンク"><button type="button" class="btn btn-go" data-act="sync-copy">コピー</button></div>
+				<p class="muted small">進度サーバー：${esc(this.sync.api)} ・ ID：${esc(this.sync.id)}</p>
+				<p class="sync-status ${this.syncState}" data-sync-status>${esc(this.syncMsg || '…')}</p>
+				<div class="btn-row"><button type="button" class="btn btn-sub" data-act="sync-now">今すぐ同期</button><button type="button" class="btn btn-sub" data-act="sync-off">このブラウザで止める</button></div>
+			</section>`;
+	}
+
 	private renderRecord() {
 		const s = this.store;
 		const rows = this.data.floors
@@ -923,9 +1028,10 @@ export class App {
 				<table class="table"><tr><th>階</th><th>解いた問題</th><th>正答率</th><th></th></tr>${rows}</table>
 			</section>
 			<section class="card"><h2 class="h2">総会（模試）の記録</h2>${exams}</section>
+			${this.renderSyncCard()}
 			<section class="card">
 				<h2 class="h2">記録の保存</h2>
-				<p class="muted small">記録はこのブラウザの中だけに保存されています。別の端末に移すときは書き出して、移した先で読み込んでください。</p>
+				<p class="muted small">記録はこのブラウザの中にも保存されています。進度リンクを使わないときは、書き出して移した先で読み込むと別の端末に移せます。</p>
 				<div class="btn-row">
 					<button type="button" class="btn btn-sub" data-act="export">記録を書き出す</button>
 					<button type="button" class="btn btn-sub" data-act="import">記録を読み込む</button>

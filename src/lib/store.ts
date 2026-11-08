@@ -1,5 +1,5 @@
 /**
- * 学習記録（ブラウザの localStorage に保存。サーバーには送らない）
+ * 学習記録（ブラウザの localStorage に保存。「進度リンク」を使うときは sync.ts が自分の進度サーバーにも送る）
  *
  * - 問題ごとの成績と「メモ帳（復習）」の予定
  * - 部屋ごとのクリア状況
@@ -66,7 +66,14 @@ export function load(): Store {
 	}
 }
 
+let onSave: ((s: Store) => void) | null = null;
+/** 保存のたびに呼ぶ（進度サーバーへの送信用） */
+export function setOnSave(f: ((s: Store) => void) | null) {
+	onSave = f;
+}
+
 export function save(s: Store) {
+	onSave?.(s);
 	try {
 		localStorage.setItem(KEY, JSON.stringify(s));
 	} catch {

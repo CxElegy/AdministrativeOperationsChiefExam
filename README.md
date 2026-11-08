@@ -53,3 +53,25 @@ http://localhost:4321/AdministrativeOperationsChiefExam/ を開きます。
 - スマホでは「楼の画面」と「相談票＋William の画面」の 2 画面に分かれます。
 - William は Live2D の公式サンプル Tororo のテクスチャだけを William の写真に合わせて塗り直したものです。形は元のままです。
 - クレジット：本コンテンツは Live2D Inc. が権利を有するサンプルデータ（Tororo）を使用しています（Live2D 無償提供マテリアル使用許諾契約）。
+
+## 進度リンク（自分のパソコンに進度を保存する）
+
+GitHub Pages は記録を保存できないので、自分のパソコンで小さな「進度サーバー」を動かし、そこへ保存します。専用のリンク（`?u=ID`）で開けば、スマホでもパソコンでも同じ続きから解けます。
+
+1. 進度サーバーを動かす（Node.js 18 以上。外部ライブラリは不要）
+
+   ```bash
+   npm run build   # 同じ Wi-Fi のスマホからサイトごと開きたいとき
+   npm run progress-server
+   ```
+
+   記録は `server/data/<ID>.json` に保存されます（Git には入りません）。ポートは `PORT=9000 npm run progress-server` のように変えられます。
+
+2. サイトの「記録」画面の「進度リンク」に進度サーバーの URL を入れて「進度リンクを作る」を押すと、専用のリンクができます。William の部屋（`/william/`）も同じリンクで進度が残ります。
+
+3. どこから開くか
+   - **同じパソコン**：GitHub Pages のサイトに `api=http://localhost:8787` 付きのリンクで開けば、そのまま保存されます。
+   - **同じ Wi-Fi のスマホ**：`http://<パソコンのIP>:8787/AdministrativeOperationsChiefExam/?u=<ID>` を開く（進度サーバーがサイトも配信します）。
+   - **外出先のスマホから GitHub Pages で使う**：進度サーバーを https で外から見えるようにする必要があります（例：`cloudflared tunnel --url http://localhost:8787`）。出てきた https の URL を `api=` に入れます。
+
+リンクの ID を知っている人は記録を見たり書き換えたりできるので、リンクはほかの人に教えないでください。パソコンの電源が切れている間はサーバーにつながりませんが、ブラウザの中には保存され、次につながったときに合わせます。

@@ -566,6 +566,30 @@ function star4(c, x, y, r, rot) { c.save(); c.translate(x, y); c.rotate(rot); c.
 
 // ---------------- 相談票 ----------------
 let qi = 0, answered = false, today = 0, cleared = false;
+// ---------------- 進度リンク（メインのサイトと同じ設定・同じ進度サーバー） ----------------
+const SYNC = (() => {
+	let c = {}; try { c = JSON.parse(localStorage.getItem('kangyo-sync-v1') || '{}'); } catch (e) {}
+	const p = new URLSearchParams(location.search), u = p.get('u'), api = p.get('api');
+	if (u && /^[A-Za-z0-9_-]{12,64}$/.test(u)) c.id = u; if (api) c.api = api.replace(/\/+$/, '');
+	if (u || api) { try { localStorage.setItem('kangyo-sync-v1', JSON.stringify(c)); } catch (e) {} }
+	const same = /^https?:$/.test(location.protocol) && !location.hostname.endsWith('github.io') && !location.hostname.endsWith('claude.ai') && location.port !== '4321' ? location.origin : '';
+	const base = c.api || same; return c.id && base ? { id: c.id, api: base } : null;
+})();
+function roomState() { return { qi, litCount: Math.min(litCount, 4), today, streak: S.streak, cleared, t: Date.now() }; }
+let syncT = 0;
+function pushRoom() { if (!SYNC) return; clearTimeout(syncT); syncT = setTimeout(() => fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { william: roomState() } }) }).catch(() => {}), 800); }
+async function pullRoom() {
+	if (!SYNC) return;
+	try {
+		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' }); if (!r.ok) return;
+		const w = (await r.json()).data?.william; if (!w) return;
+		qi = Math.min(w.qi || 0, QS.length - 1); today = w.today || 0; S.streak = w.streak || 0; cleared = !!w.cleared;
+		const n = cleared ? 4 : Math.min(w.litCount || 0, 4);
+		for (let k = 0; k < n; k++) WINS[1][ORDER[k]].classList.add('on'); litCount = n;
+		if (cleared) { const p = document.querySelector('.plate.cur .tag'); if (p && !p.querySelector('.star')) p.insertAdjacentHTML('beforeend', '<span class="star">★</span>'); }
+		bump('pT', `今日 ${today} / 10 問`); bump('pS', `<span class="heart">♥</span>連続 ${S.streak}`); renderQ();
+	} catch (e) {}
+}
 const CORNERS = ['tl', 'tr', 'bl', 'br'].map((k) => `<span class="corner c-${k}"><svg><use href="#corner"/></svg></span>`).join('');
 const bump = (id, html) => { const e = $(id); e.innerHTML = html; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); };
 function renderQ() {
@@ -593,7 +617,8 @@ function answer(i) {
 	});
 	const last = qi + 1 >= QS.length;
 	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${ok ? '管理人さんの解説を読んでおこう' : `正解は ${q.answer}。どこが違うか、解説を確認しよう`}</span><button class="cta" type="button" id="next"><i></i>${last ? '部屋のカギを受け取る' : '次の相談へ'}<i></i></button>`;
-	$('next').addEventListener('click', () => { se('tap'); if (last) { showReward(); } else { qi++; renderQ(); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); } });
+	pushRoom();
+	$('next').addEventListener('click', () => { se('tap'); setTimeout(pushRoom, 50); if (last) { showReward(); } else { qi++; renderQ(); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); } });
 	today++; bump('pT', `今日 ${today} / 10 問`);
 	$('trackFill').style.height = (Math.min(1, (qi + 1) / QS.length) * 12.5) + '%';
 	requestAnimationFrame(layout);
@@ -614,7 +639,7 @@ function answer(i) {
 	}
 }
 function showReward() {
-	lightFloor();
+	lightFloor(); cleared = true; pushRoom();
 	se('reward'); cleared = true;
 	const sc = document.createElement('div'); sc.className = 'scrim';
 	sc.innerHTML = `<div class="panel reward" role="dialog" aria-label="101号室クリア">${CORNERS}<div class="pillar"></div><h2>101号室 クリア</h2><div class="rule"><i></i></div><div class="item"><svg><use href="#key"/></svg></div><div class="nm">101号室のカギ</div><p>住人さんの相談に全部答えました。部屋の明かりがつきます。</p><div class="row"><button class="cta" type="button"><i></i>受け取る<i></i></button></div></div>`;
@@ -977,6 +1002,7 @@ function drawMouth(c, F, t) {
 	c.restore();
 }
 renderQ();
+pullRoom();
 layout();
 requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
