@@ -17,7 +17,8 @@
 	--latin: "Cinzel", "Times New Roman", serif;
 	color-scheme: dark;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }  /* スクロールバーは出さない（スクロールはできる） */
 html, body { height: 100%; overflow: hidden; }
 /* スマホのブラウザは下のバーの裏まで 100% に含めることがあるので、実際に見えている高さ（dvh）に合わせる */
 @supports (height: 100dvh) { html, body { height: 100dvh; } }
@@ -124,7 +125,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .status::before { content: ""; width: 7px; height: 7px; transform: rotate(45deg); background: var(--gold-hi); box-shadow: 0 0 8px var(--gold-hi); }
 
 /* 相談票（金の二重枠） */
-.card { position: absolute; z-index: 4; left: 24px; top: 64px; right: calc(20% + 14px); bottom: 24px; overflow: auto; background: linear-gradient(var(--paper), #f3ead6); border-radius: 14px; border: 2px solid var(--gold); padding: 24px 24px 20px; box-shadow: 0 0 0 4px var(--paper), 0 0 0 5px var(--gold-lo), 0 18px 44px rgba(40, 20, 40, .35), inset 0 0 0 1px rgba(255, 255, 255, .6); display: flex; flex-direction: column; gap: 12px; color: var(--ink); scrollbar-width: thin; }
+.card { position: absolute; z-index: 4; left: 24px; top: 64px; right: calc(20% + 14px); bottom: 24px; overflow: auto; background: linear-gradient(var(--paper), #f3ead6); border-radius: 14px; border: 2px solid var(--gold); padding: 24px 24px 20px; box-shadow: 0 0 0 4px var(--paper), 0 0 0 5px var(--gold-lo), 0 18px 44px rgba(40, 20, 40, .35), inset 0 0 0 1px rgba(255, 255, 255, .6); display: flex; flex-direction: column; gap: 12px; color: var(--ink); }
 .card.in { animation: panelIn .42s var(--ease-back) both; }
 .card.shake { animation: shake .32s; }
 @keyframes panelIn { from { transform: scale(.88) translateY(14px); opacity: 0; } }
