@@ -134,6 +134,11 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .stamp.ok { color: var(--ink); }
 .stamp.ok::before { content: ""; position: absolute; inset: -14px -18px; border-radius: 50%; border: 4px solid var(--r5); box-shadow: 0 0 16px rgba(242, 178, 74, .8), inset 0 0 12px rgba(242, 178, 74, .5); z-index: -1; }
 .stamp.ng { color: var(--ng); font-size: 34px; }
+/* スタンプは問題文に重ねず、下の「次の相談へ」の帯の左に押す */
+.bar .stamp { position: relative; left: auto; top: auto; flex: none; font-size: 30px; -webkit-text-stroke: 7px #fff; margin-left: 6px; }
+.bar .stamp.ng { font-size: 26px; }
+.bar .stamp.ok::before { inset: -10px -12px; border-width: 3px; }
+.bar .hint { flex: 1; min-width: 0; }
 @keyframes stampIn { from { transform: scale(2.2) rotate(-16deg); opacity: 0; } 60% { transform: scale(.9) rotate(-8deg); opacity: 1; } to { transform: scale(1) rotate(-8deg); } }
 
 /* William の吹き出し */
@@ -585,9 +590,8 @@ function answer(i) {
 		if (n === q.answer) b.classList.add('ok'); else if (n === i) b.classList.add('ng'); else b.classList.add('dim');
 		if (n === q.answer || n === i) b.insertAdjacentHTML('beforeend', `<span class="note">${q.notes[n - 1]}</span>`);
 	});
-	card.insertAdjacentHTML('beforeend', `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div>`);
 	const last = qi + 1 >= QS.length;
-	$('bar').innerHTML = `<span class="hint">${ok ? '管理人さんの解説を読んでおこう' : `正解は ${q.answer}。どこが違うか、解説を確認しよう`}</span><button class="cta" type="button" id="next"><i></i>${last ? '部屋のカギを受け取る' : '次の相談へ'}<i></i></button>`;
+	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${ok ? '管理人さんの解説を読んでおこう' : `正解は ${q.answer}。どこが違うか、解説を確認しよう`}</span><button class="cta" type="button" id="next"><i></i>${last ? '部屋のカギを受け取る' : '次の相談へ'}<i></i></button>`;
 	$('next').addEventListener('click', () => { se('tap'); if (last) { showReward(); } else { qi++; renderQ(); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); } });
 	today++; bump('pT', `今日 ${today} / 10 問`);
 	$('trackFill').style.height = (Math.min(1, (qi + 1) / QS.length) * 12.5) + '%';
