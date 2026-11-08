@@ -416,16 +416,16 @@ const pct = (v, t) => (v / t * 100) + '%';
 // 部屋の少ない階は、余った窓を「ほかの住人の部屋」にする（最初から明かりがついている。明るさや色は窓ごとに少しずつ違う。押せない）
 const rand = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 function layoutFloor(fi, n) {
-	const rnd = rand(97 + fi * 131), pos = [0, 1, 2, 3, 4, 5, 6, 7], res = [];
-	while (res.length < WX.length - n) { const p = pos.splice(Math.floor(rnd() * pos.length), 1)[0]; res.push(p); }
-	return { rooms: [0, 1, 2, 3, 4, 5, 6, 7].filter((p) => !res.includes(p)), res, rnd };
+	// 部屋は左から詰めて並べ（x01, x02 … と番号が続く）、余った右側の窓が住人の部屋
+	const rnd = rand(97 + fi * 131), all = WX.map((_, i) => i);
+	return { rooms: all.slice(0, n), res: all.slice(n), rnd };
 }
 const FNAME = { 1: '適正化法', 2: '会計', 3: '委託契約', 4: '民法', 5: '区分所有', 6: '管理規約', 7: '建築設備', 8: 'その他' };
 // 階の問題は部屋の順に並べる。k（階の中の通し番号）→ 部屋、部屋 → 最初の k
 DATA.floors.forEach((f) => { f.qids = f.rooms.flatMap((r) => r.qids); f.ridx = []; f.rstart = []; let k = 0; f.rooms.forEach((r, i) => { f.rstart[i] = k; r.qids.forEach(() => { f.ridx[k++] = i; }); }); });
 const roomOf = (k, fi = cur.f) => DATA.floors[fi].ridx[k];
 const rstart = (fi, r) => DATA.floors[fi].rstart[r];
-// 部屋番号は窓の列で決まる（x01 はいつも左端の窓）。住人の窓の番号は飛ばす。上下の階で同じ番号の部屋が縦にそろう
+// 部屋番号は窓の列で決まる（x01 はいつも左端の窓）。上下の階で同じ番号の部屋が縦にそろう
 const roomNo = (fi, r) => DATA.floors[fi].floor * 100 + DATA.floors[fi].pos[r] + 1;
 const WIN_STATE = (id) => { const r = ST.q[id]; return !r ? 'none' : r.last ? 'ok' : 'ng'; };
 function roomStats(fi, r) { const ids = DATA.floors[fi].rooms[r].qids; const st = ids.map(WIN_STATE); return { ids, st, n: ids.length, ok: st.filter((s) => s === 'ok').length, ng: st.filter((s) => s === 'ng').length, done: st.filter((s) => s !== 'none').length }; }
