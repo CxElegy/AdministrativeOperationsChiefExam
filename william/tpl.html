@@ -318,9 +318,15 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.pill { font-size: 11px; padding: 2px 8px; white-space: nowrap; }
 	.back { display: inline-flex; border: 0; cursor: pointer; font: inherit; }
 	.card { left: 10px; right: 10px; top: calc(var(--treeH, 20%) + 4px); bottom: 12px; padding: 14px 14px 10px; gap: 8px; }  /* スマホ：上が William の場所（キャットタワー）、下が題卡 */
-	.stem { font-size: 14px; line-height: 1.65; }
-	.choices button { font-size: 12.5px; padding: 6px 8px; line-height: 1.5; grid-template-columns: 26px 1fr; }
-	.head .t b { font-size: 15px; } .door { width: 46px; height: 32px; font-size: 15px; }
+	/* スマホ：猫は小さく、文字は大きく読みやすく */
+	.stem { font-size: 16.5px; line-height: 1.75; }
+	.choices button { font-size: 15px; padding: 8px 10px 8px 8px; line-height: 1.6; grid-template-columns: 28px 1fr; }
+	.note, .xp, .stmts li .note { font-size: 14.5px; line-height: 1.7; }
+	.stmts li { font-size: 15px; }
+	.xp p { font-size: 13.5px; }
+	.head .t b { font-size: 16px; } .head .t span { font-size: 12.5px; }
+	.rt { min-width: 34px; height: 32px; font-size: 14px; }
+	.bar .hint { font-size: 13px; } .door { width: 46px; height: 32px; font-size: 15px; }
 	.bar .hint { display: none; }
 	.bar { bottom: 0; margin: 0 -14px -10px; padding: 8px 14px 10px; }
 	.status { max-width: 46%; bottom: auto; left: 10px; right: auto; top: calc(var(--treeH, 20%) - 30px); }
@@ -382,6 +388,12 @@ const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__
 // スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
 const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
 const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
+// 「PC版サイト」表示のスマホは画面を 980px 幅とみなして縮めて表示するので、本当の画面の幅に合わせて全体を拡大する（文字が小さくならないように）
+if (PHONE) {
+	const dw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+	const z = innerWidth / dw;
+	if (z > 1.3) { document.documentElement.style.zoom = z.toFixed(3); document.documentElement.style.height = (100 / z) + 'vh'; }
+}
 if (PHONE && !matchMedia('(max-width: 760px)').matches) {
 	// 幅で切り替えているスマホ用の CSS（@media (max-width: 760px)）を、そのまま常に効くように足す
 	const css = [];
@@ -617,14 +629,14 @@ const M = (x, y) => ({ x: OX + PX + x * SC, y: OY + PY + y * SC });
 function layout() {
 	DPR = Math.min(2, devicePixelRatio || 1);
 	stacked = isMobile();
-	const r = room.getBoundingClientRect(); W = r.width; H = r.height; if (!W || !H) return;
+	W = room.clientWidth; H = room.clientHeight; if (!W || !H) return;  // clientWidth：ページ全体を拡大（zoom）していても正しい大きさ
 	if (W2D.app) W2D.app.resize();  // 隠れていた部屋を開いたとき、Live2D の描画サイズを合わせ直す
 	for (const c of [bg, fg, catLayer]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); }
 	SCN = stacked ? SCENES.wide : SCENES.tall; IW = SCN.iw; IH = SCN.ih; IMG_PL = SCN.pl; IMG_HOLE = SCN.hole; IMG_TOY = SCN.toy;
 	if (stacked) {
 		// 画面の上の帯 = William の場所。上の2つの台（top / mid）だけを使い、猫の頭から mid の台までが帯に入る大きさ
 		// スマホ：上の 2 割が William の場所、下の 8 割が題卡。絵は帯いっぱいに敷き、一番上の台を帯の下のほうに置く
-		const th = Math.round(Math.max(150, H * 0.2)); room.style.setProperty('--treeH', th + 'px'); sceneTop = 0;
+		const th = Math.round(Math.max(112, H * 0.15));  // スマホ：上の William の帯は 15%（猫は小さめ、題卡を広く） room.style.setProperty('--treeH', th + 'px'); sceneTop = 0;
 		SC = Math.max(W / 468, 0.6); OX = W / 2 - SCN.fx * SC; OY = th - 12 - 252 * SC; stripX = 0;
 	} else {
 		stripX = Math.round(W * 0.8); const sw = W - stripX;
