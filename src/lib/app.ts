@@ -401,10 +401,14 @@ export class App {
 			case 'import':
 				return (this.root.querySelector('[data-import-file]') as HTMLInputElement)?.click();
 			case 'clear':
-				if (confirm('学習記録をすべて消します。よろしいですか？')) {
-					S.clear();
-					this.store = S.load();
+				if (confirm(this.sync ? '進度をリセットして最初からやり直します。進度リンクで開いているほかの端末の記録もリセットされます。よろしいですか？' : '進度をリセットして最初からやり直します。よろしいですか？')) {
+					this.store = S.resetProgress();
+					this.lesson = null;
+					this.exam = null;
+					this.mood = 'smile';
+					location.hash = '#/record';
 					this.render();
+					this.setSync(this.syncState, '進度をリセットしました。');
 				}
 				return;
 		}
@@ -1036,7 +1040,7 @@ export class App {
 					<button type="button" class="btn btn-sub" data-act="export">記録を書き出す</button>
 					<button type="button" class="btn btn-sub" data-act="import">記録を読み込む</button>
 					<input type="file" accept="application/json" data-import-file hidden>
-					<button type="button" class="btn btn-danger" data-act="clear">記録をすべて消す</button>
+					<button type="button" class="btn btn-danger" data-act="clear">進度をリセット</button>
 				</div>
 			</section>`;
 	}

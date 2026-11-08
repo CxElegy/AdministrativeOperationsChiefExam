@@ -7,7 +7,7 @@
  * - 進度サーバーからこのサイトを開いた場合（同じ Wi-Fi のスマホなど）は api を書かなくてよい
  * - サーバーに届かないときはこれまで通りブラウザの中だけに保存し、届いたときに合わせる
  */
-import type { Store } from './store';
+import { dayKey, type Store } from './store';
 
 const CFG_KEY = 'kangyo-sync-v1';
 export interface SyncConfig {
@@ -86,7 +86,21 @@ export async function push(cfg: SyncConfig, data: { main?: Store; william?: unkn
 
 /** 2つの記録を合わせる（どちらの端末で解いた分も残す） */
 export function mergeStore(a: Store, b: Store): Store {
+	// どちらかでリセットされていたら、その日時より前の記録は捨てる
+	const reset = Math.max(a.reset ?? 0, b.reset ?? 0);
+	if (reset) {
+		const cut = (s: Store): Store => ({
+			v: 1,
+			q: Object.fromEntries(Object.entries(s.q ?? {}).filter(([, r]) => r.t >= reset)),
+			rooms: Object.fromEntries(Object.entries(s.rooms ?? {}).filter(([, r]) => r.t >= reset)),
+			days: Object.fromEntries(Object.entries(s.days ?? {}).filter(([d]) => d > dayKey(reset))),
+			exams: (s.exams ?? []).filter((e) => e.t >= reset),
+		});
+		if ((a.reset ?? 0) < reset) a = cut(a);
+		if ((b.reset ?? 0) < reset) b = cut(b);
+	}
 	const out: Store = { v: 1, q: { ...a.q }, rooms: { ...a.rooms }, days: { ...a.days }, exams: [] };
+	if (reset) out.reset = reset;
 	for (const [id, r] of Object.entries(b.q ?? {})) {
 		const x = out.q[id];
 		out.q[id] = !x || r.t > x.t ? { ...r, a: Math.max(r.a, x?.a ?? 0), c: Math.max(r.c, x?.c ?? 0) } : { ...x, a: Math.max(r.a, x.a), c: Math.max(r.c, x.c) };

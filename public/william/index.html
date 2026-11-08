@@ -227,7 +227,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.brand { height: 56px; }
 	.bldgwrap { padding: 0 16px 16px; }
 	.hud { top: 10px; left: 12px; right: 12px; gap: 5px; flex-wrap: nowrap; }
-	.util { gap: 5px; } .util button { width: 30px; height: 30px; font-size: 13px; }
+	.util { gap: 4px; } .util button { width: 28px; height: 28px; font-size: 12px; }
 	.pill { font-size: 11px; padding: 2px 8px; white-space: nowrap; }
 	.back { display: inline-flex; border: 0; cursor: pointer; font: inherit; }
 	.card { left: 10px; right: 10px; top: calc(var(--treeH, 20%) + 4px); bottom: 12px; padding: 14px 14px 10px; gap: 8px; }  /* スマホ：上が William の場所（キャットタワー）、下が題卡 */
@@ -270,6 +270,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 			<span class="pill" id="pT">今日 0 / 10 問</span>
 			<div class="util">
 				<button type="button" id="seBtn" aria-pressed="true" aria-label="効果音" title="効果音">♪</button>
+				<button type="button" id="resetBtn" aria-label="進度をリセット" title="進度をリセット">↺</button>
 				<button type="button" id="helpBtn" aria-label="あそびかた" title="あそびかた">?</button>
 			</div>
 		</div>
@@ -648,6 +649,25 @@ function showReward() {
 	sc.querySelector('.cta').addEventListener('click', () => { se('tap'); sc.remove(); qi = 0; S.streak = 0; bump('pS', `<span class="heart">♥</span>連続 0`); renderQ(); jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('いま、ちくわ中。', { font: '"Kiwi Maru"', size: 17, dx: -0.55, dy: -1.02, rot: 0, dur: 3.4 }); say('ごほうびにゃ。次の部屋へ', 2.4); }); });
 }
 $('backBtn').addEventListener('click', () => { se('tap'); openTower(); });
+// 進度をリセット（確認の画面を出してから）
+function resetRoom() {
+	qi = 0; today = 0; S.streak = 0; cleared = false; litCount = 0; pendingLights.length = 0;
+	Object.values(WINS).flat().forEach((w) => w.classList.remove('on', 'ignite', 'fizzle'));
+	document.querySelectorAll('.plate .star').forEach((e) => e.remove());
+	bump('pT', `今日 0 / 10 問`); bump('pS', `<span class="heart">♥</span>連続 0`);
+	renderQ(); pushRoom();
+	say('最初からやり直しにゃ', 2);
+}
+$('resetBtn').addEventListener('click', () => {
+	se('tap');
+	const sc = document.createElement('div'); sc.className = 'scrim';
+	sc.innerHTML = `<div class="panel" role="dialog" aria-label="進度をリセット">${CORNERS}<h2>進度をリセット</h2><div class="rule"><i></i></div><p style="margin:0;font-size:14px">相談の進み具合と、ついた窓の明かりを消して最初からやり直します。${SYNC ? '進度リンクで開いているほかの端末も同じ状態になります。' : ''}</p><div class="row" style="gap:10px;flex-wrap:wrap"><button class="cta" type="button" data-no><i></i>やめる<i></i></button><button class="cta" type="button" data-yes style="background:linear-gradient(#ffd9cf,#e98f78)"><i></i>リセットする<i></i></button></div></div>`;
+	document.body.appendChild(sc);
+	const close = () => sc.remove();
+	sc.querySelector('[data-no]').addEventListener('click', () => { se('tap'); close(); });
+	sc.querySelector('[data-yes]').addEventListener('click', () => { se('tap'); close(); resetRoom(); });
+	sc.addEventListener('click', (e) => { if (e.target === sc) close(); });
+});
 $('helpBtn').addEventListener('click', () => {
 	se('tap');
 	const sc = document.createElement('div'); sc.className = 'scrim';

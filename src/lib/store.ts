@@ -39,6 +39,8 @@ export interface ExamRec {
 
 export interface Store {
 	v: 1;
+	/** 進度をリセットした日時（これより前の記録は、ほかの端末から同期されてきても捨てる） */
+	reset?: number;
 	q: Record<string, QRec>;
 	rooms: Record<string, RoomRec>;
 	days: Record<string, number>;
@@ -150,6 +152,13 @@ export function importJson(text: string): Store {
 	const data = JSON.parse(text);
 	if (!data || typeof data !== 'object' || !data.q) throw new Error('invalid');
 	return { ...empty(), ...data };
+}
+
+/** 進度をリセット：空の記録にリセット日時を付けて保存する（進度リンクのサーバーにも送られる） */
+export function resetProgress(): Store {
+	const s: Store = { ...empty(), reset: Date.now() };
+	save(s);
+	return s;
 }
 
 export function clear() {
