@@ -19,6 +19,9 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; }
+/* スマホのブラウザは下のバーの裏まで 100% に含めることがあるので、実際に見えている高さ（dvh）に合わせる */
+@supports (height: 100dvh) { html, body { height: 100dvh; } }
+html.fitvh, html.fitvh body { height: var(--appH); }  /* 下にアドレスバーがあるブラウザ（Edge など）でも、見えている高さに合わせる（JS で測る） */
 body { background: var(--night-2); color: var(--ink); font-family: var(--maru); line-height: 1.7; overflow-x: hidden; }
 button { font: inherit; }
 button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
@@ -41,7 +44,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	background-image: radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent), radial-gradient(1px 1px at 28% 42%, #e8e2ff 50%, transparent), radial-gradient(1.4px 1.4px at 46% 12%, #fff 50%, transparent), radial-gradient(1px 1px at 63% 33%, #fff6d8 50%, transparent), radial-gradient(1.2px 1.2px at 81% 22%, #fff 50%, transparent), radial-gradient(1px 1px at 92% 48%, #e8e2ff 50%, transparent), radial-gradient(1px 1px at 7% 58%, #fff 50%, transparent), radial-gradient(1.3px 1.3px at 37% 66%, #fff6d8 50%, transparent), radial-gradient(1px 1px at 72% 61%, #fff 50%, transparent), radial-gradient(1px 1px at 55% 80%, #e8e2ff 50%, transparent); animation: twinkle 5s ease-in-out infinite alternate; }
 @keyframes twinkle { to { opacity: .45; } }
 .tower > * { position: relative; }
-.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0; background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
+.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 env(safe-area-inset-bottom, 0px); background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
 /* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
 .bldg { --k: .5; position: relative; flex: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 7%); mask-image: linear-gradient(transparent, #000 7%); }
 .ftag { position: absolute; z-index: 3; left: .6%; width: 8.4%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
@@ -403,11 +406,14 @@ const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__
 // スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
 const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
 const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
+// ブラウザのバーを除いた、本当に見えている高さにページを合わせる（拡大表示のときは下で別に合わせる）
+function fitViewport() { if (document.documentElement.style.zoom) return; const h = Math.round(window.visualViewport ? visualViewport.height : innerHeight); document.documentElement.style.setProperty('--appH', h + 'px'); document.documentElement.classList.add('fitvh'); }
+fitViewport(); addEventListener('resize', fitViewport); if (window.visualViewport) visualViewport.addEventListener('resize', fitViewport);
 // 「PC版サイト」表示のスマホは画面を 980px 幅とみなして縮めて表示するので、本当の画面の幅に合わせて全体を拡大する（文字が小さくならないように）
 if (PHONE) {
 	const dw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
 	const z = innerWidth / dw;
-	if (z > 1.3) { document.documentElement.style.zoom = z.toFixed(3); document.documentElement.style.height = (100 / z) + 'vh'; }
+	if (z > 1.3) { document.documentElement.style.zoom = z.toFixed(3); document.documentElement.style.height = (100 / z) + (CSS.supports('height', '1dvh') ? 'dvh' : 'vh'); }
 }
 if (PHONE && !matchMedia('(max-width: 760px)').matches) {
 	// 幅で切り替えているスマホ用の CSS（@media (max-width: 760px)）を、そのまま常に効くように足す
