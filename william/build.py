@@ -60,6 +60,8 @@ def main():
     data = json.dumps(build_data(), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     s = s.replace('__DATA__', data)
     s = s.replace('__ROOM__', json.dumps(data_uri('room.webp'))).replace('__TALL__', json.dumps(data_uri('tall.webp')))
+    maji = 'maji.webp' if os.path.exists(os.path.join(W, 'assets', 'maji.webp')) else 'cutin.webp'  # 全問正解のアイコン（無ければカットインの絵）
+    s = s.replace('__MAJI__', json.dumps(data_uri(maji)))
     s = s.replace('__BLDG__', data_uri('bldg.webp')).replace('__CUTIN__', json.dumps(data_uri('cutin.webp'))).replace('__POSES__', '{}')
     i = s.index('</style>') + len('</style>')
     head = ('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'

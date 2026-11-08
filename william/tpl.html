@@ -196,7 +196,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .cutin .band { position: absolute; left: -10%; right: -10%; top: 30%; height: 34%; background: linear-gradient(90deg, rgba(21, 39, 84, .94), rgba(96, 64, 150, .94)); transform: skewY(-6deg) scaleY(0); animation: band 1.8s var(--ease-quint) both; box-shadow: 0 0 0 3px var(--gold), 0 0 40px rgba(242, 178, 74, .6); }
 .cutin .band::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(100deg, transparent 0 40px, rgba(255, 255, 255, .06) 40px 44px); }
 @keyframes band { 12%, 82% { transform: skewY(-6deg) scaleY(1); } 100% { transform: skewY(-6deg) scaleY(0); } }
-.cutin img { position: absolute; z-index: 2; right: 6%; top: 14%; height: 66%; animation: cin 1.8s var(--ease-quint) both; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .45)); }
+.cutin .icon { position: absolute; z-index: 2; right: 7%; top: 18%; height: 60%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 40%, #fff8e6, #f6dfb0); box-shadow: 0 0 0 5px #fff, 0 0 0 9px var(--gold), 0 0 34px rgba(255, 210, 130, .9); animation: cin 1.8s var(--ease-quint) both; }
+.cutin .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cutin > img { position: absolute; z-index: 2; right: 6%; top: 14%; height: 66%; animation: cin 1.8s var(--ease-quint) both; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .45)); }
 @keyframes cin { 0% { transform: translateX(130%); opacity: 1; } 18%, 80% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(-20%); opacity: 0; } }
 .cutin b { position: absolute; left: 7%; top: 35%; font-family: var(--impact); font-weight: 400; font-size: clamp(38px, 6vw, 76px); color: #fff; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; animation: tin 1.8s var(--ease-back) both; }
 .cutin small { position: absolute; left: 8%; top: 55%; font-family: var(--mincho); font-weight: 800; color: var(--gold-hi); font-size: 18px; letter-spacing: .2em; animation: tin 1.8s .1s var(--ease-back) both; }
@@ -368,7 +370,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/browser/pixi.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
 <script>
-const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__;
+const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__;  // MAJI：全問正解のときの William のアイコン（写真をジブリ風に描き直して切り抜いたもの）
 const isMobile = () => matchMedia('(max-width: 760px)').matches;
 const DATA = __DATA__;
 const $ = (id) => document.getElementById(id);
@@ -656,7 +658,7 @@ function setPose(k, dur, then) {
 function endPose() {}
 // LINE スタンプ風の文字・記号
 function sticker(text, o = {}) { S.stk.push({ text, t: performance.now(), dur: o.dur || 2.4, color: o.color || '#2b2522', font: o.font || '"Dela Gothic One"', size: o.size || 30, dx: o.dx ?? 0.42, dy: o.dy ?? -0.95, rot: o.rot ?? -0.12, vertical: !!o.vertical }); }
-function cutin(k, text, sub) { const el = document.createElement('div'); el.className = 'cutin'; el.innerHTML = `<div class="band"></div><img src="${CUTIN}" alt=""><b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
+function cutin(k, text, sub, icon) { const el = document.createElement('div'); el.className = 'cutin' + (icon ? ' withicon' : ''); el.innerHTML = `<div class="band"></div>${icon ? `<span class="icon"><img src="${icon}" alt=""></span>` : `<img src="${CUTIN}" alt="">`}<b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
 function drawWing(c, x, y, s, dir, flap) { c.save(); c.translate(x, y); c.scale(dir, 1); c.rotate(-0.25 - flap * 0.4); c.fillStyle = '#ffffff'; c.strokeStyle = '#7fd3ef'; c.lineWidth = 2.5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(s * 0.3, -s * 0.9, s * 1.1, -s * 0.95, s * 1.28, -s * 0.6); c.quadraticCurveTo(s * 1.0, -s * 0.48, s * 1.14, -s * 0.3); c.quadraticCurveTo(s * 0.82, -s * 0.22, s * 0.94, -s * 0.03); c.quadraticCurveTo(s * 0.58, -0.0, s * 0.62, s * 0.18); c.quadraticCurveTo(s * 0.26, s * 0.12, 0, 0); c.fill(); c.stroke(); c.restore(); }
 function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); c.fill(); }
 const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; };
@@ -856,16 +858,16 @@ function answer(i) {
 		se('ng'); S.streak = 0; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
 		card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
 		S.wrongRun++;
-		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? `${roomNo(fi, r)}号室の明かり、きえちゃったにゃ…` : S.wrongRun >= 2 ? 'ふわぁ…ねむねむにゃ' : 'ふわぁ…ちがったみたいにゃ', 2.4), 1400); sticker('ふわぁ…', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
+		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? `${roomNo(fi, r)}号室の明かり、きえちゃったにゃ…` : S.wrongRun >= 2 ? 'ふぁ〜…ねむくなってきたにゃ' : 'ふぁ〜…ちがったみたいにゃ', 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
 	}
 }
 // 部屋の相談に全部答えた：明かりがついたらカギ、足りなければ「もう少し」
-function showReward(fi, r) {
+function showReward(fi, r, after) {
+	if (!after && roomStats(fi, r).ok === roomStats(fi, r).n) { cutin('loaf', 'まじ!!', '全問正解', MAJI); setTimeout(() => showReward(fi, r, true), 1800); return; }  // 部屋の相談を全部正解：まず まじ!! のカットイン
 	const s = roomStats(fi, r), lit = isLit(s), no = roomNo(fi, r), fs = floorStats(fi);
 	const floorLit = fs.lit === fs.rooms;
 	if (floorLit && towerVisible()) { const b = $('bldg'); b.classList.remove('sweep'); void b.offsetWidth; b.classList.add('sweep'); }
 	if (lit) se('reward');
-	if (s.ok === s.n) cutin('loaf', 'まじ!!', '全問正解');  // 部屋の相談を全部正解したときだけ
 	const n = neighbor(1);
 	const sc = document.createElement('div'); sc.className = 'scrim';
 	sc.innerHTML = `<div class="panel reward" role="dialog" aria-label="${no}号室">${CORNERS}${lit ? '<div class="pillar"></div>' : ''}<h2>${no}号室 ${lit ? '点灯' : 'もう少し'}</h2><p class="rtitle">${esc(DATA.floors[fi].rooms[r].title)}</p><div class="rule"><i></i></div><div class="item${lit ? '' : ' dim'}"><svg><use href="#key"/></svg></div><div class="nm">${lit ? `${no}号室のカギ` : `正解 ${s.ok} / ${s.n}`}</div><p>${lit ? `相談 ${s.n} 件中 ${s.ok} 件正解。部屋に明かりがつきました。${floorLit ? `${DATA.floors[fi].floor}階は全部の部屋に明かりがつきました！` : ''}` : `あと ${need(s.n) - s.ok} 件正解すると明かりがつきます。まちがえた相談（×）は部屋の中の番号から開き直せます。`}</p><div class="row" style="gap:10px;flex-wrap:wrap">${lit ? '' : '<button class="cta sub" type="button" data-retry><i></i>まちがえた相談へ<i></i></button>'}<button class="cta" type="button" data-next><i></i>${n.f === fi && roomOf(n.k, n.f) === r ? '次の相談へ' : `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ`}<i></i></button></div></div>`;
@@ -928,7 +930,7 @@ function resetRoom() {
 	S.streak = 0; WINS.flat().forEach((w) => w.classList.remove('ignite', 'glint', 'nudge'));
 	cur = { f: 0, k: 0 }; savePos(); paintWindows(); renderQ(false);
 	bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
-	say('またいっしょにがんばろにゃ', 2);
+	say('最初からやり直しにゃ', 2);
 }
 $('resetBtn').addEventListener('click', () => {
 	se('tap');
@@ -991,13 +993,13 @@ room.addEventListener('pointerdown', (e) => {
 		if (S.pose !== 'rig') { S.poseThen = null; endPose(); start('hop'); say('にゃ', 0.8); se('nya'); if (S.on === 'card') setTimeout(() => jumpTo('top'), 300); return; }
 		room.setPointerCapture(e.pointerId); S.drag = { y0: e.clientY, t: performance.now() }; S.surpriseT = performance.now(); se('nya'); W2D.motion('Tap');
 		const t = performance.now(); S.clicks = S.clicks.filter((c) => t - c < 2000); S.clicks.push(t);
-		if (S.clicks.length >= 6) { S.heat = t; S.clicks = []; S.drag = null; say('にゃにゃっ、くすぐったいにゃ！', 2.4); }
+		if (S.clicks.length >= 6) { S.heat = t; S.clicks = []; S.drag = null; say('あつい！ちゃんと読むにゃ', 2.4); }
 		return;
 	}
 	if (e.target !== fg && e.target !== bg && e.target !== room) return;
 	wake();
 	const tp = toyPos();
-	if (!stacked && Math.hypot(p.x - tp.x, p.y - tp.y) < 26) { toy.v += (p.x < tp.x ? 1 : -1) * 3.5; S.playN++; jumpTo('mid', () => { if (S.playN % 3 === 0) { setPose('upside', 2.8); sticker('にゃにゃっ♪', { font: '"Kiwi Maru"', size: 18, dx: -0.6, dy: -1.0, rot: 0, dur: 2.4 }); for (let i = 0; i < 4; i++) S.fx.push({ heart: true, x: S.pos.x + (Math.random() - 0.5) * catH * 0.8, y: S.pos.y - catH * (0.6 + Math.random() * 0.4), t: performance.now() + i * 120 }); } else { start('play'); say('にゃっ！', 1.2); } }); return; }
+	if (!stacked && Math.hypot(p.x - tp.x, p.y - tp.y) < 26) { toy.v += (p.x < tp.x ? 1 : -1) * 3.5; S.playN++; jumpTo('mid', () => { if (S.playN % 3 === 0) { setPose('upside', 2.8); sticker('おもろいにゃんけ', { vertical: true, font: '"Kiwi Maru"', size: 17, dx: -0.6, dy: -1.0, rot: 0, dur: 2.6 }); for (let i = 0; i < 4; i++) S.fx.push({ heart: true, x: S.pos.x + (Math.random() - 0.5) * catH * 0.8, y: S.pos.y - catH * (0.6 + Math.random() * 0.4), t: performance.now() + i * 120 }); } else { start('play'); say('にゃっ！', 1.2); } }); return; }
 	let best = null, bd = 1e9;
 	for (const id of Object.keys(IMG_PL)) { const s = plat(id), dx = (p.x - s.x) / (s.w / 2 + 20), dy = (p.y - s.y) / (60 * SC + 20); const d = dx * dx + dy * dy; if (d < 1 && d < bd) { bd = d; best = id; } }
 	if (best) { jumpTo(best); return; }
@@ -1010,7 +1012,7 @@ addEventListener('resize', layout);
 addEventListener('keydown', (e) => {
 	if (document.querySelector('.scrim')) return;
 	const t = performance.now(); wake(); S.lastKey = t; S.keys = S.keys.filter((k) => t - k < 2000); S.keys.push(t);
-	if (S.keys.length >= 12) { S.heat = t; S.keys = []; say('にゃにゃ、はやいにゃ〜', 1.8); }
+	if (S.keys.length >= 12) { S.heat = t; S.keys = []; say('はやすぎにゃ！', 1.8); }
 	if (!answered && /^[1-9]$/.test(e.key)) answer(+e.key);
 	if (e.key === 'ArrowRight' && !e.target.closest?.('input')) nav(1); if (e.key === 'ArrowLeft' && !e.target.closest?.('input')) nav(-1);
 });
@@ -1065,7 +1067,7 @@ function frame(t) {
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
 	if (free && t > S.nextWander && S.on !== 'card') { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
 	if (free && t > S.nextMischief && !answered) { jumpTo('card', () => { setPose('sleepPaper', 9); say('ここ、あったかいにゃ…', 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
-	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('zzz…', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
+	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
 	if (free && !answered && !S.thought && t - S.qStart > 8000) { S.thought = true; start('thinking'); say('…むむ', 2.6); }
 	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); say('のび〜っ。いっしょにのびしよ？', 2.6); } else { start('water'); say('お水のもうにゃ', 2.4); } S.nextRemind = t + 25 * 60000; }
 	if (!S.drag && !S.sleeping && !S.jump && !S.hidden && pointer.speed > 900 && t - S.punchT > 900 && t - pointer.last < 80) { const d = Math.hypot(pointer.x - S.pos.x, pointer.y - (S.pos.y - catH * 0.5)); if (d < catH * 0.9) { start('punch'); S.punchT = t; } else if (d < catH * 2.2 && !S.act) start('stalk'); }
