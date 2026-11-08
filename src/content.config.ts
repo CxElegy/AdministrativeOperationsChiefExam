@@ -1,11 +1,9 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-import { docsLoader } from '@astrojs/starlight/loaders';
-import { docsSchema } from '@astrojs/starlight/schema';
 import { CATEGORY_IDS } from './data/categories';
 
-/** 1問分のデータ。過去問とオリジナル問題（一問一答）で共通。 */
+/** 1問分のデータ。過去問とオリジナル問題（ドリル）で共通。 */
 const question = z.object({
 	/** 問題番号（年度内・ドリル内で一意） */
 	no: z.number().int().positive(),
@@ -15,17 +13,28 @@ const question = z.object({
 	stem: z.string(),
 	/** ア・イ・ウ…の記述（組合せ問題・個数問題のとき） */
 	statements: z.array(z.object({ label: z.string(), text: z.string() })).optional(),
-	/** 選択肢。4択なら4つ、○×なら ["正しい", "誤り"] のように書く */
+	/** 選択肢。4択なら4つ、○×なら ["正しい", "誤り"] */
 	choices: z.array(z.string()).min(2),
-	/** 正解の選択肢番号（1始まり）。複数正解（全員正解扱いなど）は複数書く */
+	/** 正解の選択肢番号（1始まり）。複数正解は複数書く */
 	answer: z.array(z.number().int().positive()).min(1),
-	/** 解説（Markdown の簡単な記法: 改行・**太字**・`コード`） */
+
+	/** 解説：この問題のポイント */
 	explanation: z.string().optional(),
+	/** 解説：選択肢ごとの「なぜ正しい／なぜ違う」。choices と同じ順番 */
+	choiceNotes: z.array(z.string()).optional(),
+	/** 解説：ア〜エの記述ごとの正誤と理由 */
+	statementNotes: z.array(z.object({ label: z.string(), correct: z.boolean(), note: z.string() })).optional(),
+	/** 解説：根拠条文など */
+	law: z.string().optional(),
+	/** 令和8年4月施行の法改正などで結論が変わりうる場合の注意 */
+	amendment: z.string().optional(),
+	/** 解説の中で、まだ確認が必要な点（サイト上では「確認中」と表示） */
+	needsCheck: z.string().optional(),
+
 	/** 出典表示 */
 	source: z.string().optional(),
 	/** 図表の画像（public/ からのパス）。あれば問題文の代わりに画像を表示する */
 	images: z.array(z.string()).optional(),
-	/** 文字の取り出しがうまくいかず、PDF での確認が必要な問題 */
 	needsReview: z.boolean().optional(),
 	/** 手で修正済み（取り込みスクリプトで上書きしない） */
 	manual: z.boolean().optional(),
@@ -36,7 +45,16 @@ const question = z.object({
 export type Question = z.infer<typeof question>;
 
 export const collections = {
-	docs: defineCollection({ loader: docsLoader(), schema: docsSchema() }),
+	// 読み物（試験ガイド・ノート）: src/content/guide 以下の .md
+	guide: defineCollection({
+		loader: glob({ pattern: '**/*.md', base: './src/content/guide' }),
+		schema: z.object({
+			title: z.string(),
+			description: z.string().optional(),
+			order: z.number().default(100),
+			category: z.string().optional(),
+		}),
+	}),
 
 	/** 過去問（年度ごとに 1 ファイル）: src/data/kakomon/rNN.json */
 	kakomon: defineCollection({
@@ -55,7 +73,7 @@ export const collections = {
 		}),
 	}),
 
-	/** オリジナル問題集（一問一答など）: src/data/drills/*.json */
+	/** オリジナル問題（○×など）: src/data/drills/*.json。各分野の階の最初の部屋に入る */
 	drills: defineCollection({
 		loader: glob({ pattern: '*.json', base: './src/data/drills' }),
 		schema: z.object({

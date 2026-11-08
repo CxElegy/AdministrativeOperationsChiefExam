@@ -323,7 +323,7 @@ def main(src_dir: Path):
                 warn.append(i)
             prev = old.get(i)
             if prev:
-                for k in ("explanation", "tags"):
+                for k in ("explanation", "choiceNotes", "statementNotes", "law", "amendment", "needsCheck", "tags"):
                     if prev.get(k):
                         q[k] = prev[k]
                 if prev.get("categoryLocked"):

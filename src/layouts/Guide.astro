@@ -1,0 +1,29 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+	title: string;
+	description?: string;
+}
+const { title, description } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+---
+
+<Base title={title} description={description}>
+	<header class="guide-header">
+		<a href={base} class="logo">マンション攻略</a>
+		<nav class="tabs" aria-label="メニュー">
+			<a href={`${base}#/`}>攻略マップ</a>
+			<a href={`${base}#/memo`}>メモ帳</a>
+			<a href={`${base}#/soukai`}>総会（模試）</a>
+			<a href={`${base}#/record`}>記録</a>
+			<a href={`${base}guide/`} class="on">ガイド・ノート</a>
+		</nav>
+	</header>
+	<main class="prose">
+		<slot />
+	</main>
+	<footer class="guide-footer">
+		過去問の出典：一般社団法人マンション管理業協会「管理業務主任者試験問題」各年度（<a href="https://www.kanrikyo.or.jp/kanri/pdf/kakomonshiyou.pdf">過去問の使用について</a>）。解説はこのサイト独自のものです。
+	</footer>
+</Base>

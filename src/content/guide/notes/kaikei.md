@@ -1,11 +1,9 @@
 ---
 title: 管理組合の会計・税務
 description: 管理組合の会計・税務の学習ノート
-sidebar:
-  order: 3
+order: 2
+category: kaikei
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 仕訳と貸借対照表の問題が中心です。数字を使う問題なので、慣れれば確実に得点できる分野です。
 
@@ -25,12 +23,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 | 当月分の管理費が未入金 | 未収入金 | 管理費収入 |
 | 前月までに受け取っていた当月分（前受金）を振り替える | 前受金 | 管理費収入 |
 
-## 過去の出題
-
-<CategoryStats category="kaikei" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

@@ -1,11 +1,9 @@
 ---
 title: その他の法令・実務
 description: その他の法令・実務の学習ノート
-sidebar:
-  order: 8
+order: 8
+category: sonota
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 上の分野に入らない問題です。宅地建物取引業法、個人情報保護法、マンションに関する統計、地震保険など、年によってテーマが変わります。
 
@@ -16,12 +14,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 国土交通省のマンション総合調査などの統計
 - 不動産登記法、借地借家法（民法に含めることもある）
 
-## 過去の出題
-
-<CategoryStats category="sonota" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

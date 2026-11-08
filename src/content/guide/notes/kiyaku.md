@@ -1,17 +1,18 @@
 ---
 title: 標準管理規約
 description: 標準管理規約の学習ノート
-sidebar:
-  order: 6
+order: 6
+category: kiyaku
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 国土交通省の「マンション標準管理規約（単棟型・団地型・複合用途型）」とそのコメントからの出題です。区分所有法と組み合わせた問題も多く出ます。
 
-:::note
+<div class="callout callout-note">
+<p class="callout-title">メモ</p>
+
 標準管理規約は、法改正にあわせて改正されることがあります。最新版を国土交通省のサイトで確認してください。
-:::
+
+</div>
 
 ## よく出るテーマ
 
@@ -22,12 +23,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 専有部分の修繕、専用使用権
 - 駐車場の使用、使用細則
 
-## 過去の出題
-
-<CategoryStats category="kiyaku" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

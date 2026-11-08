@@ -1,11 +1,9 @@
 ---
 title: 標準管理委託契約書
 description: 標準管理委託契約書の学習ノート
-sidebar:
-  order: 2
+order: 3
+category: itaku
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 国土交通省の「マンション標準管理委託契約書」とそのコメントからの出題です。例年 3〜5 問程度出題されています。令和8年度からは、出題範囲が「管理事務**及び管理者事務**の委託契約」に広がっています。
 
@@ -17,12 +15,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 宅地建物取引業者などへの管理規約等の提供・開示
 - 契約の更新・解除、有効期間
 
-## 過去の出題
-
-<CategoryStats category="itaku" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

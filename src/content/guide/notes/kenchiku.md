@@ -1,11 +1,9 @@
 ---
 title: 建築・設備・維持修繕
 description: 建築・設備・維持修繕の学習ノート
-sidebar:
-  order: 4
+order: 7
+category: kenchiku
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 出題数が最も多い分野の1つで、例年 10 問前後出題されています。範囲が広いので、過去問で繰り返し出るテーマから押さえます。
 
@@ -18,12 +16,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 建築基準法（定期報告など）
 - 耐震・省エネルギー・バリアフリー
 
-## 過去の出題
-
-<CategoryStats category="kenchiku" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

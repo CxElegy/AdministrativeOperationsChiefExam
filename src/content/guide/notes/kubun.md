@@ -1,17 +1,18 @@
 ---
 title: 区分所有法等
 description: 区分所有法等の学習ノート
-sidebar:
-  order: 5
+order: 5
+category: kubun
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 区分所有法は2025年に大きく改正され、**2026年4月1日に施行**されました。令和8年度の試験は改正後の法律に基づいて出題されます。
 
-:::caution[過去問を解くときの注意]
+<div class="callout callout-caution">
+<p class="callout-title">過去問を解くときの注意</p>
+
 令和7年度以前の過去問は改正前の法律に基づいています。集会の決議要件などの改正点に関わる問題は、**現在の法律では正解が変わる場合があります**。改正点は法務省の資料やテキストで確認してください。
-:::
+
+</div>
 
 ## よく出るテーマ
 
@@ -22,12 +23,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 義務違反者に対する措置
 - 復旧・建替え、団地
 
-## 過去の出題
-
-<CategoryStats category="kubun" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

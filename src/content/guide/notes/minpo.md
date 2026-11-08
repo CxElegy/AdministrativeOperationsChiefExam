@@ -1,11 +1,9 @@
 ---
 title: 民法・借地借家法等
 description: 民法・借地借家法等の学習ノート
-sidebar:
-  order: 1
+order: 4
+category: minpo
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 管理組合と区分所有者、管理業者との関係を考える土台になる分野です。例年 3〜7 問程度出題されています。
 
@@ -19,12 +17,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 賃貸借・借地借家法（専有部分を賃貸する場合）
 - 請負・委任（管理委託契約の性質）
 
-## 過去の出題
-
-<CategoryStats category="minpo" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。

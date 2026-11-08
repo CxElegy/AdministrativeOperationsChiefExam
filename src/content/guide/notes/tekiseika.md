@@ -1,11 +1,9 @@
 ---
 title: マンション管理適正化法
 description: マンション管理適正化法の学習ノート
-sidebar:
-  order: 7
+order: 1
+category: tekiseika
 ---
-
-import CategoryStats from '../../../components/CategoryStats.astro';
 
 例年 **問46〜問50 の5問**で出題されます。マンション管理士試験の合格者はこの5問が免除されます。条文の数字（期間・人数）がそのまま問われることが多い分野です。
 
@@ -19,12 +17,8 @@ import CategoryStats from '../../../components/CategoryStats.astro';
 - 管理事務の報告
 - 帳簿の作成・保存、標識の掲示
 
-## 過去の出題
-
-<CategoryStats category="tekiseika" />
-
 ## 自分のまとめ
 
-{/* ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 */}
+<!-- ここに学習した内容を書き足していく。Markdown で見出し・表・箇条書きが使える。 -->
 
 このページはまだ作成中です。学習した内容を書き足していきます（書き方は[コンテンツの追加方法](../../contributing/)を参照）。
