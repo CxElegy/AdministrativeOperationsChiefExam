@@ -326,6 +326,11 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.status { max-width: 46%; bottom: auto; left: 10px; right: auto; top: calc(var(--treeH, 20%) - 30px); }
 	.panel ul { grid-template-columns: 1fr; }
 }
+/* スマホを横にしたとき：見出しを詰めてマンションを大きく */
+@media (max-height: 520px) and (orientation: landscape) {
+	.brand { height: 40px; } .brand .en { display: none; } .brand h1 { font-size: 17px; }
+	.finfo { margin-bottom: 4px; padding: 3px 10px; } .finfo .all { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
 	*, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 	.wipe { display: none; }
@@ -373,7 +378,16 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
 <script>
 const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__;  // MAJI：全問正解のときの William のアイコン（写真をジブリ風に描き直して丸く切り抜いたもの。2枚からランダム）
-const isMobile = () => matchMedia('(max-width: 760px)').matches;
+// スマホ版：画面が狭いとき、またはスマホ（指で操作し、画面の短い辺が 600px 以下）のとき。
+// スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
+const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
+const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
+if (PHONE && !matchMedia('(max-width: 760px)').matches) {
+	// 幅で切り替えているスマホ用の CSS（@media (max-width: 760px)）を、そのまま常に効くように足す
+	const css = [];
+	for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) if (r.media && /max-width:\s*760px/.test(r.media.mediaText)) for (const x of r.cssRules) css.push(x.cssText); }
+	const st = document.createElement('style'); st.textContent = css.join('\n'); document.head.appendChild(st);
+}
 const DATA = __DATA__;
 const $ = (id) => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
