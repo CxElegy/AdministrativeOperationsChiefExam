@@ -115,7 +115,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .choices button.ok .num { background: var(--ok); color: #fff; }
 .choices button.ng { border-color: var(--ng); background: linear-gradient(#fdf3f0, #f7e2dd); }
 .choices button.ng .num { background: var(--ng); color: #fff; }
-.choices button.dim { opacity: .62; }
+.choices button.dim { opacity: 1; color: var(--ink-soft); }
+.choices button.dim .num { opacity: .6; }
 @keyframes okPulse { 50% { box-shadow: 0 0 0 4px rgba(79, 174, 115, .35), 0 0 18px rgba(79, 174, 115, .45); } }
 .note { grid-column: 2; font-size: 13px; color: var(--ink-soft); border-top: 1px dashed rgba(138, 106, 53, .4); padding-top: 6px; margin-top: 4px; animation: rise .3s var(--ease-quint) both; }
 .note::before { content: "管理人さん"; display: inline-block; margin-right: 6px; padding: 0 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: var(--ink); background: linear-gradient(var(--gold-hi), var(--gold)); }
@@ -588,7 +589,7 @@ function answer(i) {
 	card.querySelectorAll('.choices button').forEach((b) => {
 		const n = +b.dataset.i; b.disabled = true;
 		if (n === q.answer) b.classList.add('ok'); else if (n === i) b.classList.add('ng'); else b.classList.add('dim');
-		if (n === q.answer || n === i) b.insertAdjacentHTML('beforeend', `<span class="note">${q.notes[n - 1]}</span>`);
+		if (q.notes && q.notes[n - 1]) b.insertAdjacentHTML('beforeend', `<span class="note">${q.notes[n - 1]}</span>`);  // 4つの選択肢すべての解説を出す
 	});
 	const last = qi + 1 >= QS.length;
 	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${ok ? '管理人さんの解説を読んでおこう' : `正解は ${q.answer}。どこが違うか、解説を確認しよう`}</span><button class="cta" type="button" id="next"><i></i>${last ? '部屋のカギを受け取る' : '次の相談へ'}<i></i></button>`;
