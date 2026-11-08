@@ -20,15 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+      # サイトは 1 ページ（William の部屋）。問題データと絵を埋め込んで dist/ に出す（Python だけで作れる）
       - run: npm run build
-        env:
-          SITE_BASE: /${{ github.event.repository.name }}
-          SITE_URL: https://${{ github.repository_owner }}.github.io
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

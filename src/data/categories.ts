@@ -1,6 +1,6 @@
 /**
  * 出題分野 ＝ マンションの「階」。
- * 並び順が 1F → 8F（攻略の順番）。過去問 JSON の "category" はこの id を使う。
+ * 並び順が 1F → 8F。過去問 JSON の "category" はこの id を使う（william/build.py がこのファイルを読む）。
  */
 export const CATEGORIES = [
 	{ id: 'tekiseika', label: 'マンション管理適正化法', short: '適正化法' },
@@ -22,5 +22,3 @@ export type CategoryId = (typeof CATEGORIES)[number]['id'];
 
 export const categoryLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
-/** 1部屋あたりの問題数 */
-export const ROOM_SIZE = 5;

@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const DATA_DIR = process.env.DATA_DIR || path.join(HERE, 'data');
-const SITE_DIR = process.env.SITE_DIR || path.join(ROOT, 'dist');
+const SITE_DIR = process.env.SITE_DIR || path.join(ROOT, 'dist');  // npm run build で作る
 const SITE_BASE = (process.env.SITE_BASE || '/AdministrativeOperationsChiefExam').replace(/\/$/, '');
 const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || '0.0.0.0';
