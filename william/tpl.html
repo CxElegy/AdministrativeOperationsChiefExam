@@ -865,6 +865,7 @@ function showReward(fi, r) {
 	const floorLit = fs.lit === fs.rooms;
 	if (floorLit && towerVisible()) { const b = $('bldg'); b.classList.remove('sweep'); void b.offsetWidth; b.classList.add('sweep'); }
 	if (lit) se('reward');
+	if (s.ok === s.n) cutin('loaf', 'まじ!!', '全問正解');  // 部屋の相談を全部正解したときだけ
 	const n = neighbor(1);
 	const sc = document.createElement('div'); sc.className = 'scrim';
 	sc.innerHTML = `<div class="panel reward" role="dialog" aria-label="${no}号室">${CORNERS}${lit ? '<div class="pillar"></div>' : ''}<h2>${no}号室 ${lit ? '点灯' : 'もう少し'}</h2><p class="rtitle">${esc(DATA.floors[fi].rooms[r].title)}</p><div class="rule"><i></i></div><div class="item${lit ? '' : ' dim'}"><svg><use href="#key"/></svg></div><div class="nm">${lit ? `${no}号室のカギ` : `正解 ${s.ok} / ${s.n}`}</div><p>${lit ? `相談 ${s.n} 件中 ${s.ok} 件正解。部屋に明かりがつきました。${floorLit ? `${DATA.floors[fi].floor}階は全部の部屋に明かりがつきました！` : ''}` : `あと ${need(s.n) - s.ok} 件正解すると明かりがつきます。まちがえた相談（×）は部屋の中の番号から開き直せます。`}</p><div class="row" style="gap:10px;flex-wrap:wrap">${lit ? '' : '<button class="cta sub" type="button" data-retry><i></i>まちがえた相談へ<i></i></button>'}<button class="cta" type="button" data-next><i></i>${n.f === fi && roomOf(n.k, n.f) === r ? '次の相談へ' : `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ`}<i></i></button></div></div>`;
