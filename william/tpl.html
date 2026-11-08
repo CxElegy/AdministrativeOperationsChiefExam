@@ -68,9 +68,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .win .meter .o { left: 0; width: calc(var(--ok) * 100%); background: #ffe08a; box-shadow: 0 0 4px #ffd27e; }
 .win .meter .x { left: calc(var(--ok) * 100%); width: calc(var(--ng) * 100%); background: #e0758f; }
 .win.lit { box-shadow: 0 0 14px 4px rgba(255, 200, 110, .6), 0 0 40px 10px rgba(255, 180, 90, .22); color: rgba(90, 52, 18, .85); }
-.win.lit i { text-shadow: none; }
+.win.lit i, .win.lit.curfl i { color: #3b2006; font-weight: 800; text-shadow: 0 0 2px #fff6dc, 0 0 4px #fff6dc, 0 0 6px rgba(255, 246, 220, .9); }  /* 明かりのついた窓は濃い字＋明るい縁取りで読みやすく */
 .win.lit .meter { background: rgba(120, 70, 20, .25); } .win.lit .meter .o { background: #fff7d8; }
-.win.full i::after { content: "★"; font-size: .8em; color: #b5741c; }
+.win.full i::after { content: "★"; position: absolute; font-size: .6em; color: #b5741c; transform: translate(1px, -0.55em); }
 .win.here { outline: 2px solid var(--gold-hi); outline-offset: 2px; z-index: 2; }
 .win:hover { transform: scale(1.08); z-index: 2; }
 .win.glint { animation: glint .9s var(--ease-quint); }
