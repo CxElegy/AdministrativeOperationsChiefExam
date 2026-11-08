@@ -370,7 +370,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/browser/pixi.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
 <script>
-const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__;  // MAJI：全問正解のときの William のアイコン（写真をジブリ風に描き直して切り抜いたもの）
+const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__;  // MAJI：全問正解のときの William のアイコン（写真をジブリ風に描き直して丸く切り抜いたもの。2枚からランダム）
 const isMobile = () => matchMedia('(max-width: 760px)').matches;
 const DATA = __DATA__;
 const $ = (id) => document.getElementById(id);
@@ -863,7 +863,7 @@ function answer(i) {
 }
 // 部屋の相談に全部答えた：明かりがついたらカギ、足りなければ「もう少し」
 function showReward(fi, r, after) {
-	if (!after && roomStats(fi, r).ok === roomStats(fi, r).n) { cutin('loaf', 'まじ!!', '全問正解', MAJI); setTimeout(() => showReward(fi, r, true), 1800); return; }  // 部屋の相談を全部正解：まず まじ!! のカットイン
+	if (!after && roomStats(fi, r).ok === roomStats(fi, r).n) { cutin('loaf', 'まじ!!', '全問正解', MAJI[Math.floor(Math.random() * MAJI.length)]); setTimeout(() => showReward(fi, r, true), 1800); return; }  // 部屋の相談を全部正解：まず まじ!! のカットイン
 	const s = roomStats(fi, r), lit = isLit(s), no = roomNo(fi, r), fs = floorStats(fi);
 	const floorLit = fs.lit === fs.rooms;
 	if (floorLit && towerVisible()) { const b = $('bldg'); b.classList.remove('sweep'); void b.offsetWidth; b.classList.add('sweep'); }
