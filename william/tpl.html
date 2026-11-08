@@ -46,9 +46,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 env(safe-area-inset-bottom, 0px); background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
 /* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
 .bldg { --k: .5; position: relative; flex: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 3%); mask-image: linear-gradient(transparent, #000 3%); }
-.ftag { position: absolute; z-index: 3; left: .6%; width: 8.4%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
-.ftag b { font-family: var(--latin); font-size: max(10px, calc(var(--k) * 22px)); line-height: 1.1; color: var(--gold-hi); }
-.ftag small { font-size: max(7px, calc(var(--k) * 13px)); line-height: 1.1; white-space: nowrap; overflow: hidden; max-width: 96%; }
+.ftag { position: absolute; z-index: 3; left: .3%; width: 9.4%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
+.ftag b { font-family: var(--latin); font-size: max(12px, calc(var(--k) * 28px)); line-height: 1.1; color: var(--gold-hi); }
+.ftag small { font-size: max(9px, calc(var(--k) * 17px)); letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; overflow: hidden; max-width: 96%; }
 .ftag.cur { background: linear-gradient(#fff5d9, #f0d08a); color: var(--ink); box-shadow: 0 0 0 1px var(--gold-lo), 0 0 14px rgba(255, 210, 140, .7); }
 .ftag.cur b { color: var(--ink); }
 .ftag.star b::after { content: "★"; font-size: .7em; margin-left: 1px; color: #e9b44c; }
@@ -56,7 +56,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .win { --lv: 0; --ok: 0; --ng: 0; position: absolute; z-index: 1; padding: 0; border: 0; border-radius: 1px; cursor: pointer; background: transparent; display: grid; place-items: center; color: rgba(233, 226, 210, .55); transition: transform .15s, box-shadow .5s; }
 .win .glow { position: absolute; inset: 0; opacity: var(--lv); background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 45%, #f2a54f); transition: opacity .6s; }
 .win::after { content: ""; position: absolute; top: 0; bottom: 0; left: 49%; width: 2px; background: rgba(60, 30, 20, .55); pointer-events: none; }
-.win i { position: relative; z-index: 1; font-style: normal; font-family: var(--latin); font-weight: 700; font-size: max(8px, calc(var(--k) * 20px)); line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.win i { position: relative; z-index: 1; font-style: normal; font-family: var(--latin); font-weight: 700; font-size: max(10px, calc(var(--k) * 24px)); line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
 .win .meter { position: absolute; z-index: 1; left: 8%; right: 8%; bottom: 6%; height: max(2px, calc(var(--k) * 5px)); border-radius: 2px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 .win .meter .o, .win .meter .x { position: absolute; top: 0; bottom: 0; }
 .win .meter .o { left: 0; width: calc(var(--ok) * 100%); background: #ffe08a; box-shadow: 0 0 4px #ffd27e; }
