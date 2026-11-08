@@ -820,7 +820,14 @@ ST = loadLocal();
 if (SYNC && SYNC.id === PREV_ID && !Object.keys(ST.q).length) { try { ST = { ...emptyStore(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) {} saveLocal(); }
 function setSyncMsg(st, m) { syncSt = st; syncMsg = m; const el = document.querySelector('[data-sync-status]'); if (el) { el.textContent = m; el.className = 'sync-status ' + st; } }
 const hhmm = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-async function pushNow() { if (!SYNC) return; const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status); }
+// 保存：先にサーバーの記録を読んで、このブラウザの記録と合わせてから書く（ほかの端末で増えた分を上書きで消さない）
+async function pushNow() {
+	if (!SYNC) return;
+	const g = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' });
+	if (g.ok) { const m = (await g.json()).data?.main; if (m) { const before = Object.keys(ST.q).length; ST = mergeStore(ST, m); saveLocal(); if (Object.keys(ST.q).length !== before) { paintWindows(); } } }
+	else if (g.status !== 404) throw new Error('HTTP ' + g.status);
+	const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status);
+}
 function schedulePush() { if (!SYNC) return; clearTimeout(syncT); syncT = setTimeout(() => pushNow().then(() => setSyncMsg('ok', `保存しました（${hhmm()}）`), (e) => setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`)), 900); }
 async function pullSync() {
 	if (!SYNC) return; setSyncMsg('syncing', '読み込み中…');
