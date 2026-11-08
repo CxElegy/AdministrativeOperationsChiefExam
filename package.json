@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "python3 william/build.py && rm -rf dist && cp -r public dist",
-    "progress-server": "node server/progress-server.mjs"
+    "progress-server": "node server/progress-server.mjs",
+    "share": "node server/share.mjs"
   }
 }
