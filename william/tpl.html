@@ -759,7 +759,7 @@ async function pullSync() {
 	if (!SYNC) return; setSyncMsg('syncing', '読み込み中…');
 	try {
 		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' });
-		if (r.ok) { const m = (await r.json()).data?.main; if (m) { ST = mergeStore(ST, m); saveLocal(); restorePos(); paintWindows(); renderQ(true); savePos(); } }
+		if (r.ok) { const m = (await r.json()).data?.main; if (m) { ST = mergeStore(ST, m); saveLocal(); applyLinkRecord(); restorePos(); paintWindows(); renderQ(true); savePos(); } }
 		else if (r.status !== 404) throw new Error('HTTP ' + r.status);
 		await pushNow(); setSyncMsg('ok', `同期しました（${hhmm()}）`);
 	} catch (e) { setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`); }
@@ -783,7 +783,46 @@ function restorePos() {
 }
 function savePos() {
 	ST.here = { f: curFloor().id, k: cur.k, t: Date.now() }; saveStore();
-	try { history.replaceState(history.state, '', location.pathname + location.search + '#' + curQid()); } catch (e) {}  // 今の相談をアドレスに残す（再読み込み・ブックマークで同じ相談）
+	try { history.replaceState(history.state, '', recordLink(true)); } catch (e) {}  // アドレスに「記録」と今の相談を入れておく（このリンクをコピーすれば、どの端末でも続きから）
+}
+
+// ---------------- 記録のリンク（サーバーなし）：答えた記録をリンクの ?s=… に詰める ----------------
+// 問題ごとに「選んだ番号」（0＝まだ、1〜7）を 3 ビットで並べ、base64url にする。正誤は正解の番号と比べて分かる。
+// 並び順は問題 ID の並び（新しい年度は後ろに足される）。先頭に今の相談の位置（階・番号）を入れる
+const REC_IDS = Object.keys(DATA.q).sort();
+const b64u = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+function encodeRecord() {
+	const bits = []; REC_IDS.forEach((id) => { const p = Math.max(0, Math.min(7, ST.q[id]?.p || 0)); bits.push((p >> 2) & 1, (p >> 1) & 1, p & 1); });
+	const bytes = [1, cur.f, cur.k]; for (let i = 0; i < bits.length; i += 8) { let v = 0; for (let j = 0; j < 8; j++) v = (v << 1) | (bits[i + j] || 0); bytes.push(v); }
+	while (bytes.length > 3 && bytes[bytes.length - 1] === 0) bytes.pop();   // 後ろの「まだ」は省く
+	return b64u(bytes);
+}
+function decodeRecord(code) {
+	const b = unb64u(code); if (b[0] !== 1) return null;
+	const picks = {}; REC_IDS.forEach((id, i) => { let p = 0; for (let j = 0; j < 3; j++) { const n = i * 3 + j, byte = b[3 + (n >> 3)] || 0; p = (p << 1) | ((byte >> (7 - (n & 7))) & 1); } if (p) picks[id] = p; });
+	return { f: b[1], k: b[2], picks };
+}
+// 今の記録が入ったリンク（withHash：今の相談も入れる）
+function recordLink(withHash) {
+	const q = new URLSearchParams(location.search); q.set('s', encodeRecord());
+	return location.pathname + '?' + q.toString() + (withHash ? '#' + curQid() : '');
+}
+const recordURL = () => location.origin + recordLink(false);
+// リンクの記録を取り込む（リンクで答えてある問題は、リンクの答えにそろえる。リンクに無い問題は今の記録のまま）
+function applyLinkRecord() {
+	const code = new URLSearchParams(location.search).get('s'); if (!code) return;
+	let r; try { r = decodeRecord(code); } catch (e) { return; } if (!r) return;
+	const now = Date.now();
+	for (const [id, p] of Object.entries(r.picks)) {
+		const q = DATA.q[id]; if (!q || p > q.choices.length) continue;
+		const ok = q.answer.includes(p), old = ST.q[id];
+		if (old && old.p === p) continue;
+		ST.q[id] = { ...(old || {}), a: Math.max(1, old?.a || 0), c: ok ? Math.max(1, old?.c || 0) : (old?.c || 0), last: ok, p, t: now };
+	}
+	const f = DATA.floors[r.f];
+	if (f && !location.hash) ST.here = { f: f.id, k: Math.min(r.k, f.qids.length - 1), t: now };
+	saveLocal();
 }
 // 相談を開く（show = 前に答えていれば、その答えと解説を出す）
 function goQ(fi, k, show) {
@@ -919,7 +958,7 @@ function indexBody() {
 	const rows = DATA.floors.map((f, fi) => { const s = floorStats(fi); return `<tr><td>${f.floor}F ${esc(f.short)}</td><td>${s.done} / ${s.total}</td><td>${s.done ? Math.round(s.ok / s.done * 100) + '%' : '—'}</td><td>${s.lit} / ${s.rooms}</td></tr>`; }).join('');
 	const link = SYNC ? `<p class="small">このリンクで開くと、どの端末でも同じ記録になります。リンクはほかの人に教えないでください。</p><div class="sync-form"><input type="text" readonly class="sync-input" data-sync-link value="${esc(shareLink())}" aria-label="進度リンク"><button type="button" class="cta mini" data-act="copy">コピー</button></div><p class="small">進度サーバー：${esc(SYNC.api)} ・ ID：${esc(SYNC.id)}</p><div class="row2"><button type="button" class="cta mini" data-act="sync">今すぐ同期</button><button type="button" class="cta mini" data-act="unsync">このブラウザで止める</button></div>`
 		: `<p class="small">自分のパソコンで進度サーバー（<code>npm run progress-server</code>）を動かして URL を入れると、専用のリンクができます。同じリンクで開けば、どの端末でも続きから解けます。</p><div class="sync-form"><input type="url" class="sync-input" data-sync-api value="${esc((() => { try { return JSON.parse(localStorage.getItem(SYNC_KEY) || '{}').api || 'http://localhost:8787'; } catch (e) { return 'http://localhost:8787'; } })())}" aria-label="進度サーバーの URL"><button type="button" class="cta mini" data-act="create">進度リンクを作る</button></div>`;
-	return `<p class="sum">答えた相談 <b>${done.length}</b> / ${all.length} ・ 正解 <b>${ok.length}</b> ・ ${dayStreak()}日連続 ・ 今日 ${todayCount()} 問</p><table class="itable"><tr><th>階</th><th>答えた</th><th>正答率</th><th>明かり</th></tr>${rows}</table><h3 class="h3">進度リンク</h3>${link}<p class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg)}</p>`;
+	return `<p class="sum">答えた相談 <b>${done.length}</b> / ${all.length} ・ 正解 <b>${ok.length}</b> ・ ${dayStreak()}日連続 ・ 今日 ${todayCount()} 問</p><table class="itable"><tr><th>階</th><th>答えた</th><th>正答率</th><th>明かり</th></tr>${rows}</table><h3 class="h3">記録のリンク</h3><p class="small">このリンクに今の記録が入っています（サーバーは使いません）。ほかの端末でこのリンクを開くと、ここまでの続きから解けます。ブックマークしておけば記録の保存にもなります。答えるたびにアドレス欄のリンクも新しくなります。</p><div class="sync-form"><input type="text" readonly class="sync-input" data-rec-link value="${esc(recordURL())}" aria-label="記録のリンク"><button type="button" class="cta mini" data-act="reccopy">コピー</button></div><p class="sync-status" data-rec-status></p><h3 class="h3">進度リンク（自分のパソコンの進度サーバー）</h3>${link}<p class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg)}</p>`;
 }
 function openIndex(tab) {
 	if (tab) idxTab = tab; se('tap');
@@ -934,6 +973,7 @@ function openIndex(tab) {
 		sc.querySelectorAll('[data-room]').forEach((b) => b.addEventListener('click', () => { const [fi, r] = b.dataset.room.split(',').map(Number); se('tap'); sc.remove(); goRoom(fi, r); }));
 		const act = (a, fn) => { const b = sc.querySelector(`[data-act="${a}"]`); if (b) b.addEventListener('click', fn); };
 		act('copy', () => { const inp = sc.querySelector('[data-sync-link]'); navigator.clipboard?.writeText(inp.value).then(() => setSyncMsg(syncSt, 'リンクをコピーしました。ほかの端末で開くと同じ記録になります。'), () => inp.select()); inp.select(); });
+		act('reccopy', () => { const inp = sc.querySelector('[data-rec-link]'); inp.select(); const done = () => { const e = sc.querySelector('[data-rec-status]'); if (e) e.textContent = 'コピーしました。ほかの端末でこのリンクを開いてください。'; }; if (navigator.clipboard) navigator.clipboard.writeText(inp.value).then(done, () => document.execCommand('copy') && done()); else if (document.execCommand('copy')) done(); });
 		act('sync', () => pullSync());
 		act('unsync', () => { try { localStorage.setItem(SYNC_KEY, '{}'); } catch (e) {} SYNC = null; setSyncMsg('off', 'このブラウザでの進度リンクを止めました（サーバーの記録は残っています）。'); draw(); });
 		act('create', () => { const api = (sc.querySelector('[data-sync-api]').value || '').trim().replace(/\/+$/, ''); if (!/^https?:\/\//.test(api)) { setSyncMsg('error', '進度サーバーの URL を http:// か https:// から入れてください。'); return; } let c = {}; try { c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); } catch (e) {} c.id = c.id || newId(); c.api = api; try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} SYNC = { id: c.id, api }; draw(); pullSync(); });
@@ -1316,7 +1356,7 @@ function drawMouth(c, F, t) {
 	if (F.bubble) { const r = 5 + 9 * (0.5 + 0.5 * Math.sin(t / 700)); c.fillStyle = 'rgba(200,230,255,.45)'; c.strokeStyle = 'rgba(120,160,200,.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x + 14 + r, y - 12, r, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.arc(x + 11 + r * 1.4, y - 12 - r * 0.4, r * 0.2, 0, Math.PI * 2); c.fill(); }
 	c.restore();
 }
-restorePos(); paintWindows(); renderQ(true); savePos();
+applyLinkRecord(); restorePos(); paintWindows(); renderQ(true); savePos();
 pullSync();
 layout();
 requestAnimationFrame(frame);
