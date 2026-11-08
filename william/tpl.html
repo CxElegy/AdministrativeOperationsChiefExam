@@ -1,5 +1,4 @@
 <title>William の部屋</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Maru+Gothic:wght@500;700&family=Kiwi+Maru:wght@500&family=Dela+Gothic+One&family=Cinzel:wght@600;700&display=swap">
 <style>
 /* layout: 左＝夕暮れのマンション（階＝分野のノード）、右＝夕焼けの William の部屋。相談票は金縁の紙のパネルで部屋の手前に浮かぶ。
@@ -22,7 +21,6 @@
 html, body { height: 100%; overflow: hidden; }
 /* スマホのブラウザは下のバーの裏まで 100% に含めることがあるので、実際に見えている高さ（dvh）に合わせる */
 @supports (height: 100dvh) { html, body { height: 100dvh; } }
-html.fitvh, html.fitvh body { height: var(--appH); }  /* 下にアドレスバーがあるブラウザ（Edge など）でも、見えている高さに合わせる（JS で測る） */
 body { background: var(--night-2); color: var(--ink); font-family: var(--maru); line-height: 1.7; overflow-x: hidden; }
 button { font: inherit; }
 button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
@@ -330,6 +328,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.irow { grid-template-columns: 78px 1fr; }
 	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
 	.credit { font-size: 8px; bottom: 3px; }
+	/* スマホ：ブラウザの下のバーに隠れないよう、マンションを上に上げる（下は道路の色で続ける） */
+	.bldgwrap { --gpad: calc(56px + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--gpad); background: linear-gradient(to top, #0b070d var(--gpad), transparent var(--gpad)); }
+	.tower > .credit { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
 	.tidx { display: inline-flex; position: absolute; right: 12px; top: 14px; border: 1px solid var(--gold); background: rgba(13, 24, 56, .6); color: var(--gold-hi); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
 	.hud { top: 10px; left: 12px; right: 12px; gap: 5px; flex-wrap: nowrap; }
 	.util { gap: 4px; } .util button { width: 28px; height: 28px; font-size: 12px; }
@@ -407,9 +408,7 @@ const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__
 // スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
 const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
 const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
-// ブラウザのバーを除いた、本当に見えている高さにページを合わせる（拡大表示のときは下で別に合わせる）
-function fitViewport() { if (document.documentElement.style.zoom) return; const h = Math.round(window.visualViewport ? visualViewport.height : innerHeight); document.documentElement.style.setProperty('--appH', h + 'px'); document.documentElement.classList.add('fitvh'); }
-fitViewport(); addEventListener('resize', fitViewport); if (window.visualViewport) visualViewport.addEventListener('resize', fitViewport);
+
 // 「PC版サイト」表示のスマホは画面を 980px 幅とみなして縮めて表示するので、本当の画面の幅に合わせて全体を拡大する（文字が小さくならないように）
 if (PHONE) {
 	const dw = innerWidth > innerHeight ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
@@ -512,7 +511,7 @@ DATA.floors.forEach((f, fi) => {
 	});
 });
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
-function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const k = Math.min(wr.clientWidth / BW, wr.clientHeight / BH); const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
+function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const k = wr.clientHeight > 60 ? Math.min(wr.clientWidth / BW, wr.clientHeight / BH) : wr.clientWidth / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
 function towerVisible() { const t = document.querySelector('.tower'); return t && t.offsetParent !== null; }
 const pending = new Map();  // 光の玉が着くまで、前の明るさのままにしておく窓 → 着いたときの演出

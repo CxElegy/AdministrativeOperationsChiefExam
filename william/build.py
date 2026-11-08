@@ -65,7 +65,7 @@ def main():
     s = s.replace('__BLDG__', data_uri('bldg.webp')).replace('__CUTIN__', json.dumps(data_uri('cutin.webp'))).replace('__POSES__', '{}')
     i = s.index('</style>') + len('</style>')
     head = ('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
-            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
             '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n')
     out = head + s[:i] + '\n</head>\n<body>\n' + s[i:] + '\n</body>\n</html>\n'
