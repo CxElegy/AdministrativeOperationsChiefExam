@@ -764,6 +764,8 @@ async function pullSync() {
 		await pushNow(); setSyncMsg('ok', `同期しました（${hhmm()}）`);
 	} catch (e) { setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`); }
 }
+// ほかの端末で解いてから、この画面に戻ってきたときも読み込み直す（答えた直後は除く）
+document.addEventListener('visibilitychange', () => { if (!document.hidden && SYNC && Date.now() - (ST.here?.t || 0) > 3000) pullSync(); });
 function newId() { const b = new Uint8Array(12); crypto.getRandomValues(b); return Array.from(b, (x) => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + Date.now().toString(36).slice(-4); }
 function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}${SYNC.api === location.origin ? '' : `&api=${encodeURIComponent(SYNC.api)}`}`; }
 
