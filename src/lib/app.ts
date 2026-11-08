@@ -64,6 +64,70 @@ function keeperSvg(size = 72, mood: 'smile' | 'happy' | 'think' = 'smile') {
 	</svg>`;
 }
 
+/**
+ * 看板猫 William（ウィリアム）
+ * 白い毛、頭と耳はグレー、琥珀色の目、ピンクの鼻、紫の首輪、グレーのしっぽ。前足にグレーのぶち。
+ */
+type CatPose = 'sit' | 'happy' | 'tilt' | 'sleep';
+const C = { fur: '#FFFFFF', line: '#CFC6B8', grey: '#8B909C', greyDark: '#6E7380', ear: '#EBB8C2', eye: '#E9A23B', nose: '#F2A0B0', collar: '#6A3FC1', ink: '#2A2622', tongue: '#E8708A' };
+
+function williamSvg(pose: CatPose = 'sit', size = 72) {
+	if (pose === 'sleep') {
+		return `<svg width="${size}" height="${Math.round(size * 0.72)}" viewBox="0 0 140 100" role="img" aria-label="眠っている看板猫のWilliam" class="avatar william">
+			<path d="M118 78 q22 -6 14 -30 q-3 -8 -8 -4 q6 18 -12 26 z" fill="${C.grey}"></path>
+			<ellipse cx="78" cy="70" rx="44" ry="24" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+			<ellipse cx="96" cy="88" rx="14" ry="6" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+			<path d="M24 46 L22 22 L40 36 Z" fill="${C.grey}"></path>
+			<path d="M52 36 L66 20 L66 44 Z" fill="${C.grey}"></path>
+			<ellipse cx="44" cy="62" rx="28" ry="24" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+			<path d="M20 52 Q30 38 46 40 Q60 38 68 50 Q66 62 56 62 Q50 50 42 52 Q32 52 24 60 Z" fill="${C.grey}"></path>
+			<path d="M28 66 q5 4 10 0 M50 66 q5 4 10 0" fill="none" stroke="${C.ink}" stroke-width="2.2" stroke-linecap="round"></path>
+			<path d="M42 72 L46 72 L44 75 Z" fill="${C.nose}"></path>
+			<ellipse cx="36" cy="86" rx="16" ry="6" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+			<rect x="26" y="82" width="10" height="8" rx="3" fill="${C.grey}"></rect>
+			<text x="74" y="30" font-size="16" font-weight="700" fill="#9AA5C0" font-family="sans-serif">z</text>
+			<text x="86" y="18" font-size="12" font-weight="700" fill="#9AA5C0" font-family="sans-serif">z</text>
+		</svg>`;
+	}
+	const eyes =
+		pose === 'happy'
+			? `<path d="M39 55 q7 -8 14 0 M67 55 q7 -8 14 0" fill="none" stroke="${C.ink}" stroke-width="3" stroke-linecap="round"></path>`
+			: `<circle cx="46" cy="54" r="8" fill="${C.eye}"></circle><circle cx="74" cy="54" r="8" fill="${C.eye}"></circle>
+				<ellipse cx="46" cy="55" rx="3.4" ry="5.5" fill="${C.ink}"></ellipse><ellipse cx="74" cy="55" rx="3.4" ry="5.5" fill="${C.ink}"></ellipse>
+				<circle cx="48.5" cy="51.5" r="2" fill="#fff"></circle><circle cx="76.5" cy="51.5" r="2" fill="#fff"></circle>`;
+	const mouth =
+		pose === 'happy'
+			? `<path d="M60 67 q-3 4 -7 2 M60 67 q3 4 7 2" fill="none" stroke="#8A6F68" stroke-width="1.8" stroke-linecap="round"></path><ellipse cx="62" cy="73" rx="4.5" ry="5.5" fill="${C.tongue}"></ellipse>`
+			: `<path d="M60 67 q-3 4 -7 2 M60 67 q3 4 7 2" fill="none" stroke="#8A6F68" stroke-width="1.8" stroke-linecap="round"></path>`;
+	const blush = pose === 'happy' ? `<ellipse cx="38" cy="64" rx="5" ry="3" fill="#F7C6CF"></ellipse><ellipse cx="82" cy="64" rx="5" ry="3" fill="#F7C6CF"></ellipse>` : '';
+	const tilt = pose === 'tilt' ? 'rotate(-12 60 58)' : '';
+	const q = pose === 'tilt' ? `<text x="92" y="20" font-size="22" font-weight="900" fill="#FF7A59" font-family="sans-serif">?</text>` : '';
+	return `<svg width="${size}" height="${Math.round(size * 1.05)}" viewBox="0 0 120 126" role="img" aria-label="看板猫のWilliam" class="avatar william">
+		<path d="M82 116 q26 -2 24 -30 q-1 -9 -7 -6 q3 20 -17 26 z" fill="${C.grey}"></path>
+		<ellipse cx="60" cy="100" rx="27" ry="22" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+		<rect x="45" y="100" width="12" height="22" rx="6" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></rect>
+		<rect x="63" y="100" width="12" height="22" rx="6" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></rect>
+		<rect x="45.8" y="104" width="10.4" height="7" fill="${C.grey}"></rect>
+		<g transform="${tilt}">
+			<path d="M28 40 L30 8 L54 28 Z" fill="${C.grey}"></path>
+			<path d="M33 34 L34 16 L47 28 Z" fill="${C.ear}"></path>
+			<path d="M92 40 L90 8 L66 28 Z" fill="${C.grey}"></path>
+			<path d="M87 34 L86 16 L73 28 Z" fill="${C.ear}"></path>
+			<ellipse cx="60" cy="54" rx="35" ry="30" fill="${C.fur}" stroke="${C.line}" stroke-width="1.5"></ellipse>
+			<path d="M30 40 Q42 26 56 28 Q58 34 56 40 Q46 40 38 46 Z" fill="${C.grey}"></path>
+			<path d="M64 28 Q80 26 90 38 Q95 52 88 62 Q80 60 72 50 Q66 42 64 34 Z" fill="${C.grey}"></path>
+			${eyes}
+			${blush}
+			<path d="M56.5 62 L63.5 62 L60 66.5 Z" fill="${C.nose}"></path>
+			${mouth}
+			<path d="M26 62 L12 59 M26 66 L12 68 M94 62 L108 59 M94 66 L108 68" stroke="#C9C1B6" stroke-width="1.2" stroke-linecap="round"></path>
+		</g>
+		<path d="M38 80 Q60 90 82 80 L82 87 Q60 97 38 87 Z" fill="${C.collar}"></path>
+		<circle cx="60" cy="91" r="3.5" fill="#FFC857"></circle>
+		${q}
+	</svg>`;
+}
+
 const keySvg = (size = 20) =>
 	`<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="5" fill="none" stroke="#C98A00" stroke-width="2.6"></circle><path d="M13 12h9M19 12v4M16 12v3" stroke="#C98A00" stroke-width="2.6" stroke-linecap="round"></path></svg>`;
 const flameSvg = (size = 20) =>
@@ -500,8 +564,8 @@ export class App {
 			</div>
 			<div class="ground"></div>
 			<div class="keeper-talk">
-				${keeperSvg(64, this.mood)}
-				<p class="talk-bubble">${esc(this.stageTalk())}</p>
+				${williamSvg(this.mood === 'happy' ? 'happy' : this.mood === 'think' ? 'tilt' : 'sit', 92)}
+				<p class="talk-bubble"><span class="talk-name">William</span>${esc(this.stageTalk())}</p>
 			</div>`;
 	}
 
@@ -509,22 +573,22 @@ export class App {
 		const v = this.view.name;
 		if (v === 'home') {
 			const due = S.dueIds(this.store).length;
-			if (due) return `メモ帳に復習が ${due} 件たまってるよ。先に片づけると気持ちいいよ。`;
+			if (due) return `メモ帳に復習が ${due} 件たまってるにゃ。先に片づけると気持ちいいよ。`;
 			const nx = this.nextRoom();
-			if (!nx) return '全部の部屋に明かりがついた！あとは総会（模試）で仕上げよう。';
-			return this.keys() ? `おかえり！次は ${nx.room.no}号室の相談だよ。` : `ようこそ！まずは ${nx.room.no}号室の相談から始めよう。`;
+			if (!nx) return '全部の部屋に明かりがついたにゃ！あとは総会（模試）で仕上げよう。';
+			return this.keys() ? `おかえりにゃ。次は ${nx.room.no}号室の相談だよ。` : `ようこそ、看板猫の William だにゃ。まずは ${nx.room.no}号室から始めよう。`;
 		}
 		if (v === 'lesson' && this.lesson) {
 			const l = this.lesson;
-			if (l.finished) return l.kind === 'room' ? '明かりがついたね！カギを1本どうぞ。' : 'おつかれさま！';
+			if (l.finished) return l.kind === 'room' ? '明かりがついたにゃ！カギを1本どうぞ。' : 'おつかれさまにゃ。';
 			const p = l.picks[l.pos];
-			if (p === null) return l.pos === 0 ? '相談は全部で ' + l.qids.length + ' 件。落ち着いて読もう。' : 'つぎの相談だよ。';
+			if (p === null) return l.pos === 0 ? `相談は全部で ${l.qids.length} 件。落ち着いて読むにゃ。` : 'つぎの相談だにゃ。';
 			const ok = this.q(l.qids[l.pos]).answer.includes(p);
-			return ok ? pick(PRAISE, hash(l.qids[l.pos])) : '間違えたところは、右の解説で一緒に確認しよう。';
+			return ok ? pick(['正解にゃ！', 'すごいにゃ！', 'その調子だにゃ！', 'ごきげんだにゃ〜'], hash(l.qids[l.pos])) : 'にゃ？ 管理人さんの解説を読んでみよう。';
 		}
-		if (v === 'exam') return this.exam?.finished ? '採点が終わったよ。間違えた問題は解説で確認しよう。' : '総会の時間だ。わからない問題は飛ばして、あとで戻ろう。';
-		if (v === 'soukai') return '総会（模試）は本番と同じ50問・2時間。腕試しにどうぞ。';
-		return 'ここまでの記録だよ。苦手な階が見えてくるね。';
+		if (v === 'exam') return this.exam?.finished ? '採点おわり。間違えた問題は解説で確認するにゃ。' : '総会の時間だにゃ。わからない問題は飛ばして、あとで戻ろう。';
+		if (v === 'soukai') return '総会（模試）は本番と同じ50問・2時間。腕試しにどうぞにゃ。';
+		return 'ここまでの記録だにゃ。苦手な階が見えてくるね。';
 	}
 
 	/* 右：中身 */
@@ -568,7 +632,8 @@ export class App {
 		const due = S.dueIds(this.store).length;
 		const waiting = S.waitingCount(this.store);
 		const next = nx
-			? `<section class="card card-hero">
+			? `<section class="card card-hero has-cat">
+				<div class="hero-cat" aria-hidden="true">${williamSvg('sleep', 130)}</div>
 				<div class="hero-meta"><span class="room-plate">${nx.room.no}号室</span><span>${nx.floor.floor}F ${esc(nx.floor.label)} ・ 相談 ${nx.room.qids.length}件</span></div>
 				<h1 class="hero-title">「${esc(nx.floor.short)}のこと、ちょっと教えて！」</h1>
 				<p class="muted">住人さんの相談に、試験の知識で答えよう。全部答えると部屋の明かりがついてカギがもらえます。間違えても、管理人さんが「なぜ違うか」を教えてくれます。</p>
@@ -713,7 +778,7 @@ export class App {
 	private renderLesson() {
 		const l = this.lesson!;
 		if (!l.qids.length) {
-			return `<section class="card"><h1 class="h1">メモ帳は空っぽです</h1><p class="muted">間違えた相談は、ここに書きとめられて、日をおいてもう一度出てきます。</p><p><a class="btn btn-go" href="#/">攻略マップに戻る</a></p></section>`;
+			return `<section class="card">${williamSvg('sleep', 140)}<h1 class="h1">メモ帳は空っぽです</h1><p class="muted">間違えた相談は、ここに書きとめられて、日をおいてもう一度出てきます。William も安心してお昼寝中。</p><p><a class="btn btn-go" href="#/">攻略マップに戻る</a></p></section>`;
 		}
 		const q = this.q(l.qids[l.pos]);
 		const picked = l.picks[l.pos];
@@ -757,6 +822,7 @@ export class App {
 						<h1 class="hero-title">${solved && l.room ? `${l.room.no}号室 解決！` : l.kind === 'memo' ? '復習おわり！' : 'おつかれさま！'}</h1>
 						<p class="result-score">${correct} / ${results.length} 件 正解${l.kind === 'room' ? ' ・ カギを1本手に入れた' : ''}</p>
 					</div>
+					${williamSvg(wrong ? 'sit' : 'happy', 84)}
 				</div>
 				${wrong ? `<p class="note-box">間違えた ${wrong} 件はメモ帳に書きとめました。すぐに解き直すこともできます。</p>` : '<p class="note-box note-ok">全問正解！この部屋には星がつきました。</p>'}
 				<div class="btn-row">
