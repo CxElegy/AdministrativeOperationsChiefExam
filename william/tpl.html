@@ -114,6 +114,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 .corner { position: absolute; width: 30px; height: 30px; pointer-events: none; }
 .corner svg { width: 100%; height: 100%; display: block; }
+.card .c-bl, .card .c-br { display: none; }  /* 相談票はスクロールするので、下の角飾りが文字に重ならないよう出さない */
 .c-tl { left: 4px; top: 4px; } .c-tr { right: 4px; top: 4px; transform: scaleX(-1); } .c-bl { left: 4px; bottom: 4px; transform: scaleY(-1); } .c-br { right: 4px; bottom: 4px; transform: scale(-1, -1); }
 .head { display: flex; align-items: center; gap: 12px; }
 .door { flex: none; width: 58px; height: 40px; border-radius: 6px; display: grid; place-items: center; font-family: var(--latin); font-weight: 700; font-size: 19px; color: #4a3615; background: linear-gradient(160deg, #fbe7aa, #d4ab5c 55%, #a77d35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 0 rgba(0, 0, 0, .15), 0 2px 6px rgba(0, 0, 0, .2); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
@@ -142,8 +143,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .note::before { content: "管理人さん"; display: inline-block; margin-right: 6px; padding: 0 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: var(--ink); background: linear-gradient(var(--gold-hi), var(--gold)); }
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 44px; }
 /* 「次の相談へ」は題卡をスクロールしても常に下に見えるように */
-.bar { position: sticky; z-index: 2; bottom: 0; margin: 0 -24px -20px; padding: 10px 24px 14px; background: linear-gradient(rgba(243, 234, 214, 0), #f3ead6 30%); }
-.bar:has(.cta) { box-shadow: 0 -6px 12px -10px rgba(60, 40, 20, .35); }
+.bar { position: relative; z-index: 2; margin: 0 -24px -20px; padding: 10px 24px 14px; background: #f3ead6; border-radius: 0 0 12px 12px; }
+/* 答えたあと（「次の相談へ」があるとき）だけ下に固定。背景は不透明にして、後ろの選択肢と文字が重ならないように */
+.bar:has(.cta) { position: sticky; bottom: 0; border-top: 1px solid rgba(201, 164, 92, .55); box-shadow: 0 -8px 14px -10px rgba(60, 40, 20, .4); }
 .bar .hint { font-size: 12.5px; color: var(--ink-soft); }
 .cta { position: relative; overflow: hidden; border: 0; border-radius: 999px; padding: 9px 40px; font-family: var(--maru); font-weight: 700; font-size: 16px; color: var(--ink); background: linear-gradient(#fff3cf, #f0c873); box-shadow: 0 0 0 2px var(--gold-lo), 0 4px 0 var(--gold-lo), 0 8px 18px rgba(0, 0, 0, .18); cursor: pointer; transition: transform .12s var(--ease-quint), box-shadow .12s; }
 .cta::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .85), transparent); transform: skewX(-20deg); animation: sweep 3.2s 1s infinite var(--ease-io); }
