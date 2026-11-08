@@ -82,6 +82,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 /* 学習の案内（建物の上の空のところ）：はじめて → 101号室から。記録があれば → 続きから・次の部屋・まちがえた相談の復習 */
 .guide { position: relative; z-index: 2; margin: 0 14px 8px; padding: 10px 12px 12px; border-radius: 12px; background: linear-gradient(rgba(42, 34, 68, .78), rgba(20, 22, 48, .78)); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .6), 0 6px 18px rgba(0, 0, 0, .3); color: #efe6d4; font-size: 13px; line-height: 1.6; }
 .guide:empty { display: none; }
+.guide .gsync { margin: 7px 0 0; font-size: 11px; color: #bdb4a2; } .guide .gsync .sync-status { font-size: 11px; } .guide .gsync .sync-status.ok { color: #9fd9a8; } .guide .gsync .sync-status.error { color: #f3a39b; }
 .guide h2 { margin: 0 0 6px; font-family: var(--mincho); font-weight: 800; font-size: 15px; color: var(--gold-hi); letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
 .guide h2 small { margin-left: auto; font-family: var(--maru); font-weight: 700; font-size: 11px; color: #cfc6b4; letter-spacing: 0; }
 .guide ol { margin: 0 0 8px; padding-left: 1.3em; } .guide ol li { margin: 1px 0; }
@@ -584,7 +585,7 @@ function paintGuide() {
 			+ (wrong.length ? btn('wrong', '復習', `まちがえた相談 ${wrong.length} 問`, `${at(wrong[0].fi, wrong[0].k).no}号室から順に`) : '')
 			+ '</div>';
 	}
-	el.innerHTML = html;
+	el.innerHTML = html + `<p class="gsync">${SYNC ? `記録：${esc(SYNC.id)} ・ <span class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg || '読み込み中…')}</span>` : 'このブラウザの中だけに保存しています（進度リンクで開くと、どの端末でも同じ記録になります）'}</p>`;
 	el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
 		se('tap'); const g = b.dataset.g;
 		if (g === 'start') goQ(0, 0, true);
@@ -855,7 +856,7 @@ let SYNC = readSync(), syncT = 0, syncMsg = '', syncSt = 'off';
 ST = loadLocal();
 // 前はこのブラウザの記録を1つにまとめて持っていた。同じリンクで開き直したときは、その記録をこのリンクの記録として引き継ぐ
 if (SYNC && SYNC.id === PREV_ID && !Object.keys(ST.q).length) { try { ST = { ...emptyStore(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) {} saveLocal(); }
-function setSyncMsg(st, m) { syncSt = st; syncMsg = m; const el = document.querySelector('[data-sync-status]'); if (el) { el.textContent = m; el.className = 'sync-status ' + st; } }
+function setSyncMsg(st, m) { syncSt = st; syncMsg = m; document.querySelectorAll('[data-sync-status]').forEach((el) => { el.textContent = m; el.className = 'sync-status ' + st; }); }
 const hhmm = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 // 保存：先にサーバーの記録を読んで、このブラウザの記録と合わせてから書く（ほかの端末で増えた分を上書きで消さない）
 async function pushNow() {
