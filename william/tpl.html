@@ -394,7 +394,10 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.querySelector('.app');
 // スマホは ① マンションの画面から始める（窓をタップすると ② 相談票＋William の画面）
 if (isMobile()) app.classList.add('show-tower');
-function openRoom() { if (!isMobile()) return; app.classList.remove('show-tower'); app.classList.add('show-room'); requestAnimationFrame(() => layout()); }
+// スマホ：マンション（索引）の画面 ⇄ 相談の画面。相談の画面に入るときに履歴を1つ積むので、端末の「戻る」でもマンションに戻れる
+function openRoom() { if (!isMobile()) return; if (!app.classList.contains('show-room')) { try { history.pushState({ room: 1 }, '', location.href); } catch (e) {} } app.classList.remove('show-tower'); app.classList.add('show-room'); requestAnimationFrame(() => layout()); }
+let popping = 0;  // 「戻る」でアドレスの #… が変わっても、相談を開き直さない
+addEventListener('popstate', () => { popping = performance.now(); if (isMobile() && app.classList.contains('show-room')) openTower(); try { history.replaceState(history.state, '', location.pathname + location.search + '#' + curQid()); } catch (e) {} });
 function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(() => { fitBldg(); flushPendingLights(); }); }
 addEventListener('resize', () => { if (!isMobile()) app.classList.remove('show-tower', 'show-room'); else if (!app.classList.contains('show-room')) app.classList.add('show-tower'); });
 
@@ -780,7 +783,7 @@ function restorePos() {
 }
 function savePos() {
 	ST.here = { f: curFloor().id, k: cur.k, t: Date.now() }; saveStore();
-	try { history.replaceState(null, '', location.pathname + location.search + '#' + curQid()); } catch (e) {}  // 今の相談をアドレスに残す（再読み込み・ブックマークで同じ相談）
+	try { history.replaceState(history.state, '', location.pathname + location.search + '#' + curQid()); } catch (e) {}  // 今の相談をアドレスに残す（再読み込み・ブックマークで同じ相談）
 }
 // 相談を開く（show = 前に答えていれば、その答えと解説を出す）
 function goQ(fi, k, show) {
@@ -797,7 +800,7 @@ function neighbor(d) {
 	return { f, k };
 }
 function nav(d) { const n = neighbor(d); se('tap'); goQ(n.f, n.k, true); }
-addEventListener('hashchange', () => { const h = decodeURIComponent(location.hash.slice(1)), p = DATA.q[h] && findQ(h); if (p && (p.f !== cur.f || p.k !== cur.k)) goQ(p.f, p.k, true); });
+addEventListener('hashchange', () => { if (performance.now() - popping < 500) return; const h = decodeURIComponent(location.hash.slice(1)), p = DATA.q[h] && findQ(h); if (p && (p.f !== cur.f || p.k !== cur.k)) goQ(p.f, p.k, true); });
 function wipeHTML() { const f = curFloor(), s = floorStats(cur.f); return `<div class="wipe" aria-hidden="true"><div class="ttl"><small>FLOOR ${f.floor}</small><b>${esc(f.label)}</b><div class="rule"><i></i></div><span>${s.rooms}室 ・ 明かり ${s.lit} 室</span></div></div>`; }
 function playWipe() { document.querySelectorAll('.wipe').forEach((e) => e.remove()); if (reduce) return; document.body.insertAdjacentHTML('beforeend', wipeHTML()); const w = document.querySelector('.wipe'); setTimeout(() => w.remove(), 2200); }
 
@@ -894,7 +897,7 @@ function showReward(fi, r, after) {
 	const rb = sc.querySelector('[data-retry]'); if (rb) rb.addEventListener('click', () => { se('tap'); close(); const k = rstart(fi, r) + Math.max(0, s.st.indexOf('ng')); goQ(fi, k, false); });
 	sc.querySelector('[data-next]').addEventListener('click', () => { se('tap'); close(); goQ(n.f, n.k, true); if (lit) jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('もぐもぐ♪', { font: '"Kiwi Maru"', size: 18, dx: -0.55, dy: -1.02, rot: 0, dur: 3 }); say('カギもらったにゃ♪ つぎのおへやいこ', 2.4); }); });
 }
-$('backBtn').addEventListener('click', () => { se('tap'); openTower(); });
+$('backBtn').addEventListener('click', () => { se('tap'); if (history.state && history.state.room) history.back(); else openTower(); });
 
 // ---------------- 記録・進度リンク・相談の一覧 ----------------
 let idxTab = 'list', idxFilter = 'ng';
