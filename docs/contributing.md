@@ -1,12 +1,13 @@
 # 問題・解説の追加方法
 
-問題はすべて JSON ファイルで管理しています。ファイルを追加・編集して `npm run build` すると、マンションの窓（＝相談）が増えます。
+問題はすべて JSON ファイルで管理しています。ファイルを追加・編集して `npm run build` すると、マンションの部屋に相談が増えます。新しい問題は `src/data/rooms.json` のどの部屋に入れるかも書いてください（書かないと、その階の「新着の相談」の部屋に入ります）。
 
 ```
 src/data/
 ├─ kakomon/r07.json    … 過去問（年度ごとに1ファイル。解説もここ）
 ├─ drills/*.json       … オリジナル問題（各階の最初の窓に入る）
-└─ categories.ts       … 階（分野）の順番
+├─ categories.ts       … 階（分野）の順番
+└─ rooms.json          … 部屋（同じテーマの相談のまとまり）。階ごとに 4〜8 室
 public/kakomon/        … 図表のある過去問の画像
 scripts/import_kakomon.py … 過去問 PDF → JSON の変換
 william/               … ページ本体（tpl.html）と、データを埋め込む build.py

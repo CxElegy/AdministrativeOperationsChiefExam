@@ -42,33 +42,54 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .bldg::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255, 190, 140, .16), transparent 40%), radial-gradient(120% 60% at 100% 0%, rgba(255, 170, 120, .18), transparent 60%); }
 .roof { flex: none; height: 34px; display: grid; place-items: center; background: linear-gradient(#2a2244, #3a3058); border-bottom: 2px solid var(--gold-lo); position: relative; }
 .roof span { font-family: var(--latin); font-weight: 700; font-size: 12px; letter-spacing: .32em; color: var(--gold-hi); text-shadow: 0 0 10px rgba(255, 210, 140, .7); padding: 2px 12px; border: 1px solid rgba(201, 164, 92, .6); border-radius: 3px; background: rgba(13, 24, 56, .5); }
-.floors { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
-.floor { position: relative; flex: none; display: flex; gap: 8px; align-items: stretch; padding: 3px 8px 4px 0; border-bottom: 3px solid #2c2442; box-shadow: 0 1px 0 rgba(201, 164, 92, .25); cursor: pointer; transition: height .45s var(--ease-quint), background .3s; }
-.floor.open { background: linear-gradient(90deg, rgba(255, 220, 160, .07), rgba(255, 220, 160, .14)); cursor: default; }
+.floors { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.floor { position: relative; flex: 1 1 0; min-height: 0; display: flex; gap: 8px; align-items: stretch; padding: 6px 10px 7px 0; border-bottom: 4px solid #2c2442; box-shadow: 0 1px 0 rgba(201, 164, 92, .25); }
+.floor::after { content: ""; position: absolute; left: 48px; right: 0; bottom: 0; height: 5px; background: repeating-linear-gradient(90deg, rgba(201, 164, 92, .35) 0 2px, transparent 2px 9px); pointer-events: none; }  /* ベランダの手すり */
+.floor.cur { background: linear-gradient(90deg, rgba(255, 220, 160, .06), rgba(255, 220, 160, .12)); }
 .fbtn { position: relative; flex: none; width: 48px; border: 0; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: linear-gradient(90deg, #2a2244, #342b4f); color: #efe4cf; cursor: pointer; border-right: 1px solid rgba(201, 164, 92, .35); }
 .fbtn b { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; font-family: var(--latin); font-size: 12px; color: var(--ink); background: linear-gradient(var(--gold-hi), var(--gold)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6); flex: none; }
 .fbtn small { font-size: 9px; line-height: 1.15; letter-spacing: .02em; text-align: center; white-space: nowrap; overflow: hidden; max-width: 100%; }
-.floor.open .fbtn { background: linear-gradient(90deg, #fff1d0, #ecc77d); color: var(--ink); }
-.floor.open .fbtn b { background: var(--night); color: var(--gold-hi); }
+.floor.cur .fbtn { background: linear-gradient(90deg, #fff1d0, #ecc77d); color: var(--ink); }
+.floor.cur .fbtn b { background: var(--night); color: var(--gold-hi); }
 .floor.star .fbtn::after { content: "★"; position: absolute; right: 3px; top: 2px; font-size: 10px; color: var(--gold-hi); text-shadow: 0 0 6px rgba(255, 220, 140, .9); }
-.floor.thin .fbtn small { display: none; }
-.tidx { display: none; }
 .fbtn:hover b, .fbtn:focus-visible b { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 12px rgba(243, 223, 162, .8); }
-.wins { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(var(--cols, 13), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 3), minmax(0, 1fr)); gap: 3px 4px; padding: 2px 0; }
-.floor.open .wins { gap: 5px 6px; }
-/* 窓：暗い＝まだ、明かり＝正解、カーテン＝まちがい */
-.win { position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 2px; cursor: pointer; background: linear-gradient(160deg, #26304f, #141a33 70%); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .4), 0 1px 0 rgba(255, 255, 255, .08); transition: background .4s, box-shadow .4s, transform .15s; }
-.win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(120deg, rgba(255, 255, 255, .12), transparent 45%); pointer-events: none; }
-.win i { position: absolute; inset: 0; display: none; place-items: center; font-style: normal; font-family: var(--latin); font-weight: 700; font-size: var(--lab); color: rgba(233, 226, 210, .55); letter-spacing: .02em; }
-.floor.open .win i { display: grid; }
-.win.s-ok { background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 45%, #f2a54f); box-shadow: 0 0 10px 2px rgba(255, 200, 110, .55), 0 0 26px 6px rgba(255, 180, 90, .18); }
-.win.s-ok i { color: rgba(90, 55, 20, .8); }
-.win.s-ng { background: repeating-linear-gradient(90deg, #a5637a 0 3px, #8a4d66 3px 6px); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35); }
-.win.s-ng::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 22%; background: #6d3a52; border-radius: 2px 2px 0 0; }
-.win.s-ng i { color: rgba(255, 235, 240, .9); }
-.win.here { outline: 2px solid var(--gold-hi); outline-offset: 1px; z-index: 1; animation: herePulse 1.6s ease-in-out infinite; }
-@keyframes herePulse { 50% { outline-color: rgba(243, 223, 162, .35); } }
-.win:hover { transform: scale(1.12); z-index: 2; }
+.tidx { display: none; }
+.wins { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(var(--cols, 8), minmax(0, 1fr)); gap: 6px; }
+/* 窓＝部屋：正解が増えるほど明るく（--lv）、8割で点灯。下のバーは 金＝正解・赤＝まちがい */
+.win { --lv: 0; --ok: 0; --ng: 0; position: relative; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 3px 3px 2px 2px; cursor: pointer; overflow: hidden; background: linear-gradient(160deg, #26304f, #141a33 70%); box-shadow: inset 0 0 0 2px #2c2442, inset 0 0 0 3px rgba(201, 164, 92, .35); transition: transform .15s, box-shadow .4s; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(233, 226, 210, .7); }
+.win .glow { position: absolute; inset: 0; opacity: var(--lv); background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 45%, #f2a54f); transition: opacity .6s; }
+.win::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent calc(50% - 1px), rgba(44, 36, 66, .55) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(120deg, rgba(255, 255, 255, .14), transparent 45%); pointer-events: none; }
+.win i, .win em { position: relative; z-index: 1; font-style: normal; line-height: 1.15; max-width: 92%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.win i { font-family: var(--latin); font-weight: 700; font-size: 12px; }
+.win em { font-size: 9px; white-space: normal; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: center; word-break: break-all; margin-top: 2px; }
+.win .meter { position: absolute; z-index: 1; left: 4px; right: 4px; bottom: 3px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, .35); overflow: hidden; }
+.win .meter .o, .win .meter .x { position: absolute; top: 0; bottom: 0; }
+.win .meter .o { left: 0; width: calc(var(--ok) * 100%); background: #ffe08a; box-shadow: 0 0 4px #ffd27e; }
+.win .meter .x { left: calc(var(--ok) * 100%); width: calc(var(--ng) * 100%); background: #e0758f; }
+.win.lit { box-shadow: inset 0 0 0 2px #2c2442, 0 0 12px 2px rgba(255, 200, 110, .55), 0 0 30px 6px rgba(255, 180, 90, .2); color: rgba(80, 48, 18, .9); }
+.win.lit .meter { background: rgba(120, 70, 20, .25); } .win.lit .meter .o { background: #fff7d8; }
+.win.full i::after { content: " ★"; color: #b5741c; }
+.win.here { outline: 2px solid var(--gold-hi); outline-offset: 2px; z-index: 1; animation: herePulse 1.6s ease-in-out infinite; }
+@keyframes herePulse { 50% { outline-color: rgba(243, 223, 162, .3); } }
+.win:hover { transform: translateY(-2px); z-index: 2; }
+.win.glint { animation: glint .9s var(--ease-quint); }
+@keyframes glint { 0% { filter: brightness(2.2); transform: scale(1.12); } 100% { filter: none; transform: none; } }
+.win.nudge { animation: nudge .45s; }
+@keyframes nudge { 20%, 60% { transform: translateX(-3px); } 40%, 80% { transform: translateX(3px); } }
+/* 相談票：部屋の中の番号 701-1 … */
+.rtwrap { margin-top: -4px; }
+.rtabs { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 0 8px; border-bottom: 1px solid rgba(201, 164, 92, .45); }
+.rt { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 8px; border: 1px solid rgba(138, 106, 53, .45); background: #fffaf0; color: var(--ink); font-family: var(--latin); font-weight: 700; font-size: 13px; cursor: pointer; }
+.rt.ok { background: linear-gradient(#fff4c9, #ffd27e); border-color: #e0a64f; } .rt.ng { background: #f6dde5; border-color: #c27a92; color: #8a3550; }
+.rt.on { box-shadow: 0 0 0 2px var(--night); }
+.rlight { margin-left: auto; font-size: 11.5px; color: var(--ink-soft); }
+.rtitle { margin: -6px 0 0; text-align: center; font-family: var(--mincho); font-weight: 700; color: var(--ink-soft); }
+.item.dim { filter: grayscale(.7) brightness(.9); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #bba; }
+.item.dim::before { display: none; }
+.irow { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: start; margin: 4px 0; }
+.ino { display: flex; flex-direction: column; align-items: flex-start; border: 1px solid rgba(138, 106, 53, .45); background: linear-gradient(160deg, #26304f, #141a33); color: #e9e2d2; border-radius: 6px; padding: 4px 8px; cursor: pointer; line-height: 1.2; text-align: left; }
+.ino b { font-family: var(--latin); font-size: 13px; } .ino small { font-size: 10px; }
+.ino.lit { background: radial-gradient(ellipse at 50% 60%, #fff4c9, #ffd27e 60%, #f2a54f); color: var(--ink); }
 .ground { flex: none; height: 26px; display: flex; justify-content: center; align-items: flex-end; background: linear-gradient(#3a3058, #251e3a); border-top: 2px solid var(--gold-lo); }
 .ground span { width: 46px; height: 20px; border-radius: 6px 6px 0 0; background: linear-gradient(#ffe6ad, #e7b066); box-shadow: 0 0 16px rgba(255, 200, 120, .6); position: relative; }
 .ground span::before { content: ""; position: absolute; left: 50%; top: 3px; bottom: 0; width: 1px; background: rgba(90, 55, 20, .5); }
@@ -217,14 +238,11 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 }
 .back { display: none; }
 .credit { position: absolute; z-index: 3; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 9px; line-height: 1.3; color: rgba(233, 226, 210, .55); padding: 0 8px; pointer-events: none; }
-.win.ignite { animation: ignite 1.1s var(--ease-quint); z-index: 3; }
+.win.ignite { animation: ignite 1.1s var(--ease-quint); z-index: 3; overflow: visible; }
 @keyframes ignite { 0% { filter: brightness(3.5); transform: scale(1.6); } 12% { filter: brightness(.6); } 22% { filter: brightness(2.4); } 34% { filter: brightness(.9); } 100% { filter: none; transform: none; } }
-.win.fizzle { animation: fizzle .9s steps(1); }
-@keyframes fizzle { 0%, 30%, 60% { background: radial-gradient(#ffe9b0, #e09a4a); box-shadow: 0 0 10px rgba(255, 200, 110, .6); } 15%, 45%, 100% { background: repeating-linear-gradient(90deg, #a5637a 0 3px, #8a4d66 3px 6px); box-shadow: none; } }
 .ray { position: absolute; z-index: 2; pointer-events: none; width: 300%; height: 300%; left: -100%; top: -100%; background: conic-gradient(from 0deg, transparent, rgba(255, 236, 180, .9) 8%, transparent 16%, transparent 33%, rgba(255, 236, 180, .9) 41%, transparent 49%, transparent 66%, rgba(255, 236, 180, .9) 74%, transparent 82%); border-radius: 50%; mix-blend-mode: screen; animation: ray 1s var(--ease-quint) forwards; }
 @keyframes ray { from { transform: scale(.2) rotate(0); opacity: 1; } to { transform: scale(2.2) rotate(70deg); opacity: 0; } }
 .spark { position: fixed; z-index: 40; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; border-radius: 50%; background: radial-gradient(#fff, #ffe6a0 40%, rgba(255, 190, 90, 0) 70%); box-shadow: 0 0 18px 8px rgba(255, 210, 120, .7); }
-.spark.cold { background: radial-gradient(#fff, #f3c3d2 40%, rgba(200, 120, 150, 0) 70%); box-shadow: 0 0 12px 5px rgba(220, 150, 180, .55); }
 .trail { position: fixed; z-index: 39; width: 6px; height: 6px; margin: -3px 0 0 -3px; pointer-events: none; border-radius: 50%; background: #fff2c4; box-shadow: 0 0 8px rgba(255, 210, 120, .9); animation: trail .7s ease-out forwards; }
 @keyframes trail { to { transform: scale(.2) translateY(10px); opacity: 0; } }
 .bldg.sweep::before { content: ""; position: absolute; z-index: 4; left: 0; right: 0; height: 30%; bottom: -30%; background: linear-gradient(transparent, rgba(255, 230, 170, .35), transparent); animation: sweep2 1.4s var(--ease-io) forwards; pointer-events: none; }
@@ -290,7 +308,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.brand { height: 56px; }
 	.bldgwrap { padding: 0 10px 18px; }
 	.finfo { margin: 0 10px 6px; font-size: 11px; padding: 5px 10px; }
-	.fbtn { width: 40px; } .fbtn small { font-size: 8px; }
+	.fbtn { width: 40px; } .fbtn small { font-size: 8px; } .floor::after { left: 40px; }
+	.wins { gap: 4px; } .win em { display: none; } .win i { font-size: 11px; }
+	.irow { grid-template-columns: 78px 1fr; }
 	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
 	.credit { font-size: 8px; bottom: 3px; } .bldgwrap { padding-bottom: 22px; }
 	.tidx { display: inline-flex; position: absolute; right: 12px; top: 14px; border: 1px solid var(--gold); background: rgba(13, 24, 56, .6); color: var(--gold-hi); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
@@ -362,7 +382,7 @@ const app = document.querySelector('.app');
 // スマホは ① マンションの画面から始める（窓をタップすると ② 相談票＋William の画面）
 if (isMobile()) app.classList.add('show-tower');
 function openRoom() { if (!isMobile()) return; app.classList.remove('show-tower'); app.classList.add('show-room'); requestAnimationFrame(() => layout()); }
-function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(() => { fitBldg(); flushPendingLights(); }); }
+function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(flushPendingLights); }
 addEventListener('resize', () => { if (!isMobile()) app.classList.remove('show-tower', 'show-room'); else if (!app.classList.contains('show-room')) app.classList.add('show-tower'); });
 
 // ---------------- 効果音（WebAudio で合成） ----------------
@@ -387,101 +407,91 @@ function se(kind) {
 	if (kind === 'reward') [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.4, 'sine', 0.2, i * 0.09));
 }
 
-// ---------------- 左：マンション（窓＝相談。明かり＝正解・カーテン＝まちがい・暗い＝まだ） ----------------
+// ---------------- 左：マンション ----------------
+// 階＝分野、部屋（窓）＝同じテーマの相談のまとまり（701-1, 701-2 …）。正解するたびに窓が少しずつ明るくなり、8割正解で明かりが灯る（全部で ★）
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const QN = (id) => DATA.q[id];
 // 問題・解説の文：**太字** と改行だけ HTML にする（ほかはそのまま文字として出す）
 const fmt = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+const COLS = Math.max(...DATA.floors.map((f) => f.rooms.length));
+$('bldg').style.setProperty('--cols', COLS);
 const FNAME = { 1: '適正化法', 2: '会計', 3: '委託契約', 4: '民法', 5: '区分所有', 6: '管理規約', 7: '建築設備', 8: 'その他' };
-const roomNo = (fi, k) => DATA.floors[fi].floor * 100 + k + 1;
-const FLOOR_EL = [], WINS = [];  // WINS[fi][k] = 窓のボタン
-let openF = 0;                   // 大きく開いている階
+// 階の問題は部屋の順に並べる。k（階の中の通し番号）→ 部屋、部屋 → 最初の k
+DATA.floors.forEach((f) => { f.qids = f.rooms.flatMap((r) => r.qids); f.ridx = []; f.rstart = []; let k = 0; f.rooms.forEach((r, i) => { f.rstart[i] = k; r.qids.forEach(() => { f.ridx[k++] = i; }); }); });
+const roomOf = (k, fi = cur.f) => DATA.floors[fi].ridx[k];
+const rstart = (fi, r) => DATA.floors[fi].rstart[r];
+const roomNo = (fi, r) => DATA.floors[fi].floor * 100 + r + 1;
+const WIN_STATE = (id) => { const r = ST.q[id]; return !r ? 'none' : r.last ? 'ok' : 'ng'; };
+function roomStats(fi, r) { const ids = DATA.floors[fi].rooms[r].qids; const st = ids.map(WIN_STATE); return { ids, st, n: ids.length, ok: st.filter((s) => s === 'ok').length, ng: st.filter((s) => s === 'ng').length, done: st.filter((s) => s !== 'none').length }; }
+const need = (n) => Math.ceil(n * 0.8);  // 8割正解で点灯
+const isLit = (s) => s.ok >= need(s.n);
+const FLOOR_EL = [], WINS = [];  // WINS[fi][r] = 部屋の窓
 DATA.floors.forEach((f, fi) => {
 	const el = document.createElement('div'); el.className = 'floor'; el.dataset.f = fi;
-	el.innerHTML = `<button type="button" class="fbtn" aria-label="${f.floor}階 ${esc(f.label)}"><b>${f.floor}</b><small>${esc(FNAME[f.floor] || f.short)}</small></button><div class="wins"></div>`;
+	el.innerHTML = `<button type="button" class="fbtn" aria-label="${f.floor}階 ${esc(f.label)}へ"><b>${f.floor}</b><small>${esc(FNAME[f.floor] || f.short)}</small></button><div class="wins"></div>`;
 	const wins = el.querySelector('.wins');
-	WINS[fi] = f.qids.map((id, k) => {
-		const q = QN(id), w = document.createElement('button'); w.type = 'button'; w.className = 'win s-none';
-		w.innerHTML = `<i>${roomNo(fi, k)}</i>`; w.title = `${roomNo(fi, k)}号室 ・ ${q.set} 問${q.no}`;
-		w.addEventListener('click', (e) => {
-			e.stopPropagation(); se('tap');
-			if (isMobile() && openF !== fi) { selFloor(fi); return; }  // スマホ：小さい階は、まず大きく開く
-			goQ(fi, k, true);
-		});
+	WINS[fi] = f.rooms.map((room, r) => {
+		const w = document.createElement('button'); w.type = 'button'; w.className = 'win';
+		w.innerHTML = `<span class="glow"></span><i>${roomNo(fi, r)}</i><em>${esc(room.title)}</em><span class="meter"><b class="o"></b><b class="x"></b></span>`;
+		w.addEventListener('click', () => { se('tap'); goRoom(fi, r); });
 		wins.appendChild(w); return w;
 	});
-	el.querySelector('.fbtn').addEventListener('click', () => { se('tap'); selFloor(fi); if (!isMobile()) goQ(fi, nextOpenIn(fi), true); });
-	el.addEventListener('click', () => { if (openF !== fi) { se('tap'); selFloor(fi); } });
+	el.querySelector('.fbtn').addEventListener('click', () => { se('tap'); const r = firstOpenRoom(fi); goRoom(fi, r); });
 	$('floors').prepend(el); FLOOR_EL[fi] = el;  // 上から 8F → 1F
 });
-// 階を選ぶ（その階の窓が大きくなって、部屋番号が見える）
-function selFloor(fi) { openF = fi; FLOOR_EL.forEach((el, i) => el.classList.toggle('open', i === fi)); fitBldg(); paintInfo(); }
-// 建物の高さに窓が全部おさまるように、階ごとの列の数と高さを決める
-function fitBldg() {
-	const box = $('floors'); if (!box || !box.clientHeight) return;
-	const fb = FLOOR_EL[0].querySelector('.fbtn').offsetWidth || 44;
-	const ww = box.clientWidth - fb - 14, hh = box.clientHeight - DATA.floors.length * 7;
-	const cc = Math.max(8, Math.min(16, Math.round(ww / 24))), co = Math.max(5, Math.min(11, Math.round(ww / 50)));
-	const rows = DATA.floors.map((f, i) => Math.ceil(f.qids.length / (i === openF ? co : cc)));
-	const hc = (ww / cc) * 0.62, ho = (ww / co) * 0.6;
-	let need = rows.reduce((a, r, i) => a + r * (i === openF ? ho : hc), 0);
-	const k = hh / need;  // 足りなければ縮め、余れば少し伸ばす
-	DATA.floors.forEach((f, i) => {
-		const el = FLOOR_EL[i], o = i === openF;
-		el.style.setProperty('--cols', o ? co : cc); el.style.setProperty('--rows', rows[i]);
-		const h = Math.max(14, rows[i] * (o ? ho : hc) * k + 7); el.style.height = h + 'px'; el.classList.toggle('thin', h < 46);
-	});
-	$('bldg').style.setProperty('--lab', Math.max(8, Math.min(12, (ww / co) * 0.24)).toFixed(1) + 'px');
-}
-addEventListener('resize', () => requestAnimationFrame(fitBldg)); new ResizeObserver(() => fitBldg()).observe($('floors'));
 function towerVisible() { const t = document.querySelector('.tower'); return t && t.offsetParent !== null; }
-const pending = new Map();  // 光の玉が着くまで前の見た目のままにしておく窓 → 着いたときの演出
-function winState(id) { const r = ST.q[id]; return !r ? 'none' : r.last ? 'ok' : 'ng'; }
+const pending = new Map();  // 光の玉が着くまで、前の明るさのままにしておく窓 → 着いたときの演出
+const shown = new Map();    // 窓ごとに今表示している { ok, st }（光の玉が着くまでは前の状態）
+function paintWin(fi, r, s) {
+	const w = WINS[fi][r];
+	w.style.setProperty('--lv', isLit(s) ? 1 : (s.ok / need(s.n)) * 0.55);
+	w.classList.toggle('lit', isLit(s)); w.classList.toggle('full', s.ok === s.n); w.classList.toggle('miss', s.ng > 0);
+	w.style.setProperty('--ok', s.ok / s.n); w.style.setProperty('--ng', s.ng / s.n);
+	w.setAttribute('aria-label', `${roomNo(fi, r)}号室 ${DATA.floors[fi].rooms[r].title}：${s.n}件中 正解 ${s.ok}・まちがい ${s.ng}${isLit(s) ? '（明かりあり）' : ''}`);
+	w.title = `${roomNo(fi, r)}号室 ${DATA.floors[fi].rooms[r].title} ・ 正解 ${s.ok} / ${s.n}${isLit(s) ? '' : `（${need(s.n)}件正解で点灯）`}`;
+}
 function paintWindows() {
 	DATA.floors.forEach((f, fi) => {
-		let ok = 0;
-		f.qids.forEach((id, k) => {
-			const w = WINS[fi][k], s = winState(id); if (s === 'ok') ok++;
-			if (!pending.has(w)) { w.classList.remove('s-none', 's-ok', 's-ng'); w.classList.add('s-' + s); }
-			w.classList.toggle('here', fi === cur.f && k === cur.k);
-			w.setAttribute('aria-label', `${roomNo(fi, k)}号室 ${{ ok: '正解', ng: 'まちがい', none: 'まだ' }[s]}`);
-		});
-		FLOOR_EL[fi].classList.toggle('star', ok === f.qids.length);
+		let lit = 0;
+		f.rooms.forEach((_, r) => { const s = roomStats(fi, r), w = WINS[fi][r]; if (isLit(s)) lit++; paintWin(fi, r, pending.has(w) ? pending.get(w).before : s); w.classList.toggle('here', fi === cur.f && r === roomOf(cur.k)); });
+		FLOOR_EL[fi].classList.toggle('star', lit === f.rooms.length);
 		FLOOR_EL[fi].classList.toggle('cur', fi === cur.f);
 	});
 	paintInfo();
 }
-function floorStats(fi) { const ids = DATA.floors[fi].qids; return { total: ids.length, ok: ids.filter((id) => ST.q[id]?.last).length, ng: ids.filter((id) => ST.q[id] && !ST.q[id].last).length, done: ids.filter((id) => ST.q[id]).length }; }
+function floorStats(fi) { const ids = DATA.floors[fi].qids; return { total: ids.length, ok: ids.filter((id) => ST.q[id]?.last).length, ng: ids.filter((id) => ST.q[id] && !ST.q[id].last).length, done: ids.filter((id) => ST.q[id]).length, rooms: DATA.floors[fi].rooms.length, lit: DATA.floors[fi].rooms.filter((_, r) => isLit(roomStats(fi, r))).length }; }
 function paintInfo() {
-	const f = DATA.floors[openF], s = floorStats(openF);
-	let all = 0, okAll = 0; DATA.floors.forEach((_, i) => { const t = floorStats(i); all += t.total; okAll += t.ok; });
-	$('floorinfo').innerHTML = `<b>${f.floor}F ${esc(f.label)}</b><span class="lg"><i class="ok"></i>正解 ${s.ok}<i class="ng"></i>まちがい ${s.ng}<i class="none"></i>まだ ${s.total - s.done}</span><span class="all">ぜんぶで ${okAll} / ${all} 室に明かり${isMobile() ? ' ・ 階をえらんで、窓をタップ' : ' ・ 窓をクリックで相談を開く'}</span>`;
+	const f = curFloor(), s = floorStats(cur.f);
+	let rooms = 0, lit = 0; DATA.floors.forEach((_, i) => { const t = floorStats(i); rooms += t.rooms; lit += t.lit; });
+	$('floorinfo').innerHTML = `<b>${f.floor}F ${esc(f.label)}</b><span>明かり ${s.lit} / ${s.rooms} 室 ・ 正解 ${s.ok} / ${s.total} 問</span><span class="all">マンション全体 ${lit} / ${rooms} 室 ・ 部屋＝同じテーマの相談。8割正解で明かりがつく</span>`;
 }
-function igniteWin(w, kind) {
-	pending.delete(w); paintWindows();
-	if (kind === 'ng') { w.classList.remove('fizzle'); void w.offsetWidth; w.classList.add('fizzle'); return; }
-	w.classList.add('ignite'); setTimeout(() => w.classList.remove('ignite'), 1200);
-	const r = document.createElement('span'); r.className = 'ray'; w.appendChild(r); setTimeout(() => r.remove(), 1000);
+// 窓に光が着いた：明るさを上げる。ちょうど点灯したら光の輪
+function landWin(w) {
+	const p = pending.get(w); pending.delete(w); paintWindows(); if (!p) return;
+	if (p.kind === 'ng') { w.classList.remove('nudge'); void w.offsetWidth; w.classList.add('nudge'); return; }
+	const cls = p.lights ? 'ignite' : 'glint'; w.classList.remove('ignite', 'glint'); void w.offsetWidth; w.classList.add(cls); setTimeout(() => w.classList.remove(cls), 1200);
+	if (p.lights) { const r = document.createElement('span'); r.className = 'ray'; w.appendChild(r); setTimeout(() => r.remove(), 1000); }
 	se('jump');
 }
-// 題卡（スタンプ）から窓へ、光の玉が飛んでいって明かりがつく
-function flyLight(fromEl, w, kind) {
-	if (!towerVisible() || reduce || !fromEl) { if (towerVisible()) igniteWin(w, kind); return; }  // 見えていない間はそのまま（マンションに戻ったときに点ける）
+// 正解：相談票のスタンプから部屋の窓へ光の玉が飛ぶ。不正解：玉は飛ばさず、窓が小さく揺れるだけ
+function flyLight(fromEl, w) {
+	const p = pending.get(w); if (!p) return;
+	if (!towerVisible()) return;                 // スマホ：マンションの画面に戻ったときに順に点ける
+	if (p.kind === 'ng' || reduce || !fromEl) { landWin(w); return; }
 	const a = fromEl.getBoundingClientRect(), b = w.getBoundingClientRect();
 	const x0 = a.left + a.width / 2, y0 = a.top + a.height / 2, x1 = b.left + b.width / 2, y1 = b.top + b.height / 2;
 	const cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - 160;
-	const sp = document.createElement('div'); sp.className = 'spark' + (kind === 'ng' ? ' cold' : ''); document.body.appendChild(sp);
+	const sp = document.createElement('div'); sp.className = 'spark'; document.body.appendChild(sp);
 	const t0 = performance.now(), dur = 900;
 	(function step(t) {
 		const k = Math.min(1, (t - t0) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 		const x = (1 - e) * (1 - e) * x0 + 2 * (1 - e) * e * cx + e * e * x1, y = (1 - e) * (1 - e) * y0 + 2 * (1 - e) * e * cy + e * e * y1;
 		sp.style.left = x + 'px'; sp.style.top = y + 'px';
-		if (kind !== 'ng' && Math.random() < 0.7) { const tr = document.createElement('div'); tr.className = 'trail'; tr.style.left = x + 'px'; tr.style.top = y + 'px'; document.body.appendChild(tr); setTimeout(() => tr.remove(), 700); }
-		if (k < 1) requestAnimationFrame(step); else { sp.remove(); igniteWin(w, kind); }
+		if (Math.random() < 0.7) { const tr = document.createElement('div'); tr.className = 'trail'; tr.style.left = x + 'px'; tr.style.top = y + 'px'; document.body.appendChild(tr); setTimeout(() => tr.remove(), 700); }
+		if (k < 1) requestAnimationFrame(step); else { sp.remove(); landWin(w); }
 	})(t0);
 }
-// スマホ：マンションに戻ったら、解いている間についた明かりを順に点ける
-function flushPendingLights() { [...pending.entries()].forEach(([w, kind], i) => setTimeout(() => igniteWin(w, kind), 350 + 260 * i)); }
+function flushPendingLights() { [...pending.keys()].forEach((w, i) => setTimeout(() => landWin(w), 350 + 300 * i)); }
 
 // ---------------- William の素材 ----------------
 const NECK = { x: 150, y: 255 }, LEG_Y = 600, ANCHOR = { x: 192, y: 690 };
@@ -708,7 +718,7 @@ async function pullSync() {
 	if (!SYNC) return; setSyncMsg('syncing', '読み込み中…');
 	try {
 		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' });
-		if (r.ok) { const m = (await r.json()).data?.main; if (m) { ST = mergeStore(ST, m); saveLocal(); restorePos(); selFloor(cur.f); paintWindows(); renderQ(true); } }
+		if (r.ok) { const m = (await r.json()).data?.main; if (m) { ST = mergeStore(ST, m); saveLocal(); restorePos(); paintWindows(); renderQ(true); savePos(); } }
 		else if (r.status !== 404) throw new Error('HTTP ' + r.status);
 		await pushNow(); setSyncMsg('ok', `同期しました（${hhmm()}）`);
 	} catch (e) { setSyncMsg('error', `進度サーバーにつながりません（${e.message}）。このブラウザには保存しています。`); }
@@ -717,24 +727,31 @@ function newId() { const b = new Uint8Array(12); crypto.getRandomValues(b); retu
 function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}${SYNC.api === location.origin ? '' : `&api=${encodeURIComponent(SYNC.api)}`}`; }
 
 
-// ---------------- いまの相談（階 f の k 番目の窓） ----------------
+// ---------------- いまの相談（階 f の k 番目の問題。k は部屋の順に通し番号） ----------------
 let cur = { f: 0, k: 0 }, answered = false;
 const curFloor = () => DATA.floors[cur.f], curQid = () => curFloor().qids[cur.k];
-function nextOpenIn(fi) { const ids = DATA.floors[fi].qids, i = ids.findIndex((id) => !ST.q[id]); return i < 0 ? 0 : i; }
+function findQ(qid) { for (let fi = 0; fi < DATA.floors.length; fi++) { const k = DATA.floors[fi].qids.indexOf(qid); if (k >= 0) return { f: fi, k }; } return null; }
+// 部屋に入ったときに開く相談：まだの相談 → まちがえた相談 → 最初
+function entryOf(fi, r) { const s = roomStats(fi, r); let i = s.st.indexOf('none'); if (i < 0) i = s.st.indexOf('ng'); return rstart(fi, r) + Math.max(0, i); }
+function firstOpenRoom(fi) { const f = DATA.floors[fi]; const r = f.rooms.findIndex((_, i) => !isLit(roomStats(fi, i))); return r < 0 ? 0 : r; }
 function restorePos() {
-	const h = ST.here, fi = h ? DATA.floors.findIndex((f) => f.id === h.f) : -1;
-	cur = fi >= 0 ? { f: fi, k: Math.max(0, Math.min(h.k || 0, DATA.floors[fi].qids.length - 1)) } : { f: 0, k: nextOpenIn(0) };
+	const h = decodeURIComponent(location.hash.slice(1)), byHash = h && DATA.q[h] ? findQ(h) : null;
+	if (byHash) { cur = byHash; return; }  // #r06-12 のようなリンクで開いたときはその相談
+	const st = ST.here, fi = st ? DATA.floors.findIndex((f) => f.id === st.f) : -1;
+	cur = fi >= 0 ? { f: fi, k: Math.max(0, Math.min(st.k || 0, DATA.floors[fi].qids.length - 1)) } : { f: 0, k: entryOf(0, firstOpenRoom(0)) };
 }
-function savePos() { ST.here = { f: curFloor().id, k: cur.k, t: Date.now() }; saveStore(); }
-// 窓をえらぶ → その相談を開く（show = 前に答えていれば、その答えと解説を出す）
+function savePos() {
+	ST.here = { f: curFloor().id, k: cur.k, t: Date.now() }; saveStore();
+	try { history.replaceState(null, '', location.pathname + location.search + '#' + curQid()); } catch (e) {}  // 今の相談をアドレスに残す（再読み込み・ブックマークで同じ相談）
+}
+// 相談を開く（show = 前に答えていれば、その答えと解説を出す）
 function goQ(fi, k, show) {
 	const fl = fi !== cur.f; cur = { f: fi, k }; savePos();
-	if (openF !== fi) selFloor(fi);
 	paintWindows(); renderQ(show);
-	if (isMobile()) openRoom();
-	if (fl && !isMobile()) playWipe();
+	if (isMobile()) openRoom(); else if (fl) playWipe();
 	if (S.on === 'card') jumpTo('top');
 }
+function goRoom(fi, r) { goQ(fi, entryOf(fi, r), true); }
 function neighbor(d) {
 	let f = cur.f, k = cur.k + d;
 	if (k >= DATA.floors[f].qids.length) { f = (f + 1) % DATA.floors.length; k = 0; }
@@ -742,27 +759,33 @@ function neighbor(d) {
 	return { f, k };
 }
 function nav(d) { const n = neighbor(d); se('tap'); goQ(n.f, n.k, true); }
-function wipeHTML() { const f = curFloor(); return `<div class="wipe" aria-hidden="true"><div class="ttl"><small>FLOOR ${f.floor}</small><b>${esc(f.label)}</b><div class="rule"><i></i></div><span>${f.qids.length}室 ・ 正解 ${floorStats(cur.f).ok} 室に明かり</span></div></div>`; }
+addEventListener('hashchange', () => { const h = decodeURIComponent(location.hash.slice(1)), p = DATA.q[h] && findQ(h); if (p && (p.f !== cur.f || p.k !== cur.k)) goQ(p.f, p.k, true); });
+function wipeHTML() { const f = curFloor(), s = floorStats(cur.f); return `<div class="wipe" aria-hidden="true"><div class="ttl"><small>FLOOR ${f.floor}</small><b>${esc(f.label)}</b><div class="rule"><i></i></div><span>${s.rooms}室 ・ 明かり ${s.lit} 室</span></div></div>`; }
 function playWipe() { document.querySelectorAll('.wipe').forEach((e) => e.remove()); if (reduce) return; document.body.insertAdjacentHTML('beforeend', wipeHTML()); const w = document.querySelector('.wipe'); setTimeout(() => w.remove(), 2200); }
 
 // ---------------- 相談票 ----------------
 const CORNERS = ['tl', 'tr', 'bl', 'br'].map((k) => `<span class="corner c-${k}"><svg><use href="#corner"/></svg></span>`).join('');
 const bump = (id, html) => { const e = $(id); if (!e) return; e.innerHTML = html; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); };
-function updatePills() { bump('pQ', `${curFloor().floor}F ${cur.k + 1} / ${curFloor().qids.length}`); bump('pT', `今日 ${todayCount()} 問`); }
+function updatePills() { bump('pQ', `${roomNo(cur.f, roomOf(cur.k))}-${cur.k - rstart(cur.f, roomOf(cur.k)) + 1}`); bump('pT', `今日 ${todayCount()} 問`); }
+// 部屋の中の相談 701-1, 701-2 …（金＝正解・赤＝まちがい）
+function roomTabs() {
+	const r = roomOf(cur.k), s = roomStats(cur.f, r);
+	return `<div class="rtabs" role="tablist" aria-label="${roomNo(cur.f, r)}号室の相談">${s.ids.map((id, i) => `<button type="button" class="rt ${s.st[i]}${rstart(cur.f, r) + i === cur.k ? ' on' : ''}" data-k="${rstart(cur.f, r) + i}" aria-label="相談 ${roomNo(cur.f, r)}-${i + 1}">${i + 1}</button>`).join('')}<span class="rlight">${isLit(s) ? '明かりあり' : `正解 ${s.ok} / ${need(s.n)} で点灯`}</span></div>`;
+}
 function renderQ(show) {
-	const f = curFloor(), q = QN(curQid()), rec = ST.q[q.id];
+	const f = curFloor(), q = QN(curQid()), rec = ST.q[q.id], r = roomOf(cur.k);
 	answered = false; S.qStart = performance.now(); S.thought = false;
 	const st = q.statements ? `<ul class="stmts">${q.statements.map((s) => `<li data-l="${esc(s.label)}"><b>${esc(s.label)}</b><span>${fmt(s.text)}</span></li>`).join('')}</ul>` : '';
 	const imgs = q.images ? `<div class="qimgs">${q.images.map((p) => `<img src="${esc(String(p).replace(/^\//, ''))}" alt="問題の図" loading="lazy">`).join('')}</div>` : '';
 	const was = rec ? ` <i class="was ${rec.last ? 'ok' : 'ng'}">前回 ${rec.last ? '○' : '×'}</i>` : '';
-	card.innerHTML = `${CORNERS}<div class="head"><span class="door">${roomNo(cur.f, cur.k)}</span><span class="t"><b>${roomNo(cur.f, cur.k)}号室の相談${was}</b><span>${f.floor}F ${esc(f.label)} ・ ${esc(q.set)} 問${esc(q.no)}</span></span><span class="qnav"><button type="button" class="nb" data-nav="-1" aria-label="前の相談">‹</button><button type="button" class="nb" data-nav="1" aria-label="次の相談">›</button></span></div>
-	<div class="rule"><i></i></div>
+	card.innerHTML = `${CORNERS}<div class="head"><span class="door">${roomNo(cur.f, r)}</span><span class="t"><b>${esc(f.rooms[r].title)} ・ 相談 ${cur.k - rstart(cur.f, r) + 1}${was}</b><span>${roomNo(cur.f, r)}号室 ・ ${f.floor}F ${esc(f.label)} ・ ${esc(q.set)} 問${esc(q.no)}</span></span><span class="qnav"><button type="button" class="nb" data-nav="-1" aria-label="前の相談">‹</button><button type="button" class="nb" data-nav="1" aria-label="次の相談">›</button></span></div>
+	<div class="rtwrap" id="rtwrap">${roomTabs()}</div>
 	<p class="stem">${fmt(q.stem)}</p>${st}${imgs}
 	<ol class="choices">${q.choices.map((c, i) => `<li style="--i:${i}"><button type="button" data-i="${i + 1}"><span class="num"><span>${i + 1}</span></span><span>${fmt(c)}</span></button></li>`).join('')}</ol>
 	<div class="xp" id="xp"></div>
 	<div class="bar" id="bar"><span class="hint">クリックか 1〜${q.choices.length} キーで答える ・ William も一緒に考えます</span></div>`;
 	card.scrollTop = 0; card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
-	updatePills();
+	updatePills(); bindTabs();
 	card.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => nav(+b.dataset.nav)));
 	card.querySelectorAll('.choices button').forEach((b) => {
 		b.addEventListener('pointerenter', () => { if (!answered) { const rc = b.getBoundingClientRect(), rr = room.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + rc.height / 2 }; S.lookUntil = performance.now() + 1500; } });
@@ -771,6 +794,7 @@ function renderQ(show) {
 	if (show && rec && rec.p) showAnswer(rec.p, true);
 	requestAnimationFrame(layout);
 }
+function bindTabs() { card.querySelectorAll('.rt').forEach((b) => b.addEventListener('click', () => { const k = +b.dataset.k; if (k !== cur.k) { se('tap'); goQ(cur.f, k, true); } })); }
 // 解答と解説を見せる（quiet = 窓や一覧から、前に答えた相談を開いたとき）
 function showAnswer(i, quiet) {
 	answered = true; const q = QN(curQid()), ok = q.answer.includes(i);
@@ -781,68 +805,79 @@ function showAnswer(i, quiet) {
 	});
 	if (q.statementNotes) card.querySelectorAll('.stmts li').forEach((li) => { const sn = q.statementNotes.find((x) => x.label === li.dataset.l); if (sn) { li.classList.add(sn.correct ? 't' : 'f'); li.insertAdjacentHTML('beforeend', `<span class="note"><em>${sn.correct ? '○' : '×'}</em>${fmt(sn.note)}</span>`); } });
 	$('xp').innerHTML = (q.explanation ? `<div class="pt"><b>ポイント</b>${fmt(q.explanation)}</div>` : '') + (q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : '') + (q.amendment ? `<div class="amd"><b>法改正の注意</b>${fmt(q.amendment)}</div>` : '') + (q.needsCheck ? `<div class="chk"><b>要確認</b>${fmt(q.needsCheck)}</div>` : '') + (q.source ? `<p class="src">${esc(q.source)}</p>` : '');
-	const ans = q.answer.join('・');
-	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${quiet ? `前回の回答です（正解は ${ans}）` : ok ? '管理人さんの解説を読んでおこう' : `正解は ${ans}。どこが違うか、解説を確認しよう`}</span>${quiet ? '<button class="cta sub" type="button" id="retry"><i></i>もう一度<i></i></button>' : ''}<button class="cta" type="button" id="next"><i></i>次の相談へ<i></i></button>`;
+	const ans = q.answer.join('・'), n = neighbor(1), nextLabel = n.f !== cur.f || roomOf(n.k, n.f) !== roomOf(cur.k) ? `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ` : '次の相談へ';
+	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${quiet ? `前回の回答です（正解は ${ans}）` : ok ? '管理人さんの解説を読んでおこう' : `正解は ${ans}。どこが違うか、解説を確認しよう`}</span>${quiet ? '<button class="cta sub" type="button" id="retry"><i></i>もう一度<i></i></button>' : ''}<button class="cta" type="button" id="next"><i></i>${nextLabel}<i></i></button>`;
 	if (quiet) $('retry').addEventListener('click', () => { se('tap'); renderQ(false); });
-	$('next').addEventListener('click', () => { se('tap'); const n = neighbor(1); goQ(n.f, n.k, true); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); });
+	$('next').addEventListener('click', () => { se('tap'); const m = neighbor(1); goQ(m.f, m.k, true); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); });
 	requestAnimationFrame(layout);
 }
 function answer(i) {
 	if (answered) return; wake();
 	const q = QN(curQid()); if (!q || i < 1 || i > q.choices.length) return;
-	const ok = q.answer.includes(i), fi = cur.f, w = WINS[fi][cur.k], before = floorStats(fi);
-	pending.set(w, ok ? 'ok' : 'ng');                    // 窓は光の玉が着いてから変える
-	recordAnswer(q.id, ok, i); savePos();
-	showAnswer(i, false); paintWindows();
+	const ok = q.answer.includes(i), fi = cur.f, r = roomOf(cur.k), w = WINS[fi][r];
+	const before = roomStats(fi, r), prev = pending.get(w);
+	recordAnswer(q.id, ok, i);
+	const after = roomStats(fi, r), lights = !isLit(before) && isLit(after), loses = isLit(before) && !isLit(after);
+	pending.set(w, { before: prev ? prev.before : before, kind: ok ? 'ok' : 'ng', lights });  // 窓は光の玉が着いてから変える
+	savePos(); showAnswer(i, false); paintWindows();
+	$('rtwrap').innerHTML = roomTabs(); bindTabs();
 	const rr = room.getBoundingClientRect(), stEl = card.querySelector('.stamp'), st = stEl.getBoundingClientRect();
-	setTimeout(() => flyLight(stEl, w, ok ? 'ok' : 'ng'), 450);
-	const after = floorStats(fi);
-	if (after.done === after.total && (before.done < before.total || (ok && after.ok === after.total && before.ok < before.total))) setTimeout(() => showReward(fi), ok ? 1700 : 2600);
+	setTimeout(() => flyLight(stEl, w), 450);
+	if (after.done === after.n && before.done < after.n) setTimeout(() => showReward(fi, r), ok ? 1800 : 2600);  // 部屋の相談を全部答えた
 	if (ok) {
 		se('ok'); S.streak++; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>${S.streak}`);
 		setTimeout(() => burst(st.left - rr.left + st.width / 2, st.top - rr.top + st.height / 2, 26), 120);
 		S.wrongRun = 0;
-		if (S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'まじ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('勝訴', { vertical: true, size: 40, dx: -0.62, dy: -0.95, rot: 0, dur: 3 }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say('勝訴にゃ！', 2); }), 900); }
-		else if (S.on === 'card') jumpTo('top', () => { start('correct'); S.wingUntil = performance.now() + 1700; say('せいかいにゃ！'); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); });
-		else { if (S.pose !== 'rig') endPose(); start('correct'); S.wingUntil = performance.now() + 1700; say('せいかいにゃ！'); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); }
+		const msg = lights ? `${roomNo(fi, r)}号室に明かりがついたにゃ！` : 'せいかいにゃ！';
+		if (S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'まじ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('勝訴', { vertical: true, size: 40, dx: -0.62, dy: -0.95, rot: 0, dur: 3 }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say(lights ? msg : '勝訴にゃ！', 2); }), 900); }
+		else if (S.on === 'card') jumpTo('top', () => { start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); });
+		else { if (S.pose !== 'rig') endPose(); start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); }
 	} else {
 		se('ng'); S.streak = 0; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
 		card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
 		S.wrongRun++;
-		jumpTo('card', () => { start('wrong'); setTimeout(() => say(S.wrongRun >= 2 ? 'ふぁ〜…ねむくなってきたにゃ' : 'ふぁ〜あ…そこ、ちがうみたい', 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const r = n.getBoundingClientRect(); S.lookAt = { x: r.left - rr.left + 40, y: r.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
+		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? `${roomNo(fi, r)}号室の明かりが消えちゃった…` : S.wrongRun >= 2 ? 'ふぁ〜…ねむくなってきたにゃ' : 'ふぁ〜あ…そこ、ちがうみたい', 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
 	}
 }
-// 階の窓を全部まわった／全部に明かりがついた
-function showReward(fi) {
-	const f = DATA.floors[fi], s = floorStats(fi), all = s.ok === s.total;
-	ST.rooms[f.id] = { best: Math.max(ST.rooms[f.id]?.best || 0, s.ok), total: s.total, t: Date.now() }; saveStore();
-	if (all && towerVisible()) { const b = $('bldg'); b.classList.remove('sweep'); void b.offsetWidth; b.classList.add('sweep'); }
-	se('reward');
+// 部屋の相談に全部答えた：明かりがついたらカギ、足りなければ「もう少し」
+function showReward(fi, r) {
+	const s = roomStats(fi, r), lit = isLit(s), no = roomNo(fi, r), fs = floorStats(fi);
+	const floorLit = fs.lit === fs.rooms;
+	if (floorLit && towerVisible()) { const b = $('bldg'); b.classList.remove('sweep'); void b.offsetWidth; b.classList.add('sweep'); }
+	if (lit) se('reward');
+	const n = neighbor(1);
 	const sc = document.createElement('div'); sc.className = 'scrim';
-	sc.innerHTML = `<div class="panel reward" role="dialog" aria-label="${f.floor}階">${CORNERS}<div class="pillar"></div><h2>${f.floor}F ${all ? 'ぜんぶ点灯' : 'ひとまわり'}</h2><div class="rule"><i></i></div><div class="item"><svg><use href="#key"/></svg></div><div class="nm">${all ? `${f.floor}階のマスターキー` : `${f.floor}階の合いカギ`}</div><p>${esc(f.label)}の ${s.total} 室すべての相談に答えました（明かり ${s.ok} 室）。${all ? '全部の窓に明かりがつきました！' : 'カーテンの閉まった窓（まちがえた相談）をもう一度開けてみよう。'}</p><div class="row"><button class="cta" type="button"><i></i>受け取る<i></i></button></div></div>`;
+	sc.innerHTML = `<div class="panel reward" role="dialog" aria-label="${no}号室">${CORNERS}${lit ? '<div class="pillar"></div>' : ''}<h2>${no}号室 ${lit ? '点灯' : 'もう少し'}</h2><p class="rtitle">${esc(DATA.floors[fi].rooms[r].title)}</p><div class="rule"><i></i></div><div class="item${lit ? '' : ' dim'}"><svg><use href="#key"/></svg></div><div class="nm">${lit ? `${no}号室のカギ` : `正解 ${s.ok} / ${s.n}`}</div><p>${lit ? `相談 ${s.n} 件中 ${s.ok} 件正解。部屋に明かりがつきました。${floorLit ? `${DATA.floors[fi].floor}階は全部の部屋に明かりがつきました！` : ''}` : `あと ${need(s.n) - s.ok} 件正解すると明かりがつきます。まちがえた相談（×）は部屋の中の番号から開き直せます。`}</p><div class="row" style="gap:10px;flex-wrap:wrap">${lit ? '' : '<button class="cta sub" type="button" data-retry><i></i>まちがえた相談へ<i></i></button>'}<button class="cta" type="button" data-next><i></i>${n.f === fi && roomOf(n.k, n.f) === r ? '次の相談へ' : `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ`}<i></i></button></div></div>`;
 	document.body.appendChild(sc);
-	setTimeout(() => { const rc = sc.querySelector('.item').getBoundingClientRect(), rr = room.getBoundingClientRect(); burst(rc.left - rr.left + rc.width / 2, rc.top - rr.top + rc.height / 2, 30, 1.2); }, 450);
-	sc.querySelector('.cta').addEventListener('click', () => { se('tap'); sc.remove(); jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('いま、ちくわ中。', { font: '"Kiwi Maru"', size: 17, dx: -0.55, dy: -1.02, rot: 0, dur: 3.4 }); say('ごほうびにゃ', 2.4); }); });
+	if (lit) setTimeout(() => { const rc = sc.querySelector('.item').getBoundingClientRect(), rr = room.getBoundingClientRect(); burst(rc.left - rr.left + rc.width / 2, rc.top - rr.top + rc.height / 2, 30, 1.2); }, 450);
+	const close = () => sc.remove();
+	sc.addEventListener('click', (e) => { if (e.target === sc) close(); });
+	const rb = sc.querySelector('[data-retry]'); if (rb) rb.addEventListener('click', () => { se('tap'); close(); const k = rstart(fi, r) + Math.max(0, s.st.indexOf('ng')); goQ(fi, k, false); });
+	sc.querySelector('[data-next]').addEventListener('click', () => { se('tap'); close(); goQ(n.f, n.k, true); if (lit) jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('いま、ちくわ中。', { font: '"Kiwi Maru"', size: 17, dx: -0.55, dy: -1.02, rot: 0, dur: 3.4 }); say('ごほうびにゃ。次の部屋へ', 2.4); }); });
 }
 $('backBtn').addEventListener('click', () => { se('tap'); openTower(); });
 
-// ---------------- 記録・進度リンク・まちがえた相談の一覧 ----------------
+// ---------------- 記録・進度リンク・相談の一覧 ----------------
 let idxTab = 'list', idxFilter = 'ng';
 function indexBody() {
 	if (idxTab === 'list') {
 		const fl = DATA.floors.map((f, fi) => {
-			const chips = f.qids.map((id, k) => { const s = winState(id), q = QN(id), hit = idxFilter === 'all' || s === idxFilter;
-				return hit ? `<button type="button" class="qc ${s}${fi === cur.f && k === cur.k ? ' here' : ''}" data-go="${fi},${k}" title="${esc(q.set)} 問${esc(q.no)}"><span>${roomNo(fi, k)}</span><small>${esc(q.set.replace('年度', ''))} ${esc(q.no)}</small></button>` : ''; }).join('');
+			const rows = f.rooms.map((room, r) => {
+				const s = roomStats(fi, r);
+				const chips = room.qids.map((id, i) => { const st = s.st[i], q = QN(id), k = rstart(fi, r) + i, hit = idxFilter === 'all' || st === idxFilter;
+					return hit ? `<button type="button" class="qc ${st}${fi === cur.f && k === cur.k ? ' here' : ''}" data-go="${fi},${k}" title="${esc(q.set)} 問${esc(q.no)}"><span>${roomNo(fi, r)}-${i + 1}</span><small>${esc(q.set.replace('年度', ''))} ${esc(q.no)}</small></button>` : ''; }).join('');
+				return chips ? `<div class="irow"><button type="button" class="ino${isLit(s) ? ' lit' : ''}" data-room="${fi},${r}"><b>${roomNo(fi, r)}</b><small>${esc(room.title)}</small></button><div class="chips">${chips}</div></div>` : '';
+			}).join('');
 			const s = floorStats(fi);
-			return chips ? `<section class="ifl"><h3><span class="fl">${f.floor}F</span>${esc(f.label)}<small>明かり ${s.ok} / ${s.total}</small></h3><div class="chips">${chips}</div></section>` : '';
+			return rows ? `<section class="ifl"><h3><span class="fl">${f.floor}F</span>${esc(f.label)}<small>明かり ${s.lit} / ${s.rooms} 室</small></h3>${rows}</section>` : '';
 		}).join('');
 		return `<div class="ifilter">${[['ng', 'まちがえた'], ['none', 'まだ'], ['ok', '正解'], ['all', 'すべて']].map(([k, l]) => `<button type="button" data-filter="${k}" class="${idxFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div><div class="ilist">${fl || '<p class="empty">この条件の相談はありません。</p>'}</div>`;
 	}
 	const all = Object.keys(DATA.q), done = all.filter((id) => ST.q[id]), ok = done.filter((id) => ST.q[id].last);
-	const rows = DATA.floors.map((f, fi) => { const s = floorStats(fi); return `<tr><td>${f.floor}F ${esc(f.short)}</td><td>${s.done} / ${s.total}</td><td>${s.done ? Math.round(s.ok / s.done * 100) + '%' : '—'}</td><td>${s.ok} / ${s.total}</td></tr>`; }).join('');
+	const rows = DATA.floors.map((f, fi) => { const s = floorStats(fi); return `<tr><td>${f.floor}F ${esc(f.short)}</td><td>${s.done} / ${s.total}</td><td>${s.done ? Math.round(s.ok / s.done * 100) + '%' : '—'}</td><td>${s.lit} / ${s.rooms}</td></tr>`; }).join('');
 	const link = SYNC ? `<p class="small">このリンクで開くと、どの端末でも同じ記録になります。リンクはほかの人に教えないでください。</p><div class="sync-form"><input type="text" readonly class="sync-input" data-sync-link value="${esc(shareLink())}" aria-label="進度リンク"><button type="button" class="cta mini" data-act="copy">コピー</button></div><p class="small">進度サーバー：${esc(SYNC.api)} ・ ID：${esc(SYNC.id)}</p><div class="row2"><button type="button" class="cta mini" data-act="sync">今すぐ同期</button><button type="button" class="cta mini" data-act="unsync">このブラウザで止める</button></div>`
 		: `<p class="small">自分のパソコンで進度サーバー（<code>npm run progress-server</code>）を動かして URL を入れると、専用のリンクができます。同じリンクで開けば、どの端末でも続きから解けます。</p><div class="sync-form"><input type="url" class="sync-input" data-sync-api value="${esc((() => { try { return JSON.parse(localStorage.getItem(SYNC_KEY) || '{}').api || 'http://localhost:8787'; } catch (e) { return 'http://localhost:8787'; } })())}" aria-label="進度サーバーの URL"><button type="button" class="cta mini" data-act="create">進度リンクを作る</button></div>`;
-	return `<p class="sum">答えた相談 <b>${done.length}</b> / ${all.length} ・ 明かり <b>${ok.length}</b> 室 ・ ${dayStreak()}日連続 ・ 今日 ${todayCount()} 問</p><table class="itable"><tr><th>階</th><th>答えた</th><th>正答率</th><th>明かり</th></tr>${rows}</table><h3 class="h3">進度リンク</h3>${link}<p class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg)}</p>`;
+	return `<p class="sum">答えた相談 <b>${done.length}</b> / ${all.length} ・ 正解 <b>${ok.length}</b> ・ ${dayStreak()}日連続 ・ 今日 ${todayCount()} 問</p><table class="itable"><tr><th>階</th><th>答えた</th><th>正答率</th><th>明かり</th></tr>${rows}</table><h3 class="h3">進度リンク</h3>${link}<p class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg)}</p>`;
 }
 function openIndex(tab) {
 	if (tab) idxTab = tab; se('tap');
@@ -854,6 +889,7 @@ function openIndex(tab) {
 		sc.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { se('tap'); idxTab = b.dataset.tab; draw(); }));
 		sc.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => { se('tap'); idxFilter = b.dataset.filter; draw(); }));
 		sc.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => { const [fi, k] = b.dataset.go.split(',').map(Number); se('tap'); sc.remove(); goQ(fi, k, true); }));
+		sc.querySelectorAll('[data-room]').forEach((b) => b.addEventListener('click', () => { const [fi, r] = b.dataset.room.split(',').map(Number); se('tap'); sc.remove(); goRoom(fi, r); }));
 		const act = (a, fn) => { const b = sc.querySelector(`[data-act="${a}"]`); if (b) b.addEventListener('click', fn); };
 		act('copy', () => { const inp = sc.querySelector('[data-sync-link]'); navigator.clipboard?.writeText(inp.value).then(() => setSyncMsg(syncSt, 'リンクをコピーしました。ほかの端末で開くと同じ記録になります。'), () => inp.select()); inp.select(); });
 		act('sync', () => pullSync());
@@ -868,8 +904,8 @@ $('idxBtn').addEventListener('click', () => openIndex()); $('idxBtn2').addEventL
 // 進度をリセット（確認の画面を出してから）
 function resetRoom() {
 	ST = { ...emptyStore(), reset: Date.now() }; pending.clear();
-	S.streak = 0; WINS.flat().forEach((w) => w.classList.remove('ignite', 'fizzle'));
-	cur = { f: 0, k: 0 }; savePos(); selFloor(0); paintWindows(); renderQ(false);
+	S.streak = 0; WINS.flat().forEach((w) => w.classList.remove('ignite', 'glint', 'nudge'));
+	cur = { f: 0, k: 0 }; savePos(); paintWindows(); renderQ(false);
 	bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
 	say('最初からやり直しにゃ', 2);
 }
@@ -883,6 +919,7 @@ $('resetBtn').addEventListener('click', () => {
 	sc.querySelector('[data-yes]').addEventListener('click', () => { se('tap'); close(); resetRoom(); });
 	sc.addEventListener('click', (e) => { if (e.target === sc) close(); });
 });
+
 $('helpBtn').addEventListener('click', () => {
 	se('tap');
 	const sc = document.createElement('div'); sc.className = 'scrim';
@@ -1237,10 +1274,10 @@ function drawMouth(c, F, t) {
 	if (F.bubble) { const r = 5 + 9 * (0.5 + 0.5 * Math.sin(t / 700)); c.fillStyle = 'rgba(200,230,255,.45)'; c.strokeStyle = 'rgba(120,160,200,.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x + 14 + r, y - 12, r, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.arc(x + 11 + r * 1.4, y - 12 - r * 0.4, r * 0.2, 0, Math.PI * 2); c.fill(); }
 	c.restore();
 }
-restorePos(); selFloor(cur.f); paintWindows(); renderQ(true);
+restorePos(); paintWindows(); renderQ(true); savePos();
 pullSync();
 layout();
 requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
-setTimeout(() => say(`ようこそ。${roomNo(cur.f, cur.k)}号室の相談、一緒に答えよう`, 2.6), 1900);
+setTimeout(() => say(`ようこそ。${roomNo(cur.f, roomOf(cur.k))}号室「${curFloor().rooms[roomOf(cur.k)].title}」の相談、一緒に答えよう`, 2.6), 1900);
 </script>

@@ -4,7 +4,7 @@
   python3 william/build.py
 
 - 問題は src/data（過去問 kakomon/*.json とオリジナル問題 drills/*.json）から読む
-- 階＝出題分野（1F 適正化法 … 8F その他）、窓（部屋）＝1問ずつ（オリジナル問題→新しい年度の順）
+- 階＝出題分野（1F 適正化法 … 8F その他）、部屋（窓）＝同じテーマの相談のまとまり（src/data/rooms.json）
 - 絵（部屋・キャットタワー・カットイン）は william/assets から埋め込む
 - William の Live2D モデルは public/w/（テクスチャだけ William の柄に塗り替えた公式サンプル Tororo）
 """
@@ -35,8 +35,21 @@ def build_data():
     for e in exams:
         for q in e['questions']:
             qid = f"{e['id']}-{q['no']}"; qs[qid] = item(qid, e['label'], q); by[q['category']].append(qid)
-    # 階＝分野。窓＝相談（1問 1部屋。701号室＝7階の1問目）
-    floors = [{'id': c['id'], 'floor': i + 1, 'label': c['label'], 'short': c['short'], 'qids': by[c['id']]} for i, c in enumerate(cats)]
+    # 階＝分野。部屋（窓）＝同じテーマの相談のまとまり（src/data/rooms.json）。701-1, 701-2 … と番号をつける
+    plan = json.load(open(os.path.join(DATA, 'rooms.json'), encoding='utf-8')) if os.path.exists(os.path.join(DATA, 'rooms.json')) else {}
+    floors = []
+    for i, c in enumerate(cats):
+        ids = by[c['id']]
+        rooms = [{'title': r['title'], 'qids': [q for q in r['qids'] if q in qs]} for r in plan.get(c['id'], [])]
+        placed = [q for r in rooms for q in r['qids']]
+        dup = {q for q in placed if placed.count(q) > 1}
+        if dup: raise SystemExit(f"rooms.json: {c['id']} で2回出てくる問題 {sorted(dup)}")
+        rest = [q for q in ids if q not in placed]
+        if rest:  # rooms.json に無い問題（新しい年度など）は「新着」の部屋へ
+            print(f"注意: {c['id']} の {len(rest)} 問は rooms.json に無いので「新着の相談」の部屋に入れました")
+            rooms.append({'title': '新着の相談', 'qids': rest})
+        rooms = [r for r in rooms if r['qids']]
+        floors.append({'id': c['id'], 'floor': i + 1, 'label': c['label'], 'short': c['short'], 'rooms': rooms})
     return {'floors': floors, 'q': qs}
 
 def data_uri(name):
