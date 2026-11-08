@@ -428,6 +428,15 @@ if (PHONE && !matchMedia('(max-width: 760px)').matches) {
 	const st = document.createElement('style'); st.textContent = css.join('\n'); document.head.appendChild(st);
 }
 const DATA = __DATA__;
+// 新しい版が出ていたら読み込み直す（ブラウザに古いページが残っていても、開いたときに最新になる）
+const BUILD = '__BUILD__';
+(async () => {
+	try {
+		const r = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+		const m = (await r.text()).match(/const BUILD = '(\d+)'/);
+		if (m && m[1] !== BUILD && sessionStorage.getItem('reloadedFor') !== m[1]) { sessionStorage.setItem('reloadedFor', m[1]); location.reload(); }
+	} catch (e) {}
+})();
 const $ = (id) => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.querySelector('.app');

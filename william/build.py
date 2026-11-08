@@ -58,6 +58,9 @@ def data_uri(name):
 def main():
     s = open(os.path.join(W, 'tpl.html'), encoding='utf-8').read()
     data = json.dumps(build_data(), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    import hashlib, time
+    build_id = time.strftime('%Y%m%d%H%M%S')  # 版の番号（新しい版が出たら、開いているページが自動で読み込み直すのに使う）
+    s = s.replace('__BUILD__', build_id)
     s = s.replace('__DATA__', data)
     s = s.replace('__ROOM__', json.dumps(data_uri('room.webp'))).replace('__TALL__', json.dumps(data_uri('tall.webp')))
     maji = sorted(os.path.basename(f) for f in glob.glob(os.path.join(W, 'assets', 'maji*.webp'))) or ['cutin.webp']  # 全問正解のアイコン（ランダムで1枚。無ければカットインの絵）
