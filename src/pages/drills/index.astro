@@ -1,0 +1,24 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getDrills, url } from '../../lib/data';
+import { categoryLabel } from '../../data/categories';
+
+const drills = await getDrills();
+---
+
+<StarlightPage frontmatter={{ title: '一問一答ドリル', description: '重要ポイントを○×で確認するオリジナル問題' }}>
+	<p>過去問とは別の、オリジナルの確認問題です。<code>src/data/drills/</code> に JSON ファイルを追加すると、ここに自動で並びます。</p>
+	<ul class="kk-cards">
+		{
+			drills.map((d) => (
+				<li>
+					<a href={url(`/drills/${d.id}/`)}>
+						<strong>{d.title}</strong>
+						<span>{d.questions.length}問・{[...new Set(d.questions.map((q) => categoryLabel(q.category)))].join('、')}</span>
+						{d.description && <span>{d.description}</span>}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</StarlightPage>

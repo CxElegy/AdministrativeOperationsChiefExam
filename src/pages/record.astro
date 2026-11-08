@@ -1,0 +1,82 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { CATEGORIES } from '../data/categories';
+import { drillItems, examItems, getDrills, getExams } from '../lib/data';
+
+const exams = await getExams();
+const drills = await getDrills();
+// 記録の集計に必要な最小限の情報だけ渡す
+const index = [...exams.flatMap(examItems), ...drills.flatMap(drillItems)].map((q) => ({ id: q.id, set: q.set, category: q.category }));
+const sets = [...exams.map((e) => e.label), ...drills.map((d) => d.title)];
+---
+
+<StarlightPage frontmatter={{ title: '学習記録', description: '分野別・年度別の正答率', tableOfContents: false }}>
+	<p>記録はこのブラウザの中だけに保存されています（サーバーには送られません）。別の端末に移すときは「書き出し」「読み込み」を使ってください。</p>
+	<div data-record class="kk-record"><p>集計中…</p></div>
+	<p class="kk-actions">
+		<button type="button" class="qz-btn" data-export>記録を書き出す</button>
+		<label class="qz-btn">記録を読み込む<input type="file" accept="application/json" data-import hidden /></label>
+		<button type="button" class="qz-btn qz-danger" data-clear>記録をすべて消す</button>
+	</p>
+	<script type="application/json" id="record-index" set:html={JSON.stringify({ index, sets, cats: CATEGORIES })} />
+</StarlightPage>
+
+<script>
+	import { clearRecord, loadRecord, saveRecord, type RecordMap } from '../lib/record';
+
+	type Meta = { index: { id: string; set: string; category: string }[]; sets: string[]; cats: { id: string; label: string }[] };
+	const meta: Meta = JSON.parse(document.getElementById('record-index')!.textContent!);
+	const box = document.querySelector<HTMLElement>('[data-record]')!;
+
+	const bar = (ratio: number) => `<span class="kk-bar"><span style="width:${Math.round(ratio * 100)}%"></span></span>`;
+
+	function table(title: string, groups: { label: string; ids: string[] }[], rec: RecordMap) {
+		const rows = groups
+			.map((g) => {
+				const done = g.ids.filter((id) => rec[id]);
+				const ok = done.filter((id) => rec[id].last).length;
+				const rate = done.length ? ok / done.length : 0;
+				return `<tr><td>${g.label}</td><td>${done.length} / ${g.ids.length}</td><td>${done.length ? Math.round(rate * 100) + '%' : '—'}</td><td>${bar(rate)}</td></tr>`;
+			})
+			.join('');
+		return `<h2>${title}</h2><table><thead><tr><th></th><th>解いた問題</th><th>直近の正答率</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+	}
+
+	function render() {
+		const rec = loadRecord();
+		const total = Object.keys(rec).length;
+		const byCat = meta.cats.map((c) => ({ label: c.label, ids: meta.index.filter((q) => q.category === c.id).map((q) => q.id) }));
+		const bySet = meta.sets.map((s) => ({ label: s, ids: meta.index.filter((q) => q.set === s).map((q) => q.id) }));
+		box.innerHTML =
+			`<p>これまでに解いた問題：<strong>${total}</strong> 問 / 全 ${meta.index.length} 問</p>` +
+			table('分野別', byCat, rec) +
+			table('年度・ドリル別', bySet, rec);
+	}
+	render();
+
+	document.querySelector('[data-export]')!.addEventListener('click', () => {
+		const blob = new Blob([JSON.stringify(loadRecord())], { type: 'application/json' });
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = `kangyo-record-${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		URL.revokeObjectURL(a.href);
+	});
+	document.querySelector<HTMLInputElement>('[data-import]')!.addEventListener('change', async (e) => {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file) return;
+		try {
+			const data = JSON.parse(await file.text()) as RecordMap;
+			saveRecord({ ...loadRecord(), ...data });
+			render();
+		} catch {
+			alert('読み込めませんでした。書き出したファイルを選んでください。');
+		}
+	});
+	document.querySelector('[data-clear]')!.addEventListener('click', () => {
+		if (confirm('学習記録をすべて消します。よろしいですか？')) {
+			clearRecord();
+			render();
+		}
+	});
+</script>

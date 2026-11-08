@@ -1,0 +1,23 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+
+# environment
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# python
+__pycache__/
+
+# 取り込み用にダウンロードした PDF（リポジトリには入れない）
+pdf/
+*.pdf

@@ -1,0 +1,40 @@
+---
+title: 管業スタディ
+description: 管理業務主任者試験の過去問演習と分野別ノート
+template: splash
+hero:
+  tagline: 管理業務主任者試験の過去問を、年度別・分野別に解いて、間違えた問題を繰り返す。記録はブラウザに残ります。
+  actions:
+    - text: 過去問を解く
+      link: kakomon/
+      icon: right-arrow
+    - text: 試験の概要
+      link: exam/
+      variant: minimal
+---
+
+import { CardGrid, LinkCard, Aside } from '@astrojs/starlight/components';
+
+export const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+<Aside type="caution" title="令和8年度試験は改正法が出題の前提です">
+改正された区分所有法などが令和8年4月1日に施行され、令和8年度の試験はこれを前提に出題されます（試験は「4月1日現在で施行されている法令等」に基づく）。
+このサイトの過去問は出題当時の法令に基づくため、**改正点に関わる問題は、現在の法令では正解が変わる可能性があります**。
+</Aside>
+
+## できること
+
+<CardGrid>
+	<LinkCard title="過去問（年度別）" description="令和元年度〜令和7年度（令和2年度を除く）300問。練習モードと、2時間の本番モード。" href={`${base}kakomon/`} />
+	<LinkCard title="分野別・ランダム演習" description="民法・区分所有法・標準管理規約などの分野と年度で絞り込み。間違えた問題だけの復習も。" href={`${base}practice/`} />
+	<LinkCard title="一問一答ドリル" description="重要ポイントを○×で確認するオリジナル問題。" href={`${base}drills/`} />
+	<LinkCard title="学習記録" description="分野別・年度別の正答率。記録の書き出し・読み込み。" href={`${base}record/`} />
+</CardGrid>
+
+## 次の試験
+
+令和8年度 管理業務主任者試験は **2026年12月6日（日）13:00〜15:00**、合格発表は **2027年1月15日（金）** です。詳しくは[試験の概要](exam/)へ。
+
+---
+
+過去問の出典：一般社団法人マンション管理業協会「管理業務主任者試験問題」各年度。協会の「[過去問の使用について](https://www.kanrikyo.or.jp/kanri/pdf/kakomonshiyou.pdf)」に従って、教育目的で掲載しています。解説はこのサイト独自のもので、協会とは関係ありません。
