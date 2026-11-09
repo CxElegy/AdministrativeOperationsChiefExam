@@ -790,6 +790,34 @@ function drawWing(c, x, y, s, dir, flap) { c.save(); c.translate(x, y); c.scale(
 function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); c.fill(); }
 const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; };
 
+// ---------------- William の言葉（場面ごとに何種類か。その都度ランダムに 1 つ） ----------------
+const LINES = {
+	welcome: [(n, t) => `ようこそ。${n}号室「${t}」の相談、一緒に答えよう`, (n, t) => `おかえりにゃ。きょうは${n}号室「${t}」からにゃ`, (n, t) => `${n}号室「${t}」、いっしょにがんばろにゃ`, (n) => `まってたにゃ。${n}号室の相談、聞いてあげよ`, (n, t) => `きょうもよろしくにゃ。${n}号室「${t}」から`],
+	correct: ['せいかいにゃ！', 'あたりにゃ！', 'さすがにゃ♪', 'いいかんじにゃ！', 'ばっちりにゃ！'],
+	lit: [(n) => `${n}号室に明かりがついたにゃ！`, (n) => `${n}号室、ぴかっとついたにゃ♪`, (n) => `やったにゃ！${n}号室があかるくなったにゃ`, (n) => `${n}号室の住人さん、よろこんでるにゃ`, (n) => `明かりがともったにゃ。${n}号室クリアにゃ`],
+	streak: ['すごいにゃ！ れんぞくにゃ♪', 'とまらないにゃ！', 'その調子にゃ♪ れんぞく正解にゃ', 'ノリノリにゃ！', 'れんぞくにゃ！かっこいいにゃ'],
+	wrong: ['ふぁ〜…ちがったみたいにゃ', 'ふぁ〜…おしかったにゃ', 'ふぁ〜…ここ、ひっかけにゃ', 'ふぁ〜…解説、いっしょに読もにゃ', 'ふぁ〜…つぎはきっといけるにゃ'],
+	wrongAgain: ['ふぁ〜…ねむくなってきたにゃ', 'ふぁ〜…ちょっとひとやすみする？', 'ふぁ〜…ゆっくりでいいにゃ', 'ふぁ〜…あせらなくていいにゃ', 'ふぁ〜…むずかしいとこにゃ'],
+	lose: [(n) => `${n}号室の明かり、きえちゃったにゃ…`, (n) => `${n}号室、くらくなっちゃったにゃ…`, (n) => `${n}号室、もう一回ともそうにゃ`, (n) => `あれれ、${n}号室の明かりが…`, (n) => `${n}号室、またつけにいこにゃ`],
+	next: ['つぎ、いこにゃ', 'つぎの相談にゃ', 'どんどんいこにゃ', 'つぎもいっしょにゃ', 'さあ、つぎにゃ'],
+	reward: ['カギもらったにゃ♪ つぎのおへやいこ', 'カギゲットにゃ♪', 'このカギ、たからものにゃ', 'おへやクリアにゃ♪ ごほうびにゃ', 'やったにゃ！つぎのおへやも行こにゃ'],
+	reset: ['最初からやり直しにゃ', 'まっさらにもどったにゃ', 'また１階からにゃ', 'いちからがんばろにゃ', 'リセットしたにゃ。よろしくにゃ'],
+	tap: ['にゃ', 'にゃ？', 'にゃっ', 'なあに？', 'にゃーん'],
+	heat: ['あつい！ちゃんと読むにゃ', 'あついにゃ！おちつくにゃ', 'つつきすぎにゃ！', 'にゃにゃっ、くすぐったいにゃ！', 'もう、問題読むにゃ'],
+	toy: ['にゃっ！', 'つかまえたにゃ！', 'にゃにゃっ♪', 'まてまてにゃ！', 'ぽんぽん、たのしいにゃ'],
+	stretch: ['びよーん', 'のび〜る', 'のびのびにゃ', 'びよよーん', 'ひっぱらないでにゃ〜'],
+	fast: ['はやすぎにゃ！', 'ゆっくりにゃ', 'おててがはやいにゃ', 'おちついてにゃ', 'ふみふみ、おいつかないにゃ'],
+	back: ['おかえりにゃ！', 'まってたにゃ！', 'おかえり〜にゃ', 'もどってきたにゃ♪', 'あいたかったにゃ'],
+	cardNap: ['ここ、あったかいにゃ…', 'この紙、ぽかぽかにゃ…', 'ちょっとだけここにいるにゃ…', 'ここでおひるねにゃ…', 'いっしょに読むにゃ…'],
+	think: ['…むむ', '…むむむ', '…どれかにゃ', '…うーん', '…よく読むにゃ'],
+	stretchRemind: ['のび〜っ。いっしょにのびしよ？', 'かたまってないにゃ？のびしよ', 'ちょっとストレッチにゃ', 'せなか、のばそにゃ', 'ひとやすみして、のびーっにゃ'],
+	water: ['お水のもうにゃ', 'おみず、のんでるにゃ？', 'ひとくちお水にゃ', 'のどかわいてないにゃ？', 'お水タイムにゃ'],
+	wake: ['…はっ！', '…ねてないにゃ！', '…はにゃ？', '…おきてたにゃ', '…あ、おかえりにゃ'],
+	purr: ['ゴロゴロ…', 'ゴロゴロにゃ…', 'きもちいいにゃ…', 'もっとなでてにゃ…', 'ふにゃ〜…'],
+	late: ['夜おそいにゃ。あんまり無理せず、がんばってにゃ', 'もう夜10時すぎたにゃ。無理しないで、ほどほどにがんばろにゃ', '夜ふかしはほどほどににゃ。あんまり無理せず、がんばってにゃ', 'おそくまでえらいにゃ。でも無理はしないでにゃ', '夜はゆっくりでいいにゃ。無理せずにゃ', 'ねむくなったら、ねてもいいにゃ', 'きょうもおつかれさまにゃ。ほどほどにゃ', '目がしょぼしょぼしてないにゃ？無理しないでにゃ', '夜の勉強、えらいにゃ。でもからだが大事にゃ', 'あしたもあるにゃ。無理せずがんばろにゃ', 'あと少しにしとこにゃ。無理はきんもつにゃ', 'ぼくもねむいにゃ…いっしょにほどほどにゃ', 'あったかくしてるにゃ？無理せずにゃ', 'いっぱいがんばったにゃ。むりしないでにゃ', 'よふかしさんにゃ。ほどほどにがんばってにゃ'],
+};
+const pick = (k, ...a) => { const l = LINES[k], x = l[Math.floor(Math.random() * l.length)]; return typeof x === 'function' ? x(...a) : x; };
+
 // 吹き出し（タイプライター）
 const bubble = $('bubble'), btext = $('btext');
 let sayTimer = 0, sayUntil = 0, sayText = '', talkUntil = 0;
@@ -799,7 +827,7 @@ function say(t, sec = 2) {
 	let i = 0; if (reduce) { btext.textContent = t; return; }
 	sayTimer = setInterval(() => { i++; btext.textContent = t.slice(0, i); if (i >= t.length) clearInterval(sayTimer); }, 35);
 }
-function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say('…はっ！', 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
+function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say(pick('wake'), 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
 function jumpTo(id, then) {
 	if (S.jump || S.hidden) return; if (stacked && id !== 'card') id = 'top';  // スマホは帯の中の一番上の台と題卡のふちだけ
 	if (S.pose !== 'rig') { S.poseThen = null; endPose(); } const to = spot(id); if (!to) return;
@@ -1062,7 +1090,7 @@ function showAnswer(i, quiet) {
 	const ans = q.answer.join('・'), n = neighbor(1), nextLabel = n.f !== cur.f || roomOf(n.k, n.f) !== roomOf(cur.k) ? `次の部屋（${roomNo(n.f, roomOf(n.k, n.f))}）へ` : '次の相談へ';
 	$('bar').innerHTML = `<div class="stamp ${ok ? 'ok' : 'ng'}">${ok ? '正解!' : '不正解'}</div><span class="hint">${quiet ? `前回の回答です（正解は ${ans}）` : ok ? '管理人さんの解説を読んでおこう' : `正解は ${ans}。どこが違うか、解説を確認しよう`}</span>${quiet || !ok ? '<button class="cta sub" type="button" id="retry"><i></i>もう一度<i></i></button>' : ''}<button class="cta" type="button" id="next"><i></i>${nextLabel}<i></i></button>`;
 	if ($('retry')) $('retry').addEventListener('click', () => { se('tap'); renderQ(false); });  // まちがえたとき・前の回答を見ているとき：もう一度答える
-	$('next').addEventListener('click', () => { se('tap'); const m = neighbor(1); goQ(m.f, m.k, true); if (S.on === 'card') jumpTo('top', () => say('つぎ、いこにゃ')); });
+	$('next').addEventListener('click', () => { se('tap'); const m = neighbor(1); goQ(m.f, m.k, true); if (S.on === 'card') jumpTo('top', () => say(pick('next'))); });
 	requestAnimationFrame(layout);
 }
 function answer(i) {
@@ -1082,20 +1110,20 @@ function answer(i) {
 		se('ok'); S.streak++; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>${S.streak}`);
 		setTimeout(() => burst(st.left - rr.left + st.width / 2, st.top - rr.top + st.height / 2, 26), 120);
 		S.wrongRun = 0;
-		const msg = lights ? `${roomNo(fi, r)}号室に明かりがついたにゃ！` : 'せいかいにゃ！';
+		const msg = lights ? pick('lit', roomNo(fi, r)) : pick('correct');
 		const firstPass = after.done === after.n && before.done < after.n;               // 部屋の相談をはじめて全部答えた（このときは報酬の画面が まじ!! を出す）
 		const nowPerfect = after.ok === after.n && before.ok < after.n;                     // この答えで全問正解になった（答え直しも含む）
 		if (nowPerfect && !firstPass) cutin('loaf', 'まじ!!', '全問正解', MAJI[Math.floor(Math.random() * MAJI.length)]);
 		const perfect = nowPerfect;
 		if (lights && !perfect) cutin('loaf', '点灯!!', `${roomNo(fi, r)}号室に明かり`, MAJI[Math.floor(Math.random() * MAJI.length)]);  // 部屋に明かりがついた瞬間の帯（全問正解なら あとで まじ!! を出す）
-		if (!lights && S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'すごいにゃ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('♪♪', { size: 34, dx: -0.6, dy: -0.95, rot: -0.1, dur: 2.6, color: '#e8457a' }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say(lights ? msg : 'すごいにゃ！ れんぞくにゃ♪', 2); }), 900); }
+		if (!lights && S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'すごいにゃ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('♪♪', { size: 34, dx: -0.6, dy: -0.95, rot: -0.1, dur: 2.6, color: '#e8457a' }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say(lights ? msg : pick('streak'), 2); }), 900); }
 		else if (S.on === 'card') jumpTo('top', () => { start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); });
 		else { if (S.pose !== 'rig') endPose(); start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); }
 	} else {
 		se('ng'); S.streak = 0; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
 		card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
 		S.wrongRun++;
-		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? `${roomNo(fi, r)}号室の明かり、きえちゃったにゃ…` : S.wrongRun >= 2 ? 'ふぁ〜…ねむくなってきたにゃ' : 'ふぁ〜…ちがったみたいにゃ', 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
+		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? pick('lose', roomNo(fi, r)) : S.wrongRun >= 2 ? pick('wrongAgain') : pick('wrong'), 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
 	}
 }
 // 部屋の相談に全部答えた：明かりがついたらカギ、足りなければ「もう少し」
@@ -1113,7 +1141,7 @@ function showReward(fi, r, after) {
 	const close = () => sc.remove();
 	sc.addEventListener('click', (e) => { if (e.target === sc) close(); });
 	const rb = sc.querySelector('[data-retry]'); if (rb) rb.addEventListener('click', () => { se('tap'); close(); const k = rstart(fi, r) + Math.max(0, s.st.indexOf('ng')); goQ(fi, k, false); });
-	sc.querySelector('[data-next]').addEventListener('click', () => { se('tap'); close(); goQ(n.f, n.k, true); if (lit) jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('もぐもぐ♪', { font: '"Kiwi Maru"', size: 18, dx: -0.55, dy: -1.02, rot: 0, dur: 3 }); say('カギもらったにゃ♪ つぎのおへやいこ', 2.4); }); });
+	sc.querySelector('[data-next]').addEventListener('click', () => { se('tap'); close(); goQ(n.f, n.k, true); if (lit) jumpTo(S.on === 'top' ? 'mid' : 'top', () => { setPose('chikuwa', 3.6); sticker('もぐもぐ♪', { font: '"Kiwi Maru"', size: 18, dx: -0.55, dy: -1.02, rot: 0, dur: 3 }); say(pick('reward'), 2.4); }); });
 }
 $('backBtn').addEventListener('click', () => { se('tap'); if (history.state && history.state.room) history.back(); else openTower(); });
 
@@ -1168,7 +1196,7 @@ function resetRoom() {
 	S.streak = 0; WINS.flat().forEach((w) => w.classList.remove('ignite', 'glint', 'nudge'));
 	cur = { f: 0, k: 0 }; savePos(); paintWindows(); renderQ(false);
 	bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
-	say('最初からやり直しにゃ', 2);
+	say(pick('reset'), 2);
 }
 $('resetBtn').addEventListener('click', () => {
 	se('tap');
@@ -1228,36 +1256,36 @@ room.addEventListener('pointerdown', (e) => {
 	if (inBox(p, catBox()) && !S.jump) {
 		e.preventDefault(); e.stopPropagation();
 		if (wake()) return;
-		if (S.pose !== 'rig') { S.poseThen = null; endPose(); start('hop'); say('にゃ', 0.8); se('nya'); if (S.on === 'card') setTimeout(() => jumpTo('top'), 300); return; }
+		if (S.pose !== 'rig') { S.poseThen = null; endPose(); start('hop'); say(pick('tap'), 0.8); se('nya'); if (S.on === 'card') setTimeout(() => jumpTo('top'), 300); return; }
 		room.setPointerCapture(e.pointerId); S.drag = { y0: e.clientY, t: performance.now() }; S.surpriseT = performance.now(); se('nya'); W2D.motion('Tap');
 		const t = performance.now(); S.clicks = S.clicks.filter((c) => t - c < 2000); S.clicks.push(t);
-		if (S.clicks.length >= 6) { S.heat = t; S.clicks = []; S.drag = null; say('あつい！ちゃんと読むにゃ', 2.4); }
+		if (S.clicks.length >= 6) { S.heat = t; S.clicks = []; S.drag = null; say(pick('heat'), 2.4); }
 		return;
 	}
 	if (e.target !== fg && e.target !== bg && e.target !== room) return;
 	wake();
 	const tp = toyPos();
-	if (!stacked && Math.hypot(p.x - tp.x, p.y - tp.y) < 26) { toy.v += (p.x < tp.x ? 1 : -1) * 3.5; S.playN++; jumpTo('mid', () => { if (S.playN % 3 === 0) { setPose('upside', 2.8); sticker('おもろいにゃんけ', { vertical: true, font: '"Kiwi Maru"', size: 17, dx: -0.6, dy: -1.0, rot: 0, dur: 2.6 }); for (let i = 0; i < 4; i++) S.fx.push({ heart: true, x: S.pos.x + (Math.random() - 0.5) * catH * 0.8, y: S.pos.y - catH * (0.6 + Math.random() * 0.4), t: performance.now() + i * 120 }); } else { start('play'); say('にゃっ！', 1.2); } }); return; }
+	if (!stacked && Math.hypot(p.x - tp.x, p.y - tp.y) < 26) { toy.v += (p.x < tp.x ? 1 : -1) * 3.5; S.playN++; jumpTo('mid', () => { if (S.playN % 3 === 0) { setPose('upside', 2.8); sticker('おもろいにゃんけ', { vertical: true, font: '"Kiwi Maru"', size: 17, dx: -0.6, dy: -1.0, rot: 0, dur: 2.6 }); for (let i = 0; i < 4; i++) S.fx.push({ heart: true, x: S.pos.x + (Math.random() - 0.5) * catH * 0.8, y: S.pos.y - catH * (0.6 + Math.random() * 0.4), t: performance.now() + i * 120 }); } else { start('play'); say(pick('toy'), 1.2); } }); return; }
 	let best = null, bd = 1e9;
 	for (const id of Object.keys(IMG_PL)) { const s = plat(id), dx = (p.x - s.x) / (s.w / 2 + 20), dy = (p.y - s.y) / (60 * SC + 20); const d = dx * dx + dy * dy; if (d < 1 && d < bd) { bd = d; best = id; } }
 	if (best) { jumpTo(best); return; }
 	S.lookAt = p; S.lookUntil = performance.now() + 1800; S.fx.push({ ring: true, x: p.x, y: p.y, t: performance.now() });
 	if (!S.jump && !S.act) start('stalk');
 });
-const up = () => { if (!S.drag) return; if (performance.now() - S.drag.t < 220 && S.stretch < 8) { start('hop'); say('にゃ', 0.8); se('nya'); } else if (S.stretch > 20) say('びよーん', 1); S.drag = null; S.sv = 0; };
+const up = () => { if (!S.drag) return; if (performance.now() - S.drag.t < 220 && S.stretch < 8) { start('hop'); say(pick('tap'), 0.8); se('nya'); } else if (S.stretch > 20) say(pick('stretch'), 1); S.drag = null; S.sv = 0; };
 room.addEventListener('pointerup', up); room.addEventListener('pointercancel', up);
 addEventListener('resize', layout);
 addEventListener('keydown', (e) => {
 	if (document.querySelector('.scrim')) return;
 	const t = performance.now(); wake(); S.lastKey = t; S.keys = S.keys.filter((k) => t - k < 2000); S.keys.push(t);
-	if (S.keys.length >= 12) { S.heat = t; S.keys = []; say('はやすぎにゃ！', 1.8); }
+	if (S.keys.length >= 12) { S.heat = t; S.keys = []; say(pick('fast'), 1.8); }
 	if (!answered && /^[1-9]$/.test(e.key)) answer(+e.key);
 	if (e.key === 'ArrowRight' && !e.target.closest?.('input')) nav(1); if (e.key === 'ArrowLeft' && !e.target.closest?.('input')) nav(-1);
 });
 card.addEventListener('scroll', () => { S.lastInput = performance.now(); if (!S.jump && !S.act) start('play'); }, { passive: true });
 function hide() { if (S.hidden || stacked) return;  // スマホはハウスが帯の外なので隠れない
 	 S.hidden = true; S.jump = null; S.act = null; S.sleeping = false; }
-function unhide() { if (!S.hidden) return; S.hidden = false; S.on = stacked ? 'top' : 'roof'; S.land = performance.now(); start('hop'); say('おかえりにゃ！', 1.6); S.lastInput = performance.now(); }
+function unhide() { if (!S.hidden) return; S.hidden = false; S.on = stacked ? 'top' : 'roof'; S.land = performance.now(); start('hop'); say(pick('back'), 1.6); S.lastInput = performance.now(); }
 document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) hide(); });
 document.addEventListener('mouseover', () => unhide());
 document.addEventListener('visibilitychange', () => (document.hidden ? hide() : unhide()));
@@ -1304,10 +1332,10 @@ function frame(t) {
 	const free = !S.act && !S.drag && !S.sleeping && !S.jump && !S.hidden && S.pose === 'rig';
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
 	if (free && t > S.nextWander && S.on !== 'card') { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
-	if (free && t > S.nextMischief && !answered) { jumpTo('card', () => { setPose('sleepPaper', 9); say('ここ、あったかいにゃ…', 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
+	if (free && t > S.nextMischief && !answered) { jumpTo('card', () => { setPose('sleepPaper', 9); say(pick('cardNap'), 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
-	if (free && !answered && !S.thought && t - S.qStart > 8000) { S.thought = true; start('thinking'); say('…むむ', 2.6); }
-	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); say('のび〜っ。いっしょにのびしよ？', 2.6); } else { start('water'); say('お水のもうにゃ', 2.4); } S.nextRemind = t + 25 * 60000; }
+	if (free && !answered && !S.thought && t - S.qStart > 8000) { S.thought = true; start('thinking'); say(pick('think'), 2.6); }
+	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); say(pick('stretchRemind'), 2.6); } else { start('water'); say(pick('water'), 2.4); } S.nextRemind = t + 25 * 60000; }
 	if (!S.drag && !S.sleeping && !S.jump && !S.hidden && pointer.speed > 900 && t - S.punchT > 900 && t - pointer.last < 80) { const d = Math.hypot(pointer.x - S.pos.x, pointer.y - (S.pos.y - catH * 0.5)); if (d < catH * 0.9) { start('punch'); S.punchT = t; } else if (d < catH * 2.2 && !S.act) start('stalk'); }
 
 	// 視線
@@ -1456,7 +1484,7 @@ function frame(t) {
 	}
 	// 吹き出しの位置
 	if (t > sayUntil && !purr) bubble.classList.remove('on');
-	if (purr && t > sayUntil && !bubble.classList.contains('on')) say('ゴロゴロ…', 0.6);
+	if (purr && t > sayUntil && !bubble.classList.contains('on')) say(pick('purr'), 0.6);
 	const bw = bubble.offsetWidth || 120, bh = bubble.offsetHeight || 40;
 	const side = hy - bh - 18 < 56;
 	let bx = clamp(hx - bw * 0.5, 8, W - bw - 8), by = hy - bh - 18;
@@ -1540,11 +1568,10 @@ pullSync();
 layout();
 requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
-// 夜10時〜朝4時は「あんまり無理せずにがんばってね」と声をかける（開いたときと、30分に1回くらい）
+// 夜10時〜朝4時は「あんまり無理せずにがんばってね」と声をかける（開いたときと、5分に1回くらい）
 const isLateNight = () => { const h = new Date().getHours(); return h >= 22 || h < 4; };
-const LATE_LINES = ['夜おそいにゃ。あんまり無理せず、がんばってにゃ', 'もう夜10時すぎたにゃ。無理しないで、ほどほどにがんばろにゃ', '夜ふかしはほどほどににゃ。あんまり無理せず、がんばってにゃ'];
-let lateSaidAt = 0;
-function sayLate() { lateSaidAt = Date.now(); say(LATE_LINES[Math.floor(Math.random() * LATE_LINES.length)], 3); }
-setTimeout(() => { if (isLateNight()) sayLate(); else say(`ようこそ。${roomNo(cur.f, roomOf(cur.k))}号室「${curFloor().rooms[roomOf(cur.k)].title}」の相談、一緒に答えよう`, 2.6); }, 1900);
-setInterval(() => { if (isLateNight() && !document.hidden && Date.now() - lateSaidAt > 30 * 60000 && !document.querySelector('.scrim, .cutin')) sayLate(); }, 60000);
+let lateNextAt = 0;  // 夜は 5 分に 1 回くらい（4〜6 分のあいだでばらつかせる）
+function sayLate() { lateNextAt = Date.now() + (4 + Math.random() * 2) * 60000; say(pick('late'), 3); }
+setTimeout(() => { if (isLateNight()) sayLate(); else say(pick('welcome', roomNo(cur.f, roomOf(cur.k)), curFloor().rooms[roomOf(cur.k)].title), 2.6); }, 1900);
+setInterval(() => { if (isLateNight() && !document.hidden && Date.now() > lateNextAt && !document.querySelector('.scrim, .cutin')) sayLate(); }, 20000);
 </script>
