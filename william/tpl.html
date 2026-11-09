@@ -1540,5 +1540,11 @@ pullSync();
 layout();
 requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
-setTimeout(() => say(`ようこそ。${roomNo(cur.f, roomOf(cur.k))}号室「${curFloor().rooms[roomOf(cur.k)].title}」の相談、一緒に答えよう`, 2.6), 1900);
+// 夜10時〜朝4時は「あんまり無理せずにがんばってね」と声をかける（開いたときと、30分に1回くらい）
+const isLateNight = () => { const h = new Date().getHours(); return h >= 22 || h < 4; };
+const LATE_LINES = ['夜おそいにゃ。あんまり無理せず、がんばってにゃ', 'もう夜10時すぎたにゃ。無理しないで、ほどほどにがんばろにゃ', '夜ふかしはほどほどににゃ。あんまり無理せず、がんばってにゃ'];
+let lateSaidAt = 0;
+function sayLate() { lateSaidAt = Date.now(); say(LATE_LINES[Math.floor(Math.random() * LATE_LINES.length)], 3); }
+setTimeout(() => { if (isLateNight()) sayLate(); else say(`ようこそ。${roomNo(cur.f, roomOf(cur.k))}号室「${curFloor().rooms[roomOf(cur.k)].title}」の相談、一緒に答えよう`, 2.6); }, 1900);
+setInterval(() => { if (isLateNight() && !document.hidden && Date.now() - lateSaidAt > 30 * 60000 && !document.querySelector('.scrim, .cutin')) sayLate(); }, 60000);
 </script>
