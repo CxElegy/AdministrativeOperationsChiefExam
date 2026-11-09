@@ -88,7 +88,6 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 /* 学習の案内（建物の上の空のところ）：はじめて → 101号室から。記録があれば → 続きから・次の部屋・まちがえた相談の復習 */
 .guide { position: relative; z-index: 2; margin: 0 14px 8px; padding: 10px 12px 12px; border-radius: 12px; background: linear-gradient(rgba(42, 34, 68, .78), rgba(20, 22, 48, .78)); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .6), 0 6px 18px rgba(0, 0, 0, .3); color: #efe6d4; font-size: 13px; line-height: 1.6; }
 .guide:empty { display: none; }
-.guide .gexam { margin: 0 0 6px; font-size: 12px; color: #f3e3bd; letter-spacing: .02em; } .guide .gexam b { font-family: var(--latin); font-size: 17px; color: var(--gold-hi); margin: 0 2px; text-shadow: 0 0 8px rgba(255, 210, 140, .6); }
 .guide .gsync { margin: 7px 0 0; font-size: 11px; color: #bdb4a2; } .guide .gsync .sync-status { font-size: 11px; } .guide .gsync .sync-status.ok { color: #9fd9a8; } .guide .gsync .sync-status.error { color: #f3a39b; }
 .guide h2 { margin: 0 0 6px; font-family: var(--mincho); font-weight: 800; font-size: 15px; color: var(--gold-hi); letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
 .guide h2 small { margin-left: auto; font-family: var(--maru); font-weight: 700; font-size: 11px; color: #cfc6b4; letter-spacing: 0; }
@@ -337,7 +336,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.brand { height: 56px; }
 	.finfo { margin: 0 10px 6px; font-size: 11px; padding: 5px 10px; }
 	.irow { grid-template-columns: 78px 1fr; }
-	#pT, #pX, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
+	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
 	.credit { font-size: 8px; bottom: 3px; }
 	/* スマホ：縦の場所をマンションに回す（案内は低く、階の説明の2行目は出さない） */
 	.finfo .all { display: none; }
@@ -412,7 +411,6 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 			<span class="pill" id="pQ">1F 1 / 35</span>
 			<span class="pill" id="pS"><span class="heart">♥</span><span class="lbl">連続 </span>0</span>
 			<span class="pill" id="pT">今日 0 問</span>
-			<span class="pill" id="pX">試験まで —</span>
 			<button type="button" class="pill idx" id="idxBtn" aria-label="記録と一覧">≡<span class="lbl"> 記録</span></button>
 			<div class="util">
 				<button type="button" id="seBtn" aria-pressed="true" aria-label="効果音" title="効果音">♪</button>
@@ -599,7 +597,7 @@ function paintGuide() {
 	let next = null; for (let fi = 0; fi < DATA.floors.length && !next; fi++) DATA.floors[fi].rooms.forEach((_, r) => { if (!next && roomStats(fi, r).st.includes('none')) next = { fi, r }; });
 	// まちがえた相談：1F から順に
 	const wrong = []; DATA.floors.forEach((f, fi) => f.qids.forEach((id, k) => { if (ST.q[id] && !ST.q[id].last) wrong.push({ fi, k }); }));
-	const weak = weakRoom(), dl = examDaysLeft(), ed = examDate();
+	const weak = weakRoom();
 	const btn = (g, k, d, sub, main) => `<button type="button" class="gbtn${main ? ' main' : ''}" data-g="${g}"><span class="k">${k}</span><span class="d">${d}${sub ? `<small>${sub}</small>` : ''}</span><span class="go">›</span></button>`;
 	let html;
 	if (!done) {
@@ -614,7 +612,7 @@ function paintGuide() {
 			+ (wrong.length ? btn('wrong', '復習', `まちがえた相談 ${wrong.length} 問`, `${at(wrong[0].fi, wrong[0].k).no}号室から順に`) : '')
 			+ '</div>';
 	}
-	el.innerHTML = `<p class="gexam">試験（${ed.getMonth() + 1}/${ed.getDate()}）まで あと <b>${dl}</b> 日</p>` + html + `<p class="gsync">${SYNC ? `記録：${esc(SYNC.id)} ・ <span class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg || '読み込み中…')}</span>` : 'このブラウザの中だけに保存しています（進度リンクで開くと、どの端末でも同じ記録になります）'}</p>`;
+	el.innerHTML = html + `<p class="gsync">${SYNC ? `記録：${esc(SYNC.id)} ・ <span class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg || '読み込み中…')}</span>` : 'このブラウザの中だけに保存しています（進度リンクで開くと、どの端末でも同じ記録になります）'}</p>`;
 	el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
 		se('tap'); const g = b.dataset.g;
 		if (g === 'start') goQ(0, 0, true);
@@ -970,11 +968,12 @@ function mergeStore(a, b) {
 	if (reset) { if ((a.reset || 0) < reset) a = { ...a, ...cut(a) }; if ((b.reset || 0) < reset) b = { ...b, ...cut(b) }; }
 	const out = { v: 1, q: { ...(a.q || {}) }, rooms: { ...(a.rooms || {}) }, days: { ...(a.days || {}) }, exams: [] };
 	if (reset) out.reset = reset;
-	for (const [id, r] of Object.entries(b.q || {})) { const x = out.q[id]; out.q[id] = !x || r.t > x.t ? { ...r, a: Math.max(r.a, x?.a || 0), c: Math.max(r.c, x?.c || 0) } : { ...x, a: Math.max(r.a, x.a), c: Math.max(r.c, x.c) }; }
+	/* 同じ相談が両方にあるとき：このブラウザ（a）の記録を優先。サーバー側の方が先へ進んでいる（答えた回数が多い）ときだけサーバー側を使う */
+	for (const [id, r] of Object.entries(b.q || {})) { const x = out.q[id]; out.q[id] = !x || (r.a || 0) > (x.a || 0) ? { ...r, a: Math.max(r.a, x?.a || 0), c: Math.max(r.c, x?.c || 0) } : { ...x, a: Math.max(r.a, x.a), c: Math.max(r.c, x.c) }; }
 	for (const [id, r] of Object.entries(b.rooms || {})) { const x = out.rooms[id]; out.rooms[id] = !x ? r : { best: Math.max(x.best, r.best), total: r.total, t: Math.max(x.t, r.t) }; }
 	for (const [d, n] of Object.entries(b.days || {})) out.days[d] = Math.max(out.days[d] || 0, n);
 	const seen = new Set(); for (const e of [...(a.exams || []), ...(b.exams || [])]) { const k = `${e.exam}-${e.t}`; if (!seen.has(k)) { seen.add(k); out.exams.push(e); } }
-	const ha = a.here, hb = b.here; out.here = !ha ? hb || undefined : !hb ? ha : hb.t > ha.t ? hb : ha; if (!out.here) delete out.here;
+	const ha = a.here, hb = b.here; out.here = ha || hb || undefined;  /* 今いる場所もこのブラウザを優先 */ if (!out.here) delete out.here;
 	return out;
 }
 // 進度リンク：?u=<ID>（このブラウザに覚える）。進度サーバー（LocalServer）の今のアドレスは、GitHub の tunnel.json から読む
@@ -1146,7 +1145,7 @@ function playWipe() { document.querySelectorAll('.wipe').forEach((e) => e.remove
 // ---------------- 相談票 ----------------
 const CORNERS = ['tl', 'tr', 'bl', 'br'].map((k) => `<span class="corner c-${k}"><svg><use href="#corner"/></svg></span>`).join('');
 const bump = (id, html) => { const e = $(id); if (!e) return; e.innerHTML = html; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); };
-function updatePills() { const px = $('pX'); if (px) px.textContent = `試験まで ${examDaysLeft()}日`; bump('pQ', `${roomNo(cur.f, roomOf(cur.k))}-${cur.k - rstart(cur.f, roomOf(cur.k)) + 1}`); bump('pT', `今日 ${todayCount()} 問`); }
+function updatePills() { bump('pQ', `${roomNo(cur.f, roomOf(cur.k))}-${cur.k - rstart(cur.f, roomOf(cur.k)) + 1}`); bump('pT', `今日 ${todayCount()} 問`); }
 // 部屋の中の相談 701-1, 701-2 …（金＝正解・赤＝まちがい）
 function roomTabs() {
 	const r = roomOf(cur.k), s = roomStats(cur.f, r);
@@ -1677,6 +1676,6 @@ function sayLate() { lateNextAt = Date.now() + (4 + Math.random() * 2) * 60000; 
 function greeting() { const h = new Date().getHours(); return h >= 5 && h < 11 ? rnd(['おはようにゃ', 'おはよ〜にゃ', 'あさにゃ。おはようにゃ']) : h >= 11 && h < 17 ? rnd(['おひるにゃ', 'こんにちはにゃ', 'おひるの勉強にゃ']) : rnd(['こんばんはにゃ', 'こんばんにゃ〜', 'よるの勉強にゃ']); }
 setTimeout(() => { if (isLateNight()) sayLate(); else say(greeting() + '。' + pick('welcome', roomNo(cur.f, roomOf(cur.k)), curFloor().rooms[roomOf(cur.k)].title), 2.6); }, 1900);
 // 開いて少ししたら：苦手な部屋のおすすめ か 試験までの日数 の励まし
-setTimeout(() => { if (document.querySelector('.scrim, .cutin')) return; const w = weakRoom(), d = examDaysLeft(); if (w && (Math.random() < 0.6 || d > 60)) say(pick('weak', roomNo(w.fi, w.r), DATA.floors[w.fi].rooms[w.r].title), 3); else say(d === 0 ? '試験はきょうにゃ！おうえんしてるにゃ' : pick('exam', d), 3); }, 8500);
+setTimeout(() => { if (document.querySelector('.scrim, .cutin')) return; const w = weakRoom(), d = examDaysLeft(); const x = Math.random(); if (w && x < 0.55) say(pick('weak', roomNo(w.fi, w.r), DATA.floors[w.fi].rooms[w.r].title), 3); else if (d >= 0 && x > 0.75) say(d === 0 ? '試験はきょうにゃ！おうえんしてるにゃ' : pick('exam', d), 3);  /* 試験までの日数は画面に出さず、たまにウィリアムが言うだけ */ }, 8500);
 setInterval(() => { if (isLateNight() && !document.hidden && Date.now() > lateNextAt && !document.querySelector('.scrim, .cutin')) sayLate(); }, 20000);
 </script>
