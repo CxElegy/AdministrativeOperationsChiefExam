@@ -816,7 +816,38 @@ const LINES = {
 	purr: ['ゴロゴロ…', 'ゴロゴロにゃ…', 'きもちいいにゃ…', 'もっとなでてにゃ…', 'ふにゃ〜…'],
 	late: ['夜おそいにゃ。あんまり無理せず、がんばってにゃ', 'もう夜10時すぎたにゃ。無理しないで、ほどほどにがんばろにゃ', '夜ふかしはほどほどににゃ。あんまり無理せず、がんばってにゃ', 'おそくまでえらいにゃ。でも無理はしないでにゃ', '夜はゆっくりでいいにゃ。無理せずにゃ', 'ねむくなったら、ねてもいいにゃ', 'きょうもおつかれさまにゃ。ほどほどにゃ', '目がしょぼしょぼしてないにゃ？無理しないでにゃ', '夜の勉強、えらいにゃ。でもからだが大事にゃ', 'あしたもあるにゃ。無理せずがんばろにゃ', 'あと少しにしとこにゃ。無理はきんもつにゃ', 'ぼくもねむいにゃ…いっしょにほどほどにゃ', 'あったかくしてるにゃ？無理せずにゃ', 'いっぱいがんばったにゃ。むりしないでにゃ', 'よふかしさんにゃ。ほどほどにがんばってにゃ'],
 };
-const pick = (k, ...a) => { const l = LINES[k], x = l[Math.floor(Math.random() * l.length)]; return typeof x === 'function' ? x(...a) : x; };
+// 話すたびに少しずつ違うように：同じ言葉は続けて使わない＋言い出し・語尾をゆらす＋その時の状況をたまに添える
+const RECENT = {};
+const rnd = (l) => l[Math.floor(Math.random() * l.length)];
+const OPENERS = ['ねえねえ、', 'ふふっ、', 'あっ、', 'ん〜、', 'えっとね、', 'ほら、'];
+const QUIET = new Set(['tap', 'purr', 'think', 'wake', 'stretch']);  // 短い鳴き声などはそのまま
+function vary(k, t) {
+	if (QUIET.has(k)) return t;
+	// 語尾：「にゃ！」「にゃ」をときどき別の言い方に
+	const soft = /^(wrong|wrongAgain|lose|late|reset)$/.test(k);  // しょんぼり・夜は ♪ を付けない
+	if (Math.random() < 0.45) t = t.replace(/にゃ([！!♪]?)$/, (m, e) => rnd(e ? ['にゃ' + e, 'にゃ〜' + e, 'にゃっ' + e, 'にゃん' + e] : soft ? ['にゃ', 'にゃ〜', 'にゃあ', 'にゃん'] : ['にゃ', 'にゃ〜', 'にゃん', 'にゃあ', 'にゃ♪']));
+	// 言い出し
+	if (Math.random() < 0.25 && !/^[…ふあ]/.test(t)) t = rnd(OPENERS) + t;
+	// その時の状況をたまに添える
+	const today = typeof todayCount === 'function' ? todayCount() : 0, h = new Date().getHours();
+	const extra = {
+		correct: [today > 1 && `きょう${today}問めにゃ`, S.streak >= 2 && `${S.streak}れんぞくにゃ`],
+		streak: [S.streak >= 3 && `${S.streak}れんぞくにゃ`],
+		wrong: [today > 5 && `きょうはもう${today}問もやったにゃ`],
+		next: [today > 0 && `きょう${today}問め、いいペースにゃ`],
+		late: [!/時/.test(t) && `もう${h}時にゃ…`],
+		welcome: [h < 11 && h >= 5 && 'おはようにゃ', h >= 11 && h < 17 && 'こんにちはにゃ', h >= 17 && h < 22 && 'こんばんはにゃ'],
+	}[k];
+	const e = extra && extra.filter(Boolean);
+	if (e && e.length && Math.random() < 0.35) t = (k === 'welcome' || k === 'late' ? rnd(e) + '。' + t : t + ' ' + rnd(e));
+	return t;
+}
+const pick = (k, ...a) => {
+	const l = LINES[k], recent = RECENT[k] || (RECENT[k] = []);
+	let i, tries = 0; do { i = Math.floor(Math.random() * l.length); } while (recent.includes(i) && ++tries < 20);
+	recent.push(i); if (recent.length > Math.min(3, l.length - 1)) recent.shift();  // 最近の 3 つは使わない
+	const x = l[i]; return vary(k, typeof x === 'function' ? x(...a) : x);
+};
 
 // 吹き出し（タイプライター）
 const bubble = $('bubble'), btext = $('btext');
