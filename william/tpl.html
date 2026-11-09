@@ -851,31 +851,54 @@ function mergeStore(a, b) {
 	const ha = a.here, hb = b.here; out.here = !ha ? hb || undefined : !hb ? ha : hb.t > ha.t ? hb : ha; if (!out.here) delete out.here;
 	return out;
 }
-// 進度リンク：?u=<ID>&api=<進度サーバー>（このブラウザに覚える）
+// 進度リンク：?u=<ID>（このブラウザに覚える）。進度サーバー（LocalServer）の今のアドレスは、GitHub の tunnel.json から読む
+//   トンネルのアドレスが変わっても、LocalServer が tunnel.json を書き換えるので、リンクは ?u=<ID> のまま変わらない
+//   ?api=<アドレス> 付きの古いリンクも使える（つながらなくなったら tunnel.json の新しいアドレスに切り替える）
 const SYNC_KEY = 'kangyo-sync-v1';
+const TUNNEL_SRC = 'https://api.github.com/repos/CxElegy/AdministrativeOperationsChiefExam/contents/tunnel.json?ref=claude/clever-franklin-7sudl7';
 function readSync() {
 	let c = {}; try { c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); } catch (e) {}
 	PREV_ID = c.id || null;
 	const p = new URLSearchParams(location.search), u = p.get('u'), api = p.get('api');
 	if (u && /^[A-Za-z0-9_-]{12,64}$/.test(u)) { if (u !== c.id && !api) delete c.api; c.id = u; } if (api) c.api = api.replace(/\/+$/, '');
 	if (u || api) { try { localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {} }
-	const same = /^https?:$/.test(location.protocol) && !location.hostname.endsWith('github.io') && !location.hostname.endsWith('claude.ai') && location.port !== '4321' ? location.origin : '';
-	const base = c.api || same; return c.id && base ? { id: c.id, api: base } : null;
+	// 進度サーバー自身がサイトを配っているとき（http://<PC>:8787/AdministrativeOperationsChiefExam/）は、同じ場所が進度サーバー
+	const same = /^https?:$/.test(location.protocol) && !location.hostname.endsWith('github.io') && location.pathname.startsWith('/AdministrativeOperationsChiefExam') ? location.origin : '';
+	const base = c.api || same; return c.id ? { id: c.id, api: base || null } : null;
 }
 var PREV_ID = null;
 let SYNC = readSync(), syncT = 0, syncMsg = '', syncSt = 'off';
 ST = loadLocal();
 // 前はこのブラウザの記録を1つにまとめて持っていた。同じリンクで開き直したときは、その記録をこのリンクの記録として引き継ぐ
 if (SYNC && SYNC.id === PREV_ID && !Object.keys(ST.q).length) { try { ST = { ...emptyStore(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) {} saveLocal(); }
+// 今の進度サーバーのアドレスを tunnel.json から読む（GitHub の回数制限があるので、確かめるのは 1 分に 1 回まで）
+let apiCheckedAt = 0;
+async function refreshApi() {
+	if (!SYNC || Date.now() - apiCheckedAt < 60000) return false; apiCheckedAt = Date.now();
+	try {
+		const r = await fetch(TUNNEL_SRC, { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw+json' } }); if (!r.ok) return false;
+		const a = String((await r.json()).api || '').trim().replace(/\/+$/, '');
+		if (!/^https:\/\//.test(a) || a === SYNC.api) return false;
+		SYNC.api = a; try { const c = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}'); c.api = a; localStorage.setItem(SYNC_KEY, JSON.stringify(c)); } catch (e) {}
+		return true;
+	} catch (e) { return false; }
+}
+// 進度サーバーへの読み書き。アドレスが分からない・つながらないときは tunnel.json を読み直して、新しいアドレスでもう一度
+async function progressFetch(opts) {
+	if (!SYNC.api) await refreshApi();
+	if (!SYNC.api) throw new Error('進度サーバーのアドレスが分かりません');
+	try { return await fetch(`${SYNC.api}/api/progress/${encodeURIComponent(SYNC.id)}`, opts); }
+	catch (e) { if (await refreshApi()) return fetch(`${SYNC.api}/api/progress/${encodeURIComponent(SYNC.id)}`, opts); throw e; }
+}
 function setSyncMsg(st, m) { syncSt = st; syncMsg = m; document.querySelectorAll('[data-sync-status]').forEach((el) => { el.textContent = m; el.className = 'sync-status ' + st; }); }
 const hhmm = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 // 保存：先にサーバーの記録を読んで、このブラウザの記録と合わせてから書く（ほかの端末で増えた分を上書きで消さない）
 async function pushNow() {
 	if (!SYNC) return;
-	const g = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' });
+	const g = await progressFetch({ cache: 'no-store' });
 	if (g.ok) { const m = (await g.json()).data?.main; if (m) { const before = Object.keys(ST.q).length; ST = mergeStore(ST, m); saveLocal(); if (Object.keys(ST.q).length !== before) { paintWindows(); } } }
 	else if (g.status !== 404) throw new Error('HTTP ' + g.status);
-	const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status);
+	const r = await progressFetch({ method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { main: ST } }) }); if (!r.ok) throw new Error('HTTP ' + r.status);
 }
 // 答えたらすぐ保存（同じ瞬間に何回か呼ばれても 1 回にまとめ、送っている途中なら終わってからもう 1 回送る）
 let pushing = false, pushAgain = false;
@@ -893,7 +916,7 @@ function schedulePush() {
 async function pullQuiet() {
 	if (!SYNC || pushing || document.hidden) return;
 	try {
-		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' }); if (!r.ok) return;
+		const r = await progressFetch({ cache: 'no-store' }); if (!r.ok) return;
 		const m = (await r.json()).data?.main; if (!m) return;
 		const before = JSON.stringify(ST.q), merged = mergeStore(ST, m);
 		if (JSON.stringify(merged.q) !== before) { ST = { ...merged, here: ST.here || merged.here }; saveLocal(); paintWindows(); }
@@ -904,7 +927,7 @@ addEventListener('focus', pullQuiet);
 async function pullSync() {
 	if (!SYNC) return; setSyncMsg('syncing', '読み込み中…');
 	try {
-		const r = await fetch(`${SYNC.api}/api/progress/${SYNC.id}`, { cache: 'no-store' });
+		const r = await progressFetch({ cache: 'no-store' });
 		if (r.ok) { const m = (await r.json()).data?.main; if (m) { ST = mergeStore(ST, m); saveLocal(); applyLinkRecord(); restorePos(); paintWindows(); renderQ(true); savePos(); } }
 		else if (r.status !== 404) throw new Error('HTTP ' + r.status);
 		await pushNow(); setSyncMsg('ok', `同期しました（${hhmm()}）`);
@@ -913,7 +936,7 @@ async function pullSync() {
 // ほかの端末で解いてから、この画面に戻ってきたときも読み込み直す（答えた直後は除く）
 document.addEventListener('visibilitychange', () => { if (!document.hidden) pullQuiet(); });
 function newId() { const b = new Uint8Array(12); crypto.getRandomValues(b); return Array.from(b, (x) => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + Date.now().toString(36).slice(-4); }
-function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}${SYNC.api === location.origin ? '' : `&api=${encodeURIComponent(SYNC.api)}`}`; }
+function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}`; }  // アドレスは tunnel.json から分かるので、リンクは ID だけ
 
 
 // ---------------- いまの相談（階 f の k 番目の問題。k は部屋の順に通し番号） ----------------
@@ -953,13 +976,14 @@ function decodeRecord(code) {
 }
 // 今の記録が入ったリンク（withHash：今の相談も入れる）
 function recordLink(withHash) {
-	const q = new URLSearchParams(location.search); q.set('s', encodeRecord());
+	const q = new URLSearchParams(location.search);
+	if (SYNC) { ['s', 'api', 'v'].forEach((k) => q.delete(k)); q.set('u', SYNC.id); } else q.set('s', encodeRecord());  // 進度リンクのときはアドレスは ?u=ID だけ
 	return location.pathname + '?' + q.toString() + (withHash ? '#' + curQid() : '');
 }
 const recordURL = () => location.origin + recordLink(false);
 // リンクの記録を取り込む（リンクで答えてある問題は、リンクの答えにそろえる。リンクに無い問題は今の記録のまま）
 function applyLinkRecord() {
-	const code = new URLSearchParams(location.search).get('s'); if (!code) return;
+	const code = new URLSearchParams(location.search).get('s'); if (!code || SYNC) return;
 	let r; try { r = decodeRecord(code); } catch (e) { return; } if (!r) return;
 	const now = Date.now();
 	for (const [id, p] of Object.entries(r.picks)) {

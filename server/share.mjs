@@ -51,6 +51,8 @@ const watch = (buf) => {
 	console.log('どの端末でも、同じ ID のリンクで開けば同じ記録になります。');
 	console.log('次に起動したときはアドレスが変わるので、そのとき表示されるリンクで開き直してください。');
 	console.log('====================================================\n');
+	// GITHUB_TOKEN があれば、学習サイトが読む tunnel.json も新しいアドレスにする（リンクは ?u=<ID> だけで使える）
+	if (process.env.GITHUB_TOKEN) spawn(process.execPath, [path.join(HERE, 'update-tunnel-url.mjs'), api], { stdio: 'inherit' });
 };
 tunnel.stdout.on('data', watch);
 tunnel.stderr.on('data', watch);

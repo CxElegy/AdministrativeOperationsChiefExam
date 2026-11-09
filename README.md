@@ -54,7 +54,22 @@ npm run progress-server  # http://localhost:8787/AdministrativeOperationsChiefEx
 - そのリンクをほかの端末で開くと、同じ記録の続きから解けます。ブックマークすれば保存にもなります
 - リンクに入るのは、コピーした時点の記録です。別の端末で解いた分は、その端末のリンクを開けば戻ってきます
 
-## 進度リンク（自分のパソコンに進度を保存して、どの端末でも同じ記録にする）
+## 進度リンク（リンクは ?u=<ID> だけ。アドレスが変わってもそのまま使える）
+
+記録は、自分のパソコンの進度サーバー（LocalServer）に、リンクの ID ごとに保存されます。
+
+- リンクは `https://cxelegy.github.io/AdministrativeOperationsChiefExam/?u=<ID>` だけ。どの端末でも同じ ID なら同じ記録で、答えるたびに保存・1 秒ごとに読み込みます
+- 進度サーバーの今のアドレス（トンネルの URL）は、このリポジトリの `tunnel.json` に書いてあり、サイトはそれを読んで接続します。つながらなくなったら `tunnel.json` を読み直して、新しいアドレスに切り替えます（`?api=` 付きの古いリンクも同じ）
+- トンネルのアドレスが変わったら、パソコン側で次を実行して `tunnel.json` を更新します（LocalServer の「アドレスが変わったとき」の処理から呼ぶ）
+
+  ```bash
+  node server/update-tunnel-url.mjs https://xxxx.trycloudflare.com
+  ```
+
+  `GITHUB_TOKEN`（環境変数か `.env`）が必要です。GitHub の Fine-grained token で、このリポジトリの「Contents: Read and write」だけを許可してください。`tunnel.json` の更新ではサイトの再デプロイは起きません
+- `npm run share`（このリポジトリの進度サーバー＋トンネル）も、`GITHUB_TOKEN` があれば起動時に `tunnel.json` を更新します
+
+## 進度サーバーの動かし方（自分のパソコンに進度を保存する）
 
 GitHub Pages は記録を保存できないので、自分のパソコンで小さな「進度サーバー」を動かし、そこへ保存します。同じ ID のリンク（`?u=ID&api=サーバーのアドレス`）で開けば、スマホでもパソコンでも同じ続きから解けます。
 

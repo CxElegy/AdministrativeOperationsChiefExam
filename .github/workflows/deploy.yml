@@ -4,6 +4,9 @@ on:
   push:
     # github-pages 環境はリポジトリの既定ブランチからしか公開できないので、既定ブランチ（いまは作業ブランチ）でも公開する
     branches: [main, claude/clever-franklin-7sudl7]
+    # 進度サーバーのアドレス（tunnel.json）だけが変わったときは、サイトを作り直さない
+    paths-ignore:
+      - tunnel.json
   workflow_dispatch:
 
 permissions:
