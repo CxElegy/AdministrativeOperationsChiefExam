@@ -54,11 +54,12 @@ npm run progress-server  # http://localhost:8787/AdministrativeOperationsChiefEx
 - そのリンクをほかの端末で開くと、同じ記録の続きから解けます。ブックマークすれば保存にもなります
 - リンクに入るのは、コピーした時点の記録です。別の端末で解いた分は、その端末のリンクを開けば戻ってきます
 
-## 進度リンク（リンクは ?u=<ID> だけ。アドレスが変わってもそのまま使える）
+## 進度リンク（v13 の形のリンクをそのまま使い続ける）
 
 記録は、自分のパソコンの進度サーバー（LocalServer）に、リンクの ID ごとに保存されます。
 
-- リンクは `https://cxelegy.github.io/AdministrativeOperationsChiefExam/?u=<ID>` だけ。どの端末でも同じ ID なら同じ記録で、答えるたびに保存・1 秒ごとに読み込みます
+- リンクは `https://cxelegy.github.io/AdministrativeOperationsChiefExam/?u=<ID>&api=https%3A%2F%2Fhostels-graduated-ball-entering.trycloudflare.com&v=13` の形（v13 のリンク）に統一。`api=` は古いアドレスのままでよく、どの端末でも同じ ID なら同じ記録で、答えるたびに保存・1 秒ごとに読み込みます
+- 開いたあともアドレス欄はこの形のまま。記録パネルでコピーできるリンクも同じ形です
 - 進度サーバーの今のアドレス（トンネルの URL）は、このリポジトリの `tunnel.json` に書いてあり、サイトはそれを読んで接続します。つながらなくなったら `tunnel.json` を読み直して、新しいアドレスに切り替えます（`?api=` 付きの古いリンクも同じ）
 - トンネルのアドレスが変わったら、パソコン側で次を実行して `tunnel.json` を更新します（LocalServer の「アドレスが変わったとき」の処理から呼ぶ）
 

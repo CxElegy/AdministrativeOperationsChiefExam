@@ -936,7 +936,9 @@ async function pullSync() {
 // ほかの端末で解いてから、この画面に戻ってきたときも読み込み直す（答えた直後は除く）
 document.addEventListener('visibilitychange', () => { if (!document.hidden) pullQuiet(); });
 function newId() { const b = new Uint8Array(12); crypto.getRandomValues(b); return Array.from(b, (x) => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('') + Date.now().toString(36).slice(-4); }
-function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}`; }  // アドレスは tunnel.json から分かるので、リンクは ID だけ
+// 配るリンクはいつも v13 の形（?u=<ID>&api=<アドレス>&v=13）。api= が古くても、サイトが tunnel.json から今のアドレスを読むのでつながる
+const LINK_API = new URLSearchParams(location.search).get('api') || 'https://hostels-graduated-ball-entering.trycloudflare.com';
+function shareLink() { if (!SYNC) return ''; const base = location.origin + location.pathname; return `${base}?u=${encodeURIComponent(SYNC.id)}&api=${encodeURIComponent(LINK_API)}&v=13`; }
 
 
 // ---------------- いまの相談（階 f の k 番目の問題。k は部屋の順に通し番号） ----------------
@@ -977,7 +979,7 @@ function decodeRecord(code) {
 // 今の記録が入ったリンク（withHash：今の相談も入れる）
 function recordLink(withHash) {
 	const q = new URLSearchParams(location.search);
-	if (SYNC) { ['s', 'api', 'v'].forEach((k) => q.delete(k)); q.set('u', SYNC.id); } else q.set('s', encodeRecord());  // 進度リンクのときはアドレスは ?u=ID だけ
+	if (SYNC) { q.delete('s'); q.set('u', SYNC.id); } else q.set('s', encodeRecord());  // 進度リンクのときは、開いたリンク（?u=…&api=…&v=13）のまま
 	return location.pathname + '?' + q.toString() + (withHash ? '#' + curQid() : '');
 }
 const recordURL = () => location.origin + recordLink(false);
