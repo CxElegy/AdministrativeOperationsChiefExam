@@ -88,6 +88,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 /* 学習の案内（建物の上の空のところ）：はじめて → 101号室から。記録があれば → 続きから・次の部屋・まちがえた相談の復習 */
 .guide { position: relative; z-index: 2; margin: 0 14px 8px; padding: 10px 12px 12px; border-radius: 12px; background: linear-gradient(rgba(42, 34, 68, .78), rgba(20, 22, 48, .78)); box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .6), 0 6px 18px rgba(0, 0, 0, .3); color: #efe6d4; font-size: 13px; line-height: 1.6; }
 .guide:empty { display: none; }
+.guide .gexam { margin: 0 0 6px; font-size: 12px; color: #f3e3bd; letter-spacing: .02em; } .guide .gexam b { font-family: var(--latin); font-size: 17px; color: var(--gold-hi); margin: 0 2px; text-shadow: 0 0 8px rgba(255, 210, 140, .6); }
 .guide .gsync { margin: 7px 0 0; font-size: 11px; color: #bdb4a2; } .guide .gsync .sync-status { font-size: 11px; } .guide .gsync .sync-status.ok { color: #9fd9a8; } .guide .gsync .sync-status.error { color: #f3a39b; }
 .guide h2 { margin: 0 0 6px; font-family: var(--mincho); font-weight: 800; font-size: 15px; color: var(--gold-hi); letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
 .guide h2 small { margin-left: auto; font-family: var(--maru); font-weight: 700; font-size: 11px; color: #cfc6b4; letter-spacing: 0; }
@@ -222,6 +223,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .cutin .band { position: absolute; left: -10%; right: -10%; top: 30%; height: 34%; background: linear-gradient(90deg, rgba(21, 39, 84, .94), rgba(96, 64, 150, .94)); transform: skewY(-6deg) scaleY(0); animation: band 1.8s var(--ease-quint) both; box-shadow: 0 0 0 3px var(--gold), 0 0 40px rgba(242, 178, 74, .6); }
 .cutin .band::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(100deg, transparent 0 40px, rgba(255, 255, 255, .06) 40px 44px); }
 @keyframes band { 12%, 82% { transform: skewY(-6deg) scaleY(1); } 100% { transform: skewY(-6deg) scaleY(0); } }
+.cutin.small .band { top: 38%; height: 18%; } .cutin.small b { top: 39%; font-size: clamp(26px, 4vw, 48px); -webkit-text-stroke: 7px var(--ink); } .cutin.small small { top: 49%; font-size: 14px; } .cutin.small .icon { top: 34%; height: 26%; }
 .cutin .icon { position: absolute; z-index: 2; right: 7%; top: 18%; height: 60%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 40%, #fff8e6, #f6dfb0); box-shadow: 0 0 0 5px #fff, 0 0 0 9px var(--gold), 0 0 34px rgba(255, 210, 130, .9); animation: cin 1.8s var(--ease-quint) both; }
 .cutin .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cutin > img { position: absolute; z-index: 2; right: 6%; top: 14%; height: 66%; animation: cin 1.8s var(--ease-quint) both; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .45)); }
@@ -335,7 +337,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.brand { height: 56px; }
 	.finfo { margin: 0 10px 6px; font-size: 11px; padding: 5px 10px; }
 	.irow { grid-template-columns: 78px 1fr; }
-	#pT, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
+	#pT, #pX, .pill .lbl { display: none; } .pill.idx { font-size: 13px; padding: 2px 9px; }
 	.credit { font-size: 8px; bottom: 3px; }
 	/* スマホ：縦の場所をマンションに回す（案内は低く、階の説明の2行目は出さない） */
 	.finfo .all { display: none; }
@@ -362,6 +364,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	/* スマホ：全問正解の帯。William の丸いアイコンは画面の幅に合わせて帯の右側に収める */
 	.cutin .band { top: 32%; height: 26%; }
 	.cutin .icon { height: auto; width: min(36vw, 24vh); top: calc(32% + 13% - min(18vw, 12vh)); right: 5%; box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--gold), 0 0 24px rgba(255, 210, 130, .9); }
+	.cutin.small .icon { height: auto; aspect-ratio: 1; width: min(24vw, 15vh); top: calc(38% + 9% - min(12vw, 7.5vh)); } .cutin.small b { font-size: 28px; -webkit-text-stroke: 6px var(--ink); } .cutin.small small { font-size: 13px; }
 	.cutin b { left: 6%; top: 36%; font-size: 40px; -webkit-text-stroke: 7px var(--ink); }
 	.cutin small { left: 7%; top: 47%; font-size: 15px; }
 	.bar .hint { display: none; }
@@ -409,6 +412,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 			<span class="pill" id="pQ">1F 1 / 35</span>
 			<span class="pill" id="pS"><span class="heart">♥</span><span class="lbl">連続 </span>0</span>
 			<span class="pill" id="pT">今日 0 問</span>
+			<span class="pill" id="pX">試験まで —</span>
 			<button type="button" class="pill idx" id="idxBtn" aria-label="記録と一覧">≡<span class="lbl"> 記録</span></button>
 			<div class="util">
 				<button type="button" id="seBtn" aria-pressed="true" aria-label="効果音" title="効果音">♪</button>
@@ -432,6 +436,8 @@ const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__
 // スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
 const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
 const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
+// 夜（22〜4時）：William は「無理せず」と声をかけ、効果音は小さく・動きはゆったり（静かなモード）
+function isLateNight() { const h = new Date().getHours(); return h >= 22 || h < 4; }
 // ?debug=1：画面の大きさなどを表示する（スマホで下が見えないときの調査用）
 if (new URLSearchParams(location.search).get('debug')) {
 	const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:4px;top:4px;z-index:99;background:rgba(0,0,0,.8);color:#0f0;font:12px/1.4 monospace;padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre';
@@ -481,6 +487,7 @@ $('seBtn').addEventListener('click', () => { seOn = !seOn; $('seBtn').setAttribu
 function tone(f0, f1, dur, type = 'sine', gain = 0.25, delay = 0) {
 	const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
 	o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+	if (isLateNight()) gain *= 0.35;  // 夜は小さく
 	g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 	o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
 }
@@ -574,6 +581,15 @@ function paintWindows() {
 	paintInfo();
 }
 function floorStats(fi) { const ids = DATA.floors[fi].qids; return { total: ids.length, ok: ids.filter((id) => ST.q[id]?.last).length, ng: ids.filter((id) => ST.q[id] && !ST.q[id].last).length, done: ids.filter((id) => ST.q[id]).length, rooms: DATA.floors[fi].rooms.length, lit: DATA.floors[fi].rooms.filter((_, r) => isLit(roomStats(fi, r))).length }; }
+// 苦手な部屋：まだ明かりのない部屋で、まちがいが 2 問以上。いちばん多い部屋（同じなら正解の割合が低い部屋）
+function weakRoom() {
+	let best = null;
+	DATA.floors.forEach((f, fi) => f.rooms.forEach((_, r) => { const s = roomStats(fi, r); if (isLit(s) || s.ng < 2) return; const score = s.ng * 100 - s.ok / s.n; if (!best || score > best.score) best = { fi, r, ng: s.ng, score }; }));
+	return best;
+}
+// 試験日：12月の第1日曜日（過ぎていたら来年）
+function examDate() { const now = new Date(); for (const y of [now.getFullYear(), now.getFullYear() + 1]) { const d = new Date(y, 11, 1); d.setDate(1 + (7 - d.getDay()) % 7); const end = new Date(d); end.setHours(23, 59, 59); if (end >= now) return d; } }
+function examDaysLeft() { const d = examDate(), t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((d - t) / 86400000); }
 function paintGuide() {
 	const el = $('guide'); if (!el) return;
 	const all = Object.keys(DATA.q), done = all.filter((id) => ST.q[id]).length, okN = all.filter((id) => ST.q[id]?.last).length;
@@ -583,6 +599,7 @@ function paintGuide() {
 	let next = null; for (let fi = 0; fi < DATA.floors.length && !next; fi++) DATA.floors[fi].rooms.forEach((_, r) => { if (!next && roomStats(fi, r).st.includes('none')) next = { fi, r }; });
 	// まちがえた相談：1F から順に
 	const wrong = []; DATA.floors.forEach((f, fi) => f.qids.forEach((id, k) => { if (ST.q[id] && !ST.q[id].last) wrong.push({ fi, k }); }));
+	const weak = weakRoom(), dl = examDaysLeft(), ed = examDate();
 	const btn = (g, k, d, sub, main) => `<button type="button" class="gbtn${main ? ' main' : ''}" data-g="${g}"><span class="k">${k}</span><span class="d">${d}${sub ? `<small>${sub}</small>` : ''}</span><span class="go">›</span></button>`;
 	let html;
 	if (!done) {
@@ -593,19 +610,23 @@ function paintGuide() {
 		html = `<h2>つぎの一歩<small>明かり ${lit} / ${rooms} 室 ・ 正解 ${okN} / ${all.length} 問</small></h2><div class="bar2"><b style="width:${(okN / all.length * 100).toFixed(1)}%"></b></div><div class="gbtns">`
 			+ (c ? btn('cont', '続きから', `${c.no}号室「${esc(c.title)}」 相談 ${c.n}`, '前回の続き', true) : '')
 			+ (next ? btn('next', '次の部屋', `${roomNo(next.fi, next.r)}号室「${esc(DATA.floors[next.fi].rooms[next.r].title)}」`, `まだの相談 ${roomStats(next.fi, next.r).st.filter((x) => x === 'none').length} 問`) : '')
+			+ (weak ? btn('weak', '苦手', `${roomNo(weak.fi, weak.r)}号室「${esc(DATA.floors[weak.fi].rooms[weak.r].title)}」`, `まちがい ${weak.ng} 問 ・ もう一回いこにゃ`) : '')
 			+ (wrong.length ? btn('wrong', '復習', `まちがえた相談 ${wrong.length} 問`, `${at(wrong[0].fi, wrong[0].k).no}号室から順に`) : '')
 			+ '</div>';
 	}
-	el.innerHTML = html + `<p class="gsync">${SYNC ? `記録：${esc(SYNC.id)} ・ <span class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg || '読み込み中…')}</span>` : 'このブラウザの中だけに保存しています（進度リンクで開くと、どの端末でも同じ記録になります）'}</p>`;
+	el.innerHTML = `<p class="gexam">試験（${ed.getMonth() + 1}/${ed.getDate()}）まで あと <b>${dl}</b> 日</p>` + html + `<p class="gsync">${SYNC ? `記録：${esc(SYNC.id)} ・ <span class="sync-status ${syncSt}" data-sync-status>${esc(syncMsg || '読み込み中…')}</span>` : 'このブラウザの中だけに保存しています（進度リンクで開くと、どの端末でも同じ記録になります）'}</p>`;
 	el.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => {
 		se('tap'); const g = b.dataset.g;
 		if (g === 'start') goQ(0, 0, true);
 		if (g === 'cont') { const h = DATA.floors.findIndex((f) => f.id === ST.here.f); goQ(h, Math.min(ST.here.k || 0, DATA.floors[h].qids.length - 1), true); }
 		if (g === 'next') goRoom(next.fi, next.r);
+		if (g === 'weak') goRoom(weak.fi, weak.r);
 		if (g === 'wrong') { const i = wrong.findIndex((w) => w.fi > cur.f || (w.fi === cur.f && w.k > cur.k)); const w = wrong[i < 0 ? 0 : i]; goQ(w.fi, w.k, false); }
 	}));
 }
+let decorLit = -1;
 function paintInfo() {
+	if (typeof drawBg === 'function' && W) { const n = litTotal(); if (n !== decorLit) { decorLit = n; drawBg(); paintCollar(); } }
 	paintGuide();
 	const f = curFloor(), s = floorStats(cur.f);
 	let rooms = 0, lit = 0; DATA.floors.forEach((_, i) => { const t = floorStats(i); rooms += t.rooms; lit += t.lit; });
@@ -674,7 +695,7 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 		app.stage.addChild(model);
 		model.internalModel.on('beforeModelUpdate', () => applyParams(model.internalModel.coreModel));
 		const _upd = model.internalModel.update.bind(model.internalModel); model.internalModel.update = (dt, now) => { _upd(dt, now); }; // 形は Live2D の元のまま（変えるのはテクスチャ画像だけ）
-		W2D.model = model; W2D.app = app; L.ready = true;
+		W2D.model = model; W2D.app = app; L.ready = true; paintCollar();
 	} catch (e) { console.error(e); }
 })();
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
@@ -741,6 +762,46 @@ function layout() {
 	catH = stacked ? Math.max(56, (parseFloat(room.style.getPropertyValue('--treeH')) || 150) - 12 - HUDB - 8) : 172 * SC;  // 台の上に立った猫の頭が、上のボタンにかからない高さ
 	drawBg();
 }
+// ---------------- William の成長：明かりの数で、首輪の色と猫タワーの飾りが変わる ----------------
+// 首輪はテクスチャの首輪の部分（紫）の色だけを塗り替える（Live2D の形は変えない）
+const COLLAR = [[0, null, 'むらさき'], [5, 195, 'みずいろ'], [15, 135, 'みどり'], [30, 330, 'ピンク'], [45, 45, 'きんいろ']];
+const DECOR = [[3, '🌱'], [6, '🎀'], [10, '⭐'], [15, '🌸'], [20, '🧶'], [25, '🍀'], [30, '🏮'], [40, '👑'], [52, '🏆']];
+const DECOR_SLOTS = { tall: [['top', -0.22], ['top', 0.24], ['mid', 0.3], ['roof', -0.18], ['roof', 0.1], ['mid', 0.08], ['floor', 0.05], ['floor', 0.32], ['roof', 0.04]], wide: [['top', -0.44], ['top', 0.44], ['top', -0.32], ['top', 0.32], ['mid', -0.3], ['mid', 0.3], ['top', -0.2], ['top', 0.2], ['mid', 0]] };
+function litTotal() { let n = 0; DATA.floors.forEach((_, i) => { n += floorStats(i).lit; }); return n; }
+const collarLevel = (n) => COLLAR.reduce((l, c, i) => (n >= c[0] ? i : l), 0);
+const decorCount = (n) => DECOR.filter((d) => n >= d[0]).length;
+function drawDecor(c) {
+	const n = litTotal(), slots = DECOR_SLOTS[stacked ? 'wide' : 'tall'];
+	c.save(); c.textAlign = 'center'; c.textBaseline = 'bottom';
+	DECOR.forEach(([need, emo], i) => { if (n < need) return; const [pid, dx] = slots[i]; const p = plat(pid); c.font = `${Math.max(14, Math.round(24 * SC))}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; c.fillText(emo, p.x + dx * p.w, p.y - 1); });
+	c.restore();
+}
+let collarShown = -1;
+function rgbToHsv(r, g, b) { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; return [h, mx ? d / mx : 0, mx]; }
+function hsvToRgb(h, s, v) { const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c; const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return [r + m, g + m, b + m]; }
+function paintCollar() {
+	const m = W2D.model; if (!m) return; const lv = collarLevel(litTotal()); if (lv === collarShown) return; collarShown = lv;
+	try {
+		if (!W2D.texCanvas) { const img = m.textures[0].baseTexture.resource.source; const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0); W2D.texCanvas = cv; W2D.collarBox = [Math.round(img.width * 0.698), Math.round(img.height * 0.374), Math.round(img.width * 0.275), Math.round(img.height * 0.046)]; W2D.collarOrig = cx.getImageData(...W2D.collarBox); }
+		const [bx, by] = W2D.collarBox, o = W2D.collarOrig, d = new ImageData(new Uint8ClampedArray(o.data), o.width, o.height), hue = COLLAR[lv][1];
+		if (hue !== null) for (let i = 0; i < d.data.length; i += 4) {
+			if (d.data[i + 3] < 128) continue;
+			const [h, sat, v] = rgbToHsv(d.data[i] / 255, d.data[i + 1] / 255, d.data[i + 2] / 255);
+			if (h < 235 || h > 300 || sat < 0.3 || v < 0.2) continue;  // 紫（首輪）のところだけ
+			const [r, g, b] = hsvToRgb(hue, Math.min(1, sat * (hue === 45 ? 1.05 : 0.95)), Math.min(1, v * (hue === 45 ? 1.45 : hue === 195 ? 1.3 : 1.15)));
+			d.data[i] = r * 255; d.data[i + 1] = g * 255; d.data[i + 2] = b * 255;
+		}
+		W2D.texCanvas.getContext('2d').putImageData(d, bx, by);
+		if (!W2D.collarTex) { W2D.collarTex = PIXI.Texture.from(W2D.texCanvas); m.textures[0] = W2D.collarTex; } else W2D.collarTex.baseTexture.update();
+		m.glContextID = -1;  // Live2D はテクスチャを最初に 1 回だけ読むので、読み直させる
+	} catch (e) { console.warn('collar', e); }
+}
+// 明かりが増えたあと：首輪の色が変わった／飾りが増えたら William がひとこと
+function growthCheck(before) {
+	const after = litTotal();
+	if (collarLevel(after) > collarLevel(before)) { paintCollar(); say(pick('collar', COLLAR[collarLevel(after)][2]), 3); }
+	else if (decorCount(after) > decorCount(before)) say(pick('decor'), 2.6);
+}
 function drawBg() {
 	const c = bctx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
 	const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#5c4a7a'); g.addColorStop(0.6, '#c98a6a'); g.addColorStop(1, '#e0a277');
@@ -753,6 +814,7 @@ function drawBg() {
 		if (tallImg.complete && tallImg.naturalWidth) { c.save(); c.beginPath(); c.rect(stripX, 0, W - stripX, H); c.clip(); c.drawImage(tallImg, OX, OY, IW * SC, IH * SC); c.restore(); }
 		const sh = c.createLinearGradient(stripX - 40, 0, stripX + 8, 0); sh.addColorStop(0, 'rgba(40,20,40,0)'); sh.addColorStop(1, 'rgba(40,20,40,.25)'); c.fillStyle = sh; c.fillRect(stripX - 40, 0, 48, H);
 	}
+	drawDecor(c);
 	const v = c.createRadialGradient(W * 0.6, H * 0.45, Math.min(W, H) * 0.3, W * 0.6, H * 0.45, Math.max(W, H) * 0.8);
 	v.addColorStop(0, 'rgba(20,10,30,0)'); v.addColorStop(1, 'rgba(20,10,30,.3)'); c.fillStyle = v; c.fillRect(0, 0, W, H);
 }
@@ -785,7 +847,7 @@ function setPose(k, dur, then) {
 function endPose() {}
 // LINE スタンプ風の文字・記号
 function sticker(text, o = {}) { S.stk.push({ text, t: performance.now(), dur: o.dur || 2.4, color: o.color || '#2b2522', font: o.font || '"Dela Gothic One"', size: o.size || 30, dx: o.dx ?? 0.42, dy: o.dy ?? -0.95, rot: o.rot ?? -0.12, vertical: !!o.vertical }); }
-function cutin(k, text, sub, icon) { const el = document.createElement('div'); el.className = 'cutin' + (icon ? ' withicon' : ''); el.innerHTML = `<div class="band"></div>${icon ? `<span class="icon"><img src="${icon}" alt=""></span>` : `<img src="${CUTIN}" alt="">`}<b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
+function cutin(k, text, sub, icon, small) { const el = document.createElement('div'); el.className = 'cutin' + (icon ? ' withicon' : '') + (small ? ' small' : ''); el.innerHTML = `<div class="band"></div>${icon ? `<span class="icon"><img src="${icon}" alt=""></span>` : `<img src="${CUTIN}" alt="">`}<b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
 function drawWing(c, x, y, s, dir, flap) { c.save(); c.translate(x, y); c.scale(dir, 1); c.rotate(-0.25 - flap * 0.4); c.fillStyle = '#ffffff'; c.strokeStyle = '#7fd3ef'; c.lineWidth = 2.5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(s * 0.3, -s * 0.9, s * 1.1, -s * 0.95, s * 1.28, -s * 0.6); c.quadraticCurveTo(s * 1.0, -s * 0.48, s * 1.14, -s * 0.3); c.quadraticCurveTo(s * 0.82, -s * 0.22, s * 0.94, -s * 0.03); c.quadraticCurveTo(s * 0.58, -0.0, s * 0.62, s * 0.18); c.quadraticCurveTo(s * 0.26, s * 0.12, 0, 0); c.fill(); c.stroke(); c.restore(); }
 function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); c.fill(); }
 const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; };
@@ -814,6 +876,11 @@ const LINES = {
 	water: ['お水のもうにゃ', 'おみず、のんでるにゃ？', 'ひとくちお水にゃ', 'のどかわいてないにゃ？', 'お水タイムにゃ'],
 	wake: ['…はっ！', '…ねてないにゃ！', '…はにゃ？', '…おきてたにゃ', '…あ、おかえりにゃ'],
 	purr: ['ゴロゴロ…', 'ゴロゴロにゃ…', 'きもちいいにゃ…', 'もっとなでてにゃ…', 'ふにゃ〜…'],
+	streakDays: [(n) => `${n}日つづいたにゃ！えらいにゃ`, (n) => `${n}日れんぞくにゃ♪ そのちょうしにゃ`, (n) => `まいにちえらいにゃ。${n}日めにゃ`, (n) => `${n}日つづけてるにゃ！すごいにゃ`, (n) => `きょうも来てくれたにゃ。${n}日れんぞくにゃ`],
+	weak: [(n, t) => `${n}号室「${t}」、もう一回いこにゃ`, (n) => `${n}号室、ちょっと苦手みたいにゃ。いっしょにいこにゃ`, (n, t) => `${n}号室「${t}」、リベンジするにゃ？`, (n) => `まちがいが多いのは${n}号室にゃ。もう一回にゃ`, (n) => `${n}号室、あと少しで明かりがつくかもにゃ`],
+	exam: [(d) => `試験まであと${d}日にゃ。いっしょにがんばろにゃ`, (d) => `あと${d}日にゃ！1問ずつでいいにゃ`, (d) => `試験まで${d}日。きょうもすこしずつにゃ`, (d) => `のこり${d}日にゃ。ぼくがついてるにゃ`, (d) => `あと${d}日、まいにちちょっとずつにゃ`],
+	decor: ['猫タワーにかざりがふえたにゃ♪', 'あたらしいかざりにゃ！うれしいにゃ', 'タワーがにぎやかになったにゃ♪', 'みてみて、かざりがふえたにゃ', 'おへやがかわいくなったにゃ♪'],
+	collar: [(c) => `首輪が${c}になったにゃ！`, (c) => `みてみて、${c}の首輪にゃ♪`, (c) => `${c}の首輪、にあうにゃ？`, (c) => `首輪の色がかわったにゃ。${c}にゃ♪`, (c) => `${c}の首輪、たからものにゃ`],
 	late: ['夜おそいにゃ。あんまり無理せず、がんばってにゃ', 'もう夜10時すぎたにゃ。無理しないで、ほどほどにがんばろにゃ', '夜ふかしはほどほどににゃ。あんまり無理せず、がんばってにゃ', 'おそくまでえらいにゃ。でも無理はしないでにゃ', '夜はゆっくりでいいにゃ。無理せずにゃ', 'ねむくなったら、ねてもいいにゃ', 'きょうもおつかれさまにゃ。ほどほどにゃ', '目がしょぼしょぼしてないにゃ？無理しないでにゃ', '夜の勉強、えらいにゃ。でもからだが大事にゃ', 'あしたもあるにゃ。無理せずがんばろにゃ', 'あと少しにしとこにゃ。無理はきんもつにゃ', 'ぼくもねむいにゃ…いっしょにほどほどにゃ', 'あったかくしてるにゃ？無理せずにゃ', 'いっぱいがんばったにゃ。むりしないでにゃ', 'よふかしさんにゃ。ほどほどにがんばってにゃ'],
 };
 // 話すたびに少しずつ違うように：同じ言葉は続けて使わない＋言い出し・語尾をゆらす＋その時の状況をたまに添える
@@ -836,10 +903,9 @@ function vary(k, t) {
 		wrong: [today > 5 && `きょうはもう${today}問もやったにゃ`],
 		next: [today > 0 && `きょう${today}問め、いいペースにゃ`],
 		late: [!/時/.test(t) && `もう${h}時にゃ…`],
-		welcome: [h < 11 && h >= 5 && 'おはようにゃ', h >= 11 && h < 17 && 'こんにちはにゃ', h >= 17 && h < 22 && 'こんばんはにゃ'],
 	}[k];
 	const e = extra && extra.filter(Boolean);
-	if (e && e.length && Math.random() < 0.35) t = (k === 'welcome' || k === 'late' ? rnd(e) + '。' + t : t + ' ' + rnd(e));
+	if (e && e.length && Math.random() < 0.35) t = (k === 'late' ? rnd(e) + '。' + t : t + ' ' + rnd(e));
 	return t;
 }
 const pick = (k, ...a) => {
@@ -872,6 +938,7 @@ function jumpTo(id, then) {
 const P = [], RINGS = [];
 const COL = ['#fff7d6', '#f3d27a', '#ffffff', '#f3d27a', '#fff7d6', '#ffffff', '#f3d27a', '#fff7d6', '#ffffff', '#a68cd8'];
 function burst(cx, cy, n = 24, power = 1) {
+	if (isLateNight()) { n = Math.ceil(n * 0.45); power *= 0.7; }  // 夜はキラキラ控えめ
 	if (reduce) return;
 	for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, s = (3 + Math.random() * 4) * power; P.push({ x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s * (Math.sin(a) < 0 ? 1.25 : 1), r: 4 + Math.random() * 8, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.14, t0: performance.now(), life: 700 + Math.random() * 300, c: COL[i % COL.length] }); }
 	RINGS.push({ x: cx, y: cy, t0: performance.now() });
@@ -1038,7 +1105,7 @@ function decodeRecord(code) {
 // 今の記録が入ったリンク（withHash：今の相談も入れる）
 function recordLink(withHash) {
 	const q = new URLSearchParams(location.search);
-	if (SYNC) { q.delete('s'); q.set('u', SYNC.id); } else q.set('s', encodeRecord());  // 進度リンクのときは、開いたリンク（?u=…&api=…&v=13）のまま
+	if (!SYNC) q.set('s', encodeRecord());  // 進度リンクのときは、開いたリンク（?u=…&api=…&v=13&s=…）をそのまま残す
 	return location.pathname + '?' + q.toString() + (withHash ? '#' + curQid() : '');
 }
 const recordURL = () => location.origin + recordLink(false);
@@ -1079,7 +1146,7 @@ function playWipe() { document.querySelectorAll('.wipe').forEach((e) => e.remove
 // ---------------- 相談票 ----------------
 const CORNERS = ['tl', 'tr', 'bl', 'br'].map((k) => `<span class="corner c-${k}"><svg><use href="#corner"/></svg></span>`).join('');
 const bump = (id, html) => { const e = $(id); if (!e) return; e.innerHTML = html; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); };
-function updatePills() { bump('pQ', `${roomNo(cur.f, roomOf(cur.k))}-${cur.k - rstart(cur.f, roomOf(cur.k)) + 1}`); bump('pT', `今日 ${todayCount()} 問`); }
+function updatePills() { const px = $('pX'); if (px) px.textContent = `試験まで ${examDaysLeft()}日`; bump('pQ', `${roomNo(cur.f, roomOf(cur.k))}-${cur.k - rstart(cur.f, roomOf(cur.k)) + 1}`); bump('pT', `今日 ${todayCount()} 問`); }
 // 部屋の中の相談 701-1, 701-2 …（金＝正解・赤＝まちがい）
 function roomTabs() {
 	const r = roomOf(cur.k), s = roomStats(cur.f, r);
@@ -1130,6 +1197,7 @@ function answer(i) {
 	const ok = q.answer.includes(i), fi = cur.f, r = roomOf(cur.k), w = WINS[fi][r];
 	const before = roomStats(fi, r), prev = pending.get(w);
 	recordAnswer(q.id, ok, i);
+	if (todayCount() === 1 && dayStreak() >= 2) { const n = dayStreak(); setTimeout(() => { cutin('loaf', `${n}日つづいたにゃ!!`, '連続学習', MAJI[Math.floor(Math.random() * MAJI.length)], true); say(pick('streakDays', n), 3); }, 2400); }
 	const after = roomStats(fi, r), lights = !isLit(before) && isLit(after), loses = isLit(before) && !isLit(after);
 	pending.set(w, { before: prev ? prev.before : before, kind: ok ? 'ok' : 'ng', lights });  // 窓は光の玉が着いてから変える
 	savePos(); showAnswer(i, false); paintWindows();
@@ -1146,6 +1214,7 @@ function answer(i) {
 		const nowPerfect = after.ok === after.n && before.ok < after.n;                     // この答えで全問正解になった（答え直しも含む）
 		if (nowPerfect && !firstPass) cutin('loaf', 'まじ!!', '全問正解', MAJI[Math.floor(Math.random() * MAJI.length)]);
 		const perfect = nowPerfect;
+		if (lights) { const b0 = litTotal() - 1; setTimeout(() => growthCheck(b0), 3600); }
 		if (lights && !perfect) cutin('loaf', '点灯!!', `${roomNo(fi, r)}号室に明かり`, MAJI[Math.floor(Math.random() * MAJI.length)]);  // 部屋に明かりがついた瞬間の帯（全問正解なら あとで まじ!! を出す）
 		if (!lights && S.streak >= 3 && S.streak % 3 === 0) { cutin('loaf', 'すごいにゃ!!', `${S.streak}連続 正解`); const back = S.on === 'card' ? 'top' : S.on; setTimeout(() => jumpTo(back === 'top' ? 'mid' : 'top', () => { setPose('sitWin', 3.2); sticker('♪♪', { size: 34, dx: -0.6, dy: -0.95, rot: -0.1, dur: 2.6, color: '#e8457a' }); burst(S.pos.x, S.pos.y - catH * 0.6, 30, 1.2); say(lights ? msg : pick('streak'), 2); }), 900); }
 		else if (S.on === 'card') jumpTo('top', () => { start('correct'); S.wingUntil = performance.now() + 1700; say(msg); burst(S.pos.x, S.pos.y - catH * 0.7, 16, 0.8); });
@@ -1361,9 +1430,11 @@ function frame(t) {
 	if (a && ak > ACTS[a]) { S.act = null; }
 	if (S.pose !== 'rig' && t > S.poseUntil) endPose();
 	const free = !S.act && !S.drag && !S.sleeping && !S.jump && !S.hidden && S.pose === 'rig';
+	const calm = isLateNight();
+	if (free && t > S.nextIdle && calm && Math.random() < 0.5) S.nextIdle = t + 4000 + Math.random() * 4000;  // 夜はしぐさを半分に
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
-	if (free && t > S.nextWander && S.on !== 'card') { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
-	if (free && t > S.nextMischief && !answered) { jumpTo('card', () => { setPose('sleepPaper', 9); say(pick('cardNap'), 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
+	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
+	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); say(pick('cardNap'), 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
 	if (free && !answered && !S.thought && t - S.qStart > 8000) { S.thought = true; start('thinking'); say(pick('think'), 2.6); }
 	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); say(pick('stretchRemind'), 2.6); } else { start('water'); say(pick('water'), 2.4); } S.nextRemind = t + 25 * 60000; }
@@ -1600,9 +1671,12 @@ layout();
 requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
 // 夜10時〜朝4時は「あんまり無理せずにがんばってね」と声をかける（開いたときと、5分に1回くらい）
-const isLateNight = () => { const h = new Date().getHours(); return h >= 22 || h < 4; };
 let lateNextAt = 0;  // 夜は 5 分に 1 回くらい（4〜6 分のあいだでばらつかせる）
 function sayLate() { lateNextAt = Date.now() + (4 + Math.random() * 2) * 60000; say(pick('late'), 3); }
-setTimeout(() => { if (isLateNight()) sayLate(); else say(pick('welcome', roomNo(cur.f, roomOf(cur.k)), curFloor().rooms[roomOf(cur.k)].title), 2.6); }, 1900);
+// あいさつ：朝・昼・夜で変える（22時以降は夜の「無理せず」）
+function greeting() { const h = new Date().getHours(); return h >= 5 && h < 11 ? rnd(['おはようにゃ', 'おはよ〜にゃ', 'あさにゃ。おはようにゃ']) : h >= 11 && h < 17 ? rnd(['おひるにゃ', 'こんにちはにゃ', 'おひるの勉強にゃ']) : rnd(['こんばんはにゃ', 'こんばんにゃ〜', 'よるの勉強にゃ']); }
+setTimeout(() => { if (isLateNight()) sayLate(); else say(greeting() + '。' + pick('welcome', roomNo(cur.f, roomOf(cur.k)), curFloor().rooms[roomOf(cur.k)].title), 2.6); }, 1900);
+// 開いて少ししたら：苦手な部屋のおすすめ か 試験までの日数 の励まし
+setTimeout(() => { if (document.querySelector('.scrim, .cutin')) return; const w = weakRoom(), d = examDaysLeft(); if (w && (Math.random() < 0.6 || d > 60)) say(pick('weak', roomNo(w.fi, w.r), DATA.floors[w.fi].rooms[w.r].title), 3); else say(d === 0 ? '試験はきょうにゃ！おうえんしてるにゃ' : pick('exam', d), 3); }, 8500);
 setInterval(() => { if (isLateNight() && !document.hidden && Date.now() > lateNextAt && !document.querySelector('.scrim, .cutin')) sayLate(); }, 20000);
 </script>
