@@ -143,7 +143,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .door { flex: none; width: 58px; height: 40px; border-radius: 6px; display: grid; place-items: center; font-family: var(--latin); font-weight: 700; font-size: 19px; color: #4a3615; background: linear-gradient(160deg, #fbe7aa, #d4ab5c 55%, #a77d35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -2px 0 rgba(0, 0, 0, .15), 0 2px 6px rgba(0, 0, 0, .2); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
 .head .t { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
 .head .t b { font-family: var(--mincho); font-size: 18px; letter-spacing: .06em; }
-.head .t span { font-size: 12px; color: var(--ink-soft); }
+.head .t > span { font-size: 12px; color: var(--ink-soft); }
 .card .rule { color: var(--gold); margin: 0; }
 .stem { margin: 0; font-family: var(--mincho); font-weight: 700; font-size: 16.5px; line-height: 1.85; }
 .choices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
@@ -277,7 +277,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .head .qnav { margin-left: auto; display: flex; gap: 6px; flex: none; }
 .nb { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--gold); background: linear-gradient(#fffaf0, #f3e6c8); color: var(--ink); font-size: 18px; font-weight: 700; line-height: 1; cursor: pointer; display: grid; place-items: center; }
 .nb:hover { box-shadow: 0 0 10px rgba(243, 223, 162, .9); }
-.was { font-style: normal; font-family: var(--maru); font-size: 11px; font-weight: 700; padding: 0 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; color: #fff; }
+.nw { white-space: nowrap; }
+.was { display: inline-block; white-space: nowrap; line-height: 1.6; font-style: normal; font-family: var(--maru); font-size: 11px; font-weight: 700; padding: 0 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; color: #fff; }
 .was.ok { background: var(--ok); } .was.ng { background: var(--ng); }
 .stmts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .stmts li { display: grid; grid-template-columns: 26px 1fr; gap: 6px; font-size: 14px; padding: 6px 10px 6px 6px; border-radius: 10px; background: rgba(255, 250, 240, .7); border: 1px dashed rgba(138, 106, 53, .45); }
@@ -352,7 +353,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	.note, .xp, .stmts li .note { font-size: 14.5px; line-height: 1.7; }
 	.stmts li { font-size: 15px; }
 	.xp p { font-size: 13.5px; }
-	.head .t b { font-size: 16px; } .head .t span { font-size: 12.5px; }
+	.head { align-items: flex-start; gap: 10px; } .head .door { margin-top: 2px; }
+	.head .t b { font-size: 16px; line-height: 1.45; } .head .t > span { font-size: 12.5px; line-height: 1.5; }
+	.head .t { flex: 1; } .head .qnav { gap: 4px; } .nb { width: 32px; height: 32px; }
 	.rt { min-width: 34px; height: 32px; font-size: 14px; }
 	.bar .hint { font-size: 13px; } .door { width: 46px; height: 32px; font-size: 15px; }
 	/* スマホ：全問正解の帯。William の丸いアイコンは画面の幅に合わせて帯の右側に収める */
@@ -1002,7 +1005,7 @@ function renderQ(show) {
 	const st = q.statements ? `<ul class="stmts">${q.statements.map((s) => `<li data-l="${esc(s.label)}"><b>${esc(s.label)}</b><span>${fmt(s.text)}</span></li>`).join('')}</ul>` : '';
 	const imgs = q.images ? `<div class="qimgs">${q.images.map((p) => `<img src="${esc(String(p).replace(/^\//, ''))}" alt="問題の図" loading="lazy">`).join('')}</div>` : '';
 	const was = rec ? ` <i class="was ${rec.last ? 'ok' : 'ng'}">前回 ${rec.last ? '○' : '×'}</i>` : '';
-	card.innerHTML = `${CORNERS}<div class="head"><span class="door">${roomNo(cur.f, r)}</span><span class="t"><b>${esc(f.rooms[r].title)} ・ 相談 ${cur.k - rstart(cur.f, r) + 1}${was}</b><span>${roomNo(cur.f, r)}号室 ・ ${f.floor}F ${esc(f.label)} ・ ${esc(q.set)} 問${esc(q.no)}</span></span><span class="qnav"><button type="button" class="nb" data-nav="-1" aria-label="前の相談">‹</button><button type="button" class="nb" data-nav="1" aria-label="次の相談">›</button></span></div>
+	card.innerHTML = `${CORNERS}<div class="head"><span class="door">${roomNo(cur.f, r)}</span><span class="t"><b>${esc(f.rooms[r].title)} ・ <span class="nw">相談 ${cur.k - rstart(cur.f, r) + 1}</span>${was}</b><span>${roomNo(cur.f, r)}号室 ・ ${f.floor}F ${esc(f.label)} ・ ${esc(q.set)} 問${esc(q.no)}</span></span><span class="qnav"><button type="button" class="nb" data-nav="-1" aria-label="前の相談">‹</button><button type="button" class="nb" data-nav="1" aria-label="次の相談">›</button></span></div>
 	<div class="rtwrap" id="rtwrap">${roomTabs()}</div>
 	<p class="stem">${fmt(q.stem)}</p>${st}${imgs}
 	<ol class="choices">${q.choices.map((c, i) => `<li style="--i:${i}"><button type="button" data-i="${i + 1}"><span class="num"><span>${i + 1}</span></span><span>${fmt(c)}</span></button></li>`).join('')}</ol>
