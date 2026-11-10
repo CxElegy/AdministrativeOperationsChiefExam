@@ -930,6 +930,13 @@ function say(t, sec = 2) {
 	let i = 0; if (reduce) { btext.textContent = t; return; }
 	sayTimer = setInterval(() => { i++; btext.textContent = t.slice(0, i); if (i >= t.length) clearInterval(sayTimer); }, 35);
 }
+// 考える時間が長いときのヒント（問題ごとに 3 段階：30 秒・1 分・2 分）。寝ているときは寝言で言う
+const HINT_AT = [30000, 60000, 120000];
+function giveHint(free) {
+	const n = S.hintN || 0, h = QN(curQid())?.hints?.[n]; S.hintN = n + 1; if (!h) return;
+	if (S.sleeping) { say(rnd(['むにゃ…', 'すぴー…', 'むにゃむにゃ…']) + h, 3); return; }
+	if (free) start('thinking'); say((n === 0 ? rnd(['ちょっとだけヒントにゃ。', 'ヒントにゃ。', '']) : '') + h, 3);
+}
 function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say(pick('wake'), 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
 function jumpTo(id, then) {
 	if (S.jump || S.hidden) return; if (stacked && id !== 'card') id = 'top';  // スマホは帯の中の一番上の台と題卡のふちだけ
@@ -1163,7 +1170,7 @@ function roomTabs() {
 }
 function renderQ(show) {
 	const f = curFloor(), q = QN(curQid()), rec = ST.q[q.id], r = roomOf(cur.k);
-	answered = false; S.qStart = performance.now(); S.thought = false;
+	answered = false; if (S.hintQ !== q.id) { S.hintQ = q.id; S.hintN = 0; S.qStart = performance.now(); } S.thought = false;  /* 同じ問題を描き直しても、ヒントの時間は続ける */
 	const st = q.statements ? `<ul class="stmts">${q.statements.map((s) => `<li data-l="${esc(s.label)}"><b>${esc(s.label)}</b><span>${fmt(s.text)}</span></li>`).join('')}</ul>` : '';
 	const imgs = q.images ? `<div class="qimgs">${q.images.map((p) => `<img src="${esc(String(p).replace(/^\//, ''))}" alt="問題の図" loading="lazy">`).join('')}</div>` : '';
 	const was = rec ? ` <i class="was ${rec.last ? 'ok' : 'ng'}">前回 ${rec.last ? '○' : '×'}</i>` : '';
@@ -1445,7 +1452,7 @@ function frame(t) {
 	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
 	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); sayIdle(pick('cardNap'), 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
-	if (free && !answered && !S.thought && t - S.qStart > 30000) { S.thought = true; start('thinking'); sayIdle(pick('think'), 2.6); }
+	if (!answered && (S.hintN || 0) < 3 && t - S.qStart > HINT_AT[S.hintN || 0] && t > sayUntil && !document.hidden && !S.drag && !S.jump && !S.hidden && !document.querySelector('.scrim, .cutin') && (!isMobile() || app.classList.contains('show-room'))) giveHint(free);
 	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); sayIdle(pick('stretchRemind'), 2.6); } else { start('water'); sayIdle(pick('water'), 2.4); } S.nextRemind = t + 25 * 60000; }
 	if (!S.drag && !S.sleeping && !S.jump && !S.hidden && pointer.speed > 900 && t - S.punchT > 900 && t - pointer.last < 80) { const d = Math.hypot(pointer.x - S.pos.x, pointer.y - (S.pos.y - catH * 0.5)); if (d < catH * 0.9) { start('punch'); S.punchT = t; } else if (d < catH * 2.2 && !S.act) start('stalk'); }
 

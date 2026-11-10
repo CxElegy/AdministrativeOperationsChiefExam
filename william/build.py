@@ -23,7 +23,12 @@ def item(qid, set_label, q):
     d = {k: q[k] for k in keep if q.get(k) not in (None, '', [])}
     d['id'] = qid; d['set'] = set_label; d['cat'] = q['category']
     d['answer'] = q['answer'] if isinstance(q['answer'], list) else [q['answer']]
+    if qid in HINTS: d['hints'] = HINTS[qid]
     return d
+
+# 考える時間が長いときにウィリアムが言うヒント（src/data/hints/*.json：問題ID → [30秒, 1分, 2分]）
+HINTS = {}
+for _f in sorted(glob.glob(os.path.join(DATA, 'hints', '*.json'))): HINTS.update(json.load(open(_f, encoding='utf-8')))
 
 def build_data():
     cats = categories(); by = {c['id']: [] for c in cats}; qs = {}
