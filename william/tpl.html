@@ -195,6 +195,13 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .bubble.pop { animation: pop .28s var(--ease-back); }
 .bubble::after { content: ""; position: absolute; left: var(--tx, 50%); bottom: -10px; width: 16px; height: 16px; margin-left: -8px; background: #fff; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
 .bubble.side::after { display: none; }
+/* 寝言の吹き出し：夢の中みたいな、ふわっとした雲（しっぽは小さな丸がぽこぽこ） */
+.bubble.dream { background: linear-gradient(#f3efff, #e6e0fb); border: 2px dashed #9a8fd0; border-radius: 26px; color: #4b4378; font-style: normal; box-shadow: 0 0 18px rgba(170, 150, 255, .45); }
+.bubble.dream::after { width: 12px; height: 12px; margin-left: -6px; bottom: -16px; border: 2px solid #9a8fd0; border-radius: 50%; background: #eee9ff; transform: none; }
+.bubble.dream::before { content: ""; position: absolute; left: var(--tx, 50%); bottom: -27px; width: 7px; height: 7px; margin-left: 2px; border: 2px solid #9a8fd0; border-radius: 50%; background: #eee9ff; }
+.bubble.dream .np { background: linear-gradient(#d9d1ff, #b9addf); box-shadow: 0 0 0 1px #8a7fc0; color: #3b3366; }
+.bubble.dream .np::after { content: " ・ 寝言"; font-weight: 600; }
+.bubble.dream.side::before { display: none; }
 .bubble .np { position: absolute; top: -13px; left: 12px; padding: 0 10px; border-radius: 6px; font-family: var(--mincho); font-weight: 800; font-size: 12px; letter-spacing: .06em; color: var(--ink); background: linear-gradient(var(--gold-hi), var(--gold)); box-shadow: 0 0 0 1px var(--gold-lo); }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } }
 
@@ -924,7 +931,8 @@ function idleOk() { const now = performance.now(); idleSaid = idleSaid.filter((x
 function sayIdle(t, sec) { if (!idleOk()) return false; idleSaid.push(performance.now()); say(t, sec); return true; }
 /* 正解のひとことは、続けて答えたときは毎回は言わない（動きと光だけ） */
 function sayAns(t, sec) { const now = performance.now(); if (now - lastAnsSay < 7000 && now < sayUntil + 3000) return; lastAnsSay = now; say(t, sec); }
-function say(t, sec = 2) {
+function say(t, sec = 2, dream = false) {
+	bubble.classList.toggle('dream', dream);
 	sayText = t; lastSayAt = performance.now(); sayUntil = lastSayAt + Math.max(3200, sec * 1000 + 1200) + t.length * 110;  /* 読み終わるまで消さない */ talkUntil = performance.now() + Math.min(1400, t.length * 55 + 150);
 	clearInterval(sayTimer); btext.textContent = ''; bubble.classList.add('on'); bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
 	let i = 0; if (reduce) { btext.textContent = t; return; }
@@ -934,7 +942,7 @@ function say(t, sec = 2) {
 const HINT_AT = [30000, 60000, 120000];
 function giveHint(free) {
 	const n = S.hintN || 0, h = QN(curQid())?.hints?.[n]; S.hintN = n + 1; if (!h) return;
-	if (S.sleeping) { say(rnd(['むにゃ…', 'すぴー…', 'むにゃむにゃ…']) + h, 3); return; }
+	if (S.sleeping) { say(rnd(['むにゃ…', 'すぴー…', 'むにゃむにゃ…']) + h + rnd(['…zzz', '…すやぁ', '']), 3, true); return; }  /* 寝ているときは寝言の吹き出し */
 	if (free) start('thinking'); say((n === 0 ? rnd(['ちょっとだけヒントにゃ。', 'ヒントにゃ。', '']) : '') + h, 3);
 }
 function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say(pick('wake'), 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
