@@ -79,6 +79,13 @@ def main():
     out = head + s[:i] + '\n</head>\n<body>\n' + s[i:] + '\n</body>\n</html>\n'
     open(os.path.join(ROOT, 'public', 'index.html'), 'w', encoding='utf-8').write(out)
     print('public/index.html', len(out) // 1024, 'KB')
+    # 進度ダッシュボード（dashboard.html?u=<ID>）：部屋の並びと、問題の年度・番号だけ入れる
+    full = build_data()
+    dash = {'floors': [{'floor': f['floor'], 'label': f['label'], 'short': f['short'], 'rooms': [{'title': r['title'], 'qids': r['qids']} for r in f['rooms']]} for f in full['floors']],
+            'q': {k: [v['set'], v['no']] for k, v in full['q'].items()}}
+    d = open(os.path.join(W, 'dashboard.html'), encoding='utf-8').read().replace('__DASH__', json.dumps(dash, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/'))
+    open(os.path.join(ROOT, 'public', 'dashboard.html'), 'w', encoding='utf-8').write(d)
+    print('public/dashboard.html', len(d) // 1024, 'KB')
 
 if __name__ == '__main__':
     main()

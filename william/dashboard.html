@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>進度ダッシュボード</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 学習サイト（William の部屋）と同じ夜のマンションの色 */
+:root { --bg: #0d0e1f; --panel: #17182f; --panel2: #1f2040; --line: #2e2f55; --ink: #f3ead8; --mute: #a9a3bd; --gold: #d9b26a; --gold-hi: #ffe2a3; --ok: #7fd1a8; --ng: #f08a8a; --lit: #ffd27a; --mincho: "Shippori Mincho", serif; --sans: "Zen Kaku Gothic New", system-ui, sans-serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+body { min-height: 100vh; background: radial-gradient(1200px 500px at 70% -10%, #23224a, transparent), var(--bg); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 18px; }
+header .en { font-family: var(--mincho); letter-spacing: .45em; font-size: 11px; color: var(--gold-hi); opacity: .85; }
+header h1 { margin: 2px 0 0; font-family: var(--mincho); font-size: 24px; letter-spacing: .06em; }
+header h1 small { font-size: 13px; color: var(--mute); font-family: var(--sans); letter-spacing: 0; margin-left: 8px; font-weight: 500; }
+.live { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); flex-wrap: wrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #777; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+.dot.ok { background: var(--ok); box-shadow: 0 0 0 0 rgba(127, 209, 168, .6); animation: ping 2s infinite; }
+.dot.err { background: var(--ng); }
+@keyframes ping { 70% { box-shadow: 0 0 0 7px rgba(127, 209, 168, 0); } 100% { box-shadow: 0 0 0 0 rgba(127, 209, 168, 0); } }
+.btn { display: inline-block; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold-hi); text-decoration: none; font-size: 13px; background: rgba(217, 178, 106, .08); }
+.btn:hover { background: rgba(217, 178, 106, .18); }
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.kpi .l { font-size: 12px; color: var(--mute); }
+.kpi .v { font-family: var(--mincho); font-size: 28px; font-weight: 800; color: var(--gold-hi); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.kpi .v small { font-size: 14px; color: var(--mute); font-family: var(--sans); font-weight: 500; margin-left: 3px; }
+.kpi .s { font-size: 12px; color: var(--mute); margin-top: 2px; }
+.kpi.bump .v { animation: bump .6s; }
+@keyframes bump { 30% { color: #fff; text-shadow: 0 0 14px var(--gold-hi); } }
+.grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px 16px; min-width: 0; }
+.card h2 { margin: 0 0 10px; font-family: var(--mincho); font-size: 16px; letter-spacing: .04em; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card h2 small { font-family: var(--sans); font-size: 12px; color: var(--mute); font-weight: 500; letter-spacing: 0; }
+.span2 { grid-column: 1 / -1; }
+/* 日ごとの回答数 */
+.days { display: flex; align-items: stretch; gap: 4px; height: 160px; padding-top: 26px; }
+.day i { flex: none; }
+.day { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; position: relative; }
+.day i { width: 100%; max-width: 26px; border-radius: 4px 4px 1px 1px; background: linear-gradient(var(--gold-hi), var(--gold)); min-height: 2px; transition: height .4s; }
+.day i.zero { background: var(--line); }
+.day b { position: absolute; font-size: 10px; color: var(--ink); font-weight: 500; }
+.day span { font-size: 10px; color: var(--mute); margin-top: 4px; white-space: nowrap; height: 14px; line-height: 14px; }
+.day.today span { color: var(--gold-hi); font-weight: 700; }
+/* 階ごと */
+.fl { display: grid; grid-template-columns: 92px minmax(0, 1fr) 92px; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.fl:first-of-type { border-top: 0; }
+.fl .n b { font-family: var(--mincho); color: var(--gold-hi); margin-right: 4px; }
+.bar { height: 10px; border-radius: 6px; background: var(--panel2); overflow: hidden; display: flex; }
+.bar .o { background: var(--ok); } .bar .x { background: var(--ng); opacity: .85; }
+.fl .r { text-align: right; color: var(--mute); font-variant-numeric: tabular-nums; font-size: 12px; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--mute); margin-top: 8px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+/* マンションの窓（部屋ごと） */
+.tower { display: grid; gap: 5px; }
+.trow { display: grid; grid-template-columns: 34px repeat(8, minmax(0, 1fr)); gap: 5px; align-items: center; }
+.trow > b { font-family: var(--mincho); color: var(--gold-hi); font-size: 13px; text-align: center; }
+.w { height: 30px; border-radius: 4px; background: #262744; border: 1px solid #34355e; position: relative; overflow: hidden; display: grid; place-items: center; font-size: 10px; color: #8c87a6; font-variant-numeric: tabular-nums; }
+.w .f { position: absolute; left: 0; bottom: 0; width: 100%; background: linear-gradient(rgba(255, 210, 122, .55), rgba(255, 190, 90, .35)); }
+.w span { position: relative; }
+.w.lit { background: linear-gradient(#ffe9b8, #f5c766); border-color: #ffd27a; color: #3a2a10; font-weight: 700; box-shadow: 0 0 12px rgba(255, 210, 122, .45); }
+.w.lit .f { display: none; }
+.w.full::after { content: "★"; position: absolute; top: 0; right: 2px; font-size: 9px; color: #b0761b; }
+.w.none { visibility: hidden; }
+.w.flash { animation: flash 1.6s; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 2px #fff, 0 0 18px #fff; } }
+/* 最近の回答・更新の記録 */
+.log { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow: auto; }
+.log li { display: grid; grid-template-columns: 54px 22px minmax(0, 1fr); gap: 8px; align-items: center; padding: 7px 2px; border-top: 1px solid var(--line); font-size: 13px; }
+.log li:first-child { border-top: 0; }
+.log time { color: var(--mute); font-size: 12px; font-variant-numeric: tabular-nums; }
+.log .m { font-weight: 700; text-align: center; }
+.log .m.o { color: var(--ok); } .log .m.x { color: var(--ng); }
+.log .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log .t small { color: var(--mute); margin-left: 6px; }
+.log li.new { animation: newrow 2.4s; }
+@keyframes newrow { 0% { background: rgba(255, 226, 163, .22); } 100% { background: transparent; } }
+.empty { color: var(--mute); font-size: 13px; padding: 10px 2px; }
+.err { margin: 0 0 14px; padding: 10px 14px; border-radius: 10px; background: rgba(240, 138, 138, .12); border: 1px solid rgba(240, 138, 138, .4); color: #ffd0d0; font-size: 13px; }
+.foot { margin-top: 16px; font-size: 12px; color: var(--mute); }
+@media (max-width: 860px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis .kpi:first-child { grid-column: 1 / -1; } .grid { grid-template-columns: minmax(0, 1fr); } .fl { grid-template-columns: 78px minmax(0, 1fr) 80px; } .w { height: 26px; font-size: 9px; } .trow { grid-template-columns: 28px repeat(8, minmax(0, 1fr)); gap: 3px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header>
+		<div><div class="en">DASHBOARD</div><h1>進度ダッシュボード<small id="who"></small></h1></div>
+		<div class="live"><span><span class="dot" id="dot"></span><span id="st">読み込み中…</span></span><a class="btn" id="open" href="./">学習サイトを開く</a></div>
+	</header>
+	<p class="err" id="err" hidden></p>
+	<section class="kpis">
+		<div class="kpi" id="kA"><div class="l">回答した相談</div><div class="v">—</div><div class="s"></div></div>
+		<div class="kpi" id="kR"><div class="l">正解率（最後の回答）</div><div class="v">—</div><div class="s"></div></div>
+		<div class="kpi" id="kL"><div class="l">明かりのついた部屋</div><div class="v">—</div><div class="s"></div></div>
+		<div class="kpi" id="kT"><div class="l">今日の回答</div><div class="v">—</div><div class="s"></div></div>
+		<div class="kpi" id="kS"><div class="l">連続学習</div><div class="v">—</div><div class="s"></div></div>
+	</section>
+	<div class="grid">
+		<section class="card span2"><h2>日ごとの回答数<small>最近 21 日</small></h2><div class="days" id="days"></div></section>
+		<section class="card"><h2>マンション（部屋ごと）<small>明かり＝8 割正解</small></h2><div class="tower" id="tower"></div>
+			<div class="legend"><span><i style="background:linear-gradient(#ffe9b8,#f5c766)"></i>明かり</span><span><i style="background:rgba(255,210,122,.45)"></i>正解した分</span><span><i style="background:#262744;border:1px solid #34355e"></i>まだ</span><span>★ 全問正解</span></div></section>
+		<section class="card"><h2>分野（階）ごと<small>正解・まちがい / 問題数</small></h2><div id="floors"></div>
+			<div class="legend"><span><i style="background:var(--ok)"></i>正解</span><span><i style="background:var(--ng)"></i>まちがい</span></div></section>
+		<section class="card span2"><h2>最近の回答<small id="logsub">新しい順</small></h2><ul class="log" id="log"></ul></section>
+	</div>
+	<p class="foot">記録は PC の進度サーバーから読むだけです（このページから書き換えることはありません）。開いているあいだ 5 秒ごとに更新します。</p>
+</div>
+<script>
+const D = __DASH__;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const DAY = 86400000;
+const dayKey = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const hm = (t) => new Date(t).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+const md = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; };
+// 部屋の場所（学習サイトと同じ：階の部屋は左から詰める）
+const ROOM_OF = {}; D.floors.forEach((f, fi) => f.rooms.forEach((r, ri) => r.qids.forEach((id, k) => { ROOM_OF[id] = { fi, ri, k: k + 1 }; })));
+const roomNo = (fi, ri) => D.floors[fi].floor * 100 + ri + 1;
+const need = (n) => Math.ceil(n * 0.8);
+
+// 進度リンクと同じ：?u=<ID>（なければテスト1）。サーバーのアドレスは ?api= か tunnel.json
+const P = new URLSearchParams(location.search);
+const ID = P.get('u') || 'test1-k7m2q9xh4r';
+let API = (P.get('api') || '').replace(/\/+$/, '');
+const TUNNEL_SRC = 'https://api.github.com/repos/CxElegy/AdministrativeOperationsChiefExam/contents/tunnel.json?ref=claude/clever-franklin-7sudl7';
+$('who').textContent = ID;
+$('open').href = './?u=' + encodeURIComponent(ID) + (P.get('api') ? '&api=' + encodeURIComponent(P.get('api')) : '') + '&v=13';
+let apiAt = 0;
+async function refreshApi() {
+	if (Date.now() - apiAt < 60000) return false; apiAt = Date.now();
+	try { const r = await fetch(TUNNEL_SRC, { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw+json' } }); if (!r.ok) return false; const a = String((await r.json()).api || '').trim().replace(/\/+$/, ''); if (!/^https:\/\//.test(a) || a === API) return false; API = a; return true; } catch (e) { return false; }
+}
+async function load() {
+	if (!API) await refreshApi();
+	if (!API) throw new Error('進度サーバーのアドレスが分かりません');
+	const url = () => `${API}/api/progress/${encodeURIComponent(ID)}`;
+	let r; try { r = await fetch(url(), { cache: 'no-store' }); } catch (e) { if (await refreshApi()) r = await fetch(url(), { cache: 'no-store' }); else throw new Error('進度サーバーにつながりません（PC が動いているか確認してください）'); }
+	if (r.status === 404) return null;
+	if (!r.ok) throw new Error('HTTP ' + r.status);
+	return (await r.json()).data?.main || null;
+}
+
+let prev = null, first = true;
+function setKpi(id, v, s) { const el = $(id), vv = el.querySelector('.v'); if (vv.innerHTML !== v) { vv.innerHTML = v; if (!first) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } } el.querySelector('.s').textContent = s || ''; }
+function render(st) {
+	const q = st?.q || {}, days = st?.days || {};
+	const total = Object.keys(D.q).length;
+	const ids = Object.keys(q).filter((id) => D.q[id] && (!st.reset || q[id].t >= st.reset));
+	const ok = ids.filter((id) => q[id].last).length;
+	// 部屋ごと
+	let lit = 0, rooms = 0;
+	const RS = D.floors.map((f, fi) => f.rooms.map((r) => { const n = r.qids.length, o = r.qids.filter((id) => q[id]?.last).length, x = r.qids.filter((id) => q[id] && !q[id].last).length; rooms++; const L = o >= need(n); if (L) lit++; return { n, o, x, lit: L, full: o === n }; }));
+	const today = days[dayKey()] || 0;
+	let streak = 0, t = Date.now(); if (!days[dayKey(t)]) t -= DAY; while (days[dayKey(t)]) { streak++; t -= DAY; }
+	const allA = ids.reduce((s, id) => s + (q[id].a || 0), 0);
+	setKpi('kA', `${ids.length}<small>/ ${total}</small>`, `のべ ${allA} 回 ・ ${Math.round(ids.length / total * 100)}%`);
+	setKpi('kR', ids.length ? `${Math.round(ok / ids.length * 100)}<small>%</small>` : '—', `正解 ${ok} ・ まちがい ${ids.length - ok}`);
+	setKpi('kL', `${lit}<small>/ ${rooms} 室</small>`, `★ 全問正解 ${RS.flat().filter((r) => r.full).length} 室`);
+	setKpi('kT', `${today}<small>問</small>`, `きのう ${days[dayKey(Date.now() - DAY)] || 0} 問`);
+	setKpi('kS', `${streak}<small>日</small>`, `勉強した日 ${Object.keys(days).length} 日`);
+	// 日ごと（21 日）
+	const N = 21, vals = []; for (let i = N - 1; i >= 0; i--) { const tt = Date.now() - i * DAY; vals.push({ t: tt, n: days[dayKey(tt)] || 0 }); }
+	const mx = Math.max(5, ...vals.map((v) => v.n));
+	$('days').innerHTML = vals.map((v, i) => { const h = v.n ? Math.max(4, v.n / mx * 100) : 2; return `<div class="day${i === N - 1 ? ' today' : ''}" title="${md(v.t)}：${v.n} 問">${v.n ? `<b style="bottom:calc(${h}% + 18px)">${v.n}</b>` : ''}<i class="${v.n ? '' : 'zero'}" style="height:${h}%"></i><span>${i % 3 === 0 || i === N - 1 ? md(v.t) : ''}</span></div>`; }).join('');
+	// マンション
+	$('tower').innerHTML = D.floors.map((f, fi) => fi).reverse().map((fi) => { const f = D.floors[fi]; let h = `<div class="trow"><b>${f.floor}F</b>`; for (let c = 0; c < 8; c++) { const r = RS[fi][c]; if (!r) { h += '<div class="w none"></div>'; continue; } h += `<div class="w${r.lit ? ' lit' : ''}${r.full ? ' full' : ''}" data-r="${fi}-${c}" title="${roomNo(fi, c)}号室 ${esc(f.rooms[c].title)}：正解 ${r.o} / ${r.n}（まちがい ${r.x}）"><div class="f" style="height:${r.o / r.n * 100}%"></div><span>${roomNo(fi, c)}</span></div>`; } return h + '</div>'; }).join('');
+	// 新しく明かりがついた部屋を光らせる
+	if (prev) RS.forEach((fl, fi) => fl.forEach((r, c) => { if (r.lit && !prev.RS[fi][c].lit) document.querySelector(`.w[data-r="${fi}-${c}"]`)?.classList.add('flash'); }));
+	// 階ごと
+	$('floors').innerHTML = D.floors.map((f, fi) => { const n = f.rooms.reduce((s, r) => s + r.qids.length, 0), o = RS[fi].reduce((s, r) => s + r.o, 0), x = RS[fi].reduce((s, r) => s + r.x, 0), L = RS[fi].filter((r) => r.lit).length; return `<div class="fl"><div class="n"><b>${f.floor}F</b>${esc(f.short)}</div><div class="bar" title="正解 ${o}・まちがい ${x} / ${n} 問"><i class="o" style="width:${o / n * 100}%"></i><i class="x" style="width:${x / n * 100}%"></i></div><div class="r">${o + x} / ${n} ・ 灯 ${L}/${RS[fi].length}</div></div>`; }).join('');
+	// 最近の回答（最後に答えた時刻の新しい順）
+	const recent = ids.sort((a, b) => q[b].t - q[a].t).slice(0, 30);
+	const old = prev ? prev.q : null;
+	$('log').innerHTML = recent.length ? recent.map((id) => { const r = q[id], m = D.q[id], at = ROOM_OF[id], isNew = old && (!old[id] || old[id].t !== r.t); return `<li class="${isNew ? 'new' : ''}"><time title="${new Date(r.t).toLocaleString('ja-JP')}">${dayKey(r.t) === dayKey() ? hm(r.t) : md(r.t)}</time><span class="m ${r.last ? 'o' : 'x'}">${r.last ? '○' : '×'}</span><span class="t">${at ? `${roomNo(at.fi, at.ri)}-${at.k} ` : ''}${esc(at ? D.floors[at.fi].rooms[at.ri].title : '')}<small>${esc(m[0])} 問${esc(m[1])} ・ ${r.a} 回中 ${r.c} 回正解</small></span></li>`; }).join('') : '<li class="empty">まだ回答がありません</li>';
+	prev = { q: JSON.parse(JSON.stringify(q)), RS };
+	first = false;
+}
+let lastSig = '';
+async function tick() {
+	if (document.hidden) return;
+	try {
+		const st = await load(); $('err').hidden = true;
+		const sig = JSON.stringify(st);
+		if (sig !== lastSig) { lastSig = sig; render(st || { q: {}, days: {} }); $('st').textContent = `更新 ${hm(Date.now())}`; }
+		$('dot').className = 'dot ok'; $('st').dataset.ok = 1; if (!$('st').textContent.startsWith('更新')) $('st').textContent = '接続中';
+		$('st').title = `最終確認 ${new Date().toLocaleTimeString('ja-JP')}`;
+	} catch (e) { $('dot').className = 'dot err'; $('st').textContent = 'つながりません'; $('err').hidden = false; $('err').textContent = e.message; }
+}
+tick(); setInterval(tick, 5000); addEventListener('focus', tick); document.addEventListener('visibilitychange', tick);
+</script>
+</body>
+</html>
