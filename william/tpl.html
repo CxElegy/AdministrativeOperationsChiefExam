@@ -43,7 +43,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	background-image: radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent), radial-gradient(1px 1px at 28% 42%, #e8e2ff 50%, transparent), radial-gradient(1.4px 1.4px at 46% 12%, #fff 50%, transparent), radial-gradient(1px 1px at 63% 33%, #fff6d8 50%, transparent), radial-gradient(1.2px 1.2px at 81% 22%, #fff 50%, transparent), radial-gradient(1px 1px at 92% 48%, #e8e2ff 50%, transparent), radial-gradient(1px 1px at 7% 58%, #fff 50%, transparent), radial-gradient(1.3px 1.3px at 37% 66%, #fff6d8 50%, transparent), radial-gradient(1px 1px at 72% 61%, #fff 50%, transparent), radial-gradient(1px 1px at 55% 80%, #e8e2ff 50%, transparent); animation: twinkle 5s ease-in-out infinite alternate; }
 @keyframes twinkle { to { opacity: .45; } }
 .tower > * { position: relative; }
-.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 env(safe-area-inset-bottom, 0px) 5%;  /* 左の 5% は階の札の場所（札が窓にかからないように、建物を少し右へ） */ background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
+.bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 18px) 5%;  /* 下の 18px はクレジットの行（1F の窓にかけない） */  /* 左の 5% は階の札の場所（札が窓にかからないように、建物を少し右へ） */ background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
 /* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
 .bldg { --k: .5; position: relative; left: 3%; flex: none; }  /* 札の文字のぶん左が重く見えるので、少し右へ（右は空なので はみ出してよい） */
 .bldg::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); mask-composite: intersect; }  /* 絵だけぼかす（上と左の空のふちを夜空になじませる）（はみ出した階の札は消さない） */
@@ -195,6 +195,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .bubble.pop { animation: pop .28s var(--ease-back); }
 .bubble::after { content: ""; position: absolute; left: var(--tx, 50%); bottom: -10px; width: 16px; height: 16px; margin-left: -8px; background: #fff; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
 .bubble.side::after { display: none; }
+.bubble.below::after { bottom: auto; top: -10px; transform: rotate(225deg); }  /* 台の下に出すときは、しっぽを上に */
+.bubble.dream.below::after { top: -16px; } .bubble.dream.below::before { bottom: auto; top: -27px; }
 /* 寝言の吹き出し：夢の中みたいな、ふわっとした雲（しっぽは小さな丸がぽこぽこ） */
 .bubble.dream { background: linear-gradient(#f3efff, #e6e0fb); border: 2px dashed #9a8fd0; border-radius: 26px; color: #4b4378; font-style: normal; box-shadow: 0 0 18px rgba(170, 150, 255, .45); }
 .bubble.dream::after { width: 12px; height: 12px; margin-left: -6px; bottom: -16px; border: 2px solid #9a8fd0; border-radius: 50%; background: #eee9ff; transform: none; }
@@ -337,7 +339,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .sync-status { margin: 0; font-size: 12.5px; } .sync-status.ok { color: #2f7a4c; } .sync-status.error { color: #b5443d; }
 .pill.idx { border: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 13px; }
 /* スマホ：画面を2つに分ける（① 楼 → 階をタップ → ② 題卡＋キャットタワー） */
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {  /* スマホと、縦に持ったタブレット（横の帯が細くなりすぎるので、上に William・下に相談票） */
 	.app { grid-template-columns: 1fr; }
 	.app.show-tower .room, .app.show-room .tower { display: none; }
 	.tower { padding-right: env(safe-area-inset-right, 0px); }
@@ -441,7 +443,8 @@ const ROOMIMG = __ROOM__, TALLIMG = __TALL__, CUTIN = __CUTIN__, MAJI = __MAJI__
 // スマホ版：画面が狭いとき、またはスマホ（指で操作し、画面の短い辺が 600px 以下）のとき。
 // スマホを横にしたときや「PC版サイト」表示でも、スマホ版の画面にする
 const PHONE = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600;
-const isMobile = () => PHONE || matchMedia('(max-width: 760px)').matches;
+const MOBILE_Q = '(max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px)';
+const isMobile = () => PHONE || matchMedia(MOBILE_Q).matches;
 // 夜（22〜4時）：William は「無理せず」と声をかけ、効果音は小さく・動きはゆったり（静かなモード）
 function isLateNight() { const h = new Date().getHours(); return h >= 22 || h < 4; }
 // ?debug=1：画面の大きさなどを表示する（スマホで下が見えないときの調査用）
@@ -457,7 +460,7 @@ if (PHONE) {
 	const z = innerWidth / dw;
 	if (z > 1.3) { document.documentElement.style.zoom = z.toFixed(3); }
 }
-if (PHONE && !matchMedia('(max-width: 760px)').matches) {
+if (PHONE && !matchMedia(MOBILE_Q).matches) {
 	// 幅で切り替えているスマホ用の CSS（@media (max-width: 760px)）を、そのまま常に効くように足す
 	const css = [];
 	for (const sh of document.styleSheets) { let rules; try { rules = sh.cssRules; } catch (e) { continue; } for (const r of rules) if (r.media && /max-width:\s*760px/.test(r.media.mediaText)) for (const x of r.cssRules) css.push(x.cssText); }
@@ -947,7 +950,7 @@ function giveHint(free) {
 }
 function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say(pick('wake'), 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
 function jumpTo(id, then) {
-	if (S.jump || S.hidden) return; if (stacked) id = 'top';  /* スマホは台の上だけ（相談票のふちに行くと小さくなって文字にかかる） */  // スマホは帯の中の一番上の台と題卡のふちだけ
+	if (S.jump || S.hidden) return; if (stacked) id = 'top'; else if (id === 'card') id = 'mid';  /* 台の上だけ（相談票のふちに行くと、題名やボタン・文字にかかる） */  // スマホは帯の中の一番上の台と題卡のふちだけ
 	if (S.pose !== 'rig') { S.poseThen = null; endPose(); } const to = spot(id); if (!to) return;
 	if (id === S.on) { start('hop'); then && then(); return; }
 	const from = { ...S.pos }, d = Math.hypot(to.x - from.x, to.y - from.y);
@@ -1612,10 +1615,18 @@ function frame(t) {
 	if (t > sayUntil && !purr) bubble.classList.remove('on');
 	if (purr && t > sayUntil && !bubble.classList.contains('on')) say(pick('purr'), 0.6);
 	const bw = bubble.offsetWidth || 120, bh = bubble.offsetHeight || 40;
-	const side = hy - bh - 18 < 56;
+	let side = hy - bh - 18 < 56;
 	let bx = clamp(hx - bw * 0.5, 8, W - bw - 8), by = hy - bh - 18;
-	if (side) { bx = hx + catH * 0.32 + bw < W - 8 ? hx + catH * 0.32 : hx - catH * 0.32 - bw; by = Math.max(56, hy + catH * 0.06); }
-	bubble.classList.toggle('side', side);
+	let below = false;
+	if (!stacked) {
+		/* PC・タブレット横：吹き出しは右の帯の中だけ（相談票の題名・ボタン・文字にかけない）。頭の上に場所がなければ、台の下に出す */
+		const minX = stripX + 6; bubble.style.maxWidth = Math.max(150, Math.min(230, W - minX - 8)) + 'px';
+		bx = clamp(hx - bw * 0.5, minX, W - bw - 6);
+		if (side) { below = true; by = S.pos.y + 16; }
+		side = false;
+	} else bubble.style.maxWidth = '';
+	if (stacked && side) { bx = hx + catH * 0.32 + bw < W - 8 ? hx + catH * 0.32 : hx - catH * 0.32 - bw; by = Math.max(56, hy + catH * 0.06); }
+	bubble.classList.toggle('side', side); bubble.classList.toggle('below', below);
 	bubble.style.transform = `translate(${bx}px, ${by}px)`; bubble.style.setProperty('--tx', clamp(hx - bx, 18, bw - 18) + 'px');
 
 	const st = S.hidden ? 'ハウスからのぞき中' : S.sleeping ? 'おやすみ中（クリックで起きる）' : S.drag ? 'びよーん' : heating ? '過熱中！' : S.jump ? 'ジャンプ' : purr ? 'ゴロゴロ' : t - S.lastKey < 900 ? 'ふみふみ' : ({ punch: '猫パンチ', stalk: 'ねらってる', play: 'じゃれてる', thinking: '一緒に考え中', correct: 'よろこび', bigWin: '大よろこび', wrong: 'しょんぼり', knead: 'ふみふみ', stretchUp: 'ストレッチ', water: '水分補給', sleepy: 'うとうと', groom: '毛づくろい' })[a] || 'くつろぎ中';
