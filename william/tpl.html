@@ -947,7 +947,7 @@ function giveHint(free) {
 }
 function wake() { S.lastInput = performance.now(); if (S.sleeping) { S.sleeping = false; endPose(); say(pick('wake'), 1); sticker('!?', { color: '#e8457a', size: 34 }); S.surpriseT = performance.now(); return true; } return false; }
 function jumpTo(id, then) {
-	if (S.jump || S.hidden) return; if (stacked && id !== 'card') id = 'top';  // スマホは帯の中の一番上の台と題卡のふちだけ
+	if (S.jump || S.hidden) return; if (stacked) id = 'top';  /* スマホは台の上だけ（相談票のふちに行くと小さくなって文字にかかる） */  // スマホは帯の中の一番上の台と題卡のふちだけ
 	if (S.pose !== 'rig') { S.poseThen = null; endPose(); } const to = spot(id); if (!to) return;
 	if (id === S.on) { start('hop'); then && then(); return; }
 	const from = { ...S.pos }, d = Math.hypot(to.x - from.x, to.y - from.y);
