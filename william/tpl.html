@@ -708,151 +708,122 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 		model.internalModel.on('beforeModelUpdate', () => applyParams(model.internalModel.coreModel));
 		const _upd = model.internalModel.update.bind(model.internalModel); model.internalModel.update = (dt, now) => { _upd(dt, now); }; // 形は Live2D の元のまま（変えるのはテクスチャ画像だけ）
 		W2D.model = model; W2D.app = app; L.ready = true; paintCollar();
-		if (PLAYGROUND) loadAna(app, model);
 	} catch (e) { console.error(e); }
 })();
-// ---------- アナちゃん（試し中・playground だけ）：同じ Tororo のモデルに、アナちゃんの柄を描いたテクスチャ ----------
-// ノルウェージャンフォレストキャット：大きめの長毛種。ふだんはダルめ（半目でぼーっと、ゆっくりまばたき、ときどきあくび）
-// ふわふわ感：モデルをいったん画像（RenderTexture）に描き、その画像に「毛のフィルター」をかけて、輪郭のまわりに毛先を生やす
-//   （Live2D のモデルに直接フィルターをかけると端末によってクリッピングが乱れるので、画像にしてからかける）
-const ANA = { model: null, sprite: null, rt: null, hopT: 0, blinkAt: 0, yawnT: -1e9, nextYawn: 0, lookT: -1e9, tailPh: 0 };
-const FUR_FRAG = `
-precision highp float;
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler;
-uniform vec4 inputSize;
-uniform vec4 inputClamp;
-uniform float uLen;
-uniform float uTime;
-float hash(float n) { return fract(sin(n) * 43758.5453); }
-float A(vec2 uv) { return texture2D(uSampler, clamp(uv, inputClamp.xy, inputClamp.zw)).a; }
-void main() {
-  vec2 px = inputSize.zw;
-  vec4 c = texture2D(uSampler, vTextureCoord);
-  // 外向きの向き（まわりの不透明さのかたより）
-  vec2 g = vec2(0.0); float sum = 0.0;
-  for (int i = 0; i < 12; i++) {
-    float an = float(i) * 0.5236; vec2 d = vec2(cos(an), sin(an));
-    float a = A(vTextureCoord + d * uLen * 0.8 * px); g += d * a; sum += a;
-  }
-  vec2 n = length(g) > 0.001 ? -normalize(g) : vec2(0.0, -1.0);
-  vec2 tg = vec2(-n.y, n.x);
-  vec2 p = vTextureCoord / px;               // ピクセル単位の位置
-  float t = dot(p, tg);
-  // 毛の束（房）：束のまん中ほど長く、ふちは短い → 輪郭がもこもこの房になる
-  float tw = 7.0;
-  float id = floor(t / tw), ft = fract(t / tw);
-  float prof = 1.0 - pow(abs(ft - 0.5) * 2.0, 1.6);
-  float len = uLen * (0.35 + 0.65 * hash(id * 1.7 + 3.1)) * (0.35 + 0.65 * prof);
-  float wob = (hash(id * 3.3) - 0.5) * 0.7;  // 房ごとに向きが少しちがう
-  vec2 dir = normalize(n + tg * wob);
-  vec4 fur = vec4(0.0);
-  if (c.a < 0.98 && sum > 0.0 && len > 0.5) {
-    for (int k = 1; k <= 16; k++) {
-      float s = float(k) / 16.0 * len;
-      vec4 q = texture2D(uSampler, clamp(vTextureCoord - dir * s * px, inputClamp.xy, inputClamp.zw));
-      if (q.a > 0.6) {
-        vec4 q2 = texture2D(uSampler, clamp(vTextureCoord - dir * (s + 2.5) * px, inputClamp.xy, inputClamp.zw));
-        vec4 qc = q2.a > 0.9 ? q2 : q;   // 毛の色は、ふちの線をさけて少し内側から
-        float fall = 1.0 - s / len;
-        float fine = 0.88 + 0.12 * sin(t * 3.1 + hash(id) * 6.28);  // 細い毛のすじ
-        float a = clamp(pow(fall, 0.8) * fine, 0.0, 0.95);
-        fur = vec4(qc.rgb / max(qc.a, 0.001), 1.0) * a;
-        break;
-      }
-    }
-  }
-  gl_FragColor = c + fur * (1.0 - c.a);
-}`;
-async function loadAna(app, william) {
-	try {
-		const m = await PIXI.live2d.Live2DModel.from('w/ana.model3.json', { autoInteract: false });
-		m.internalModel.motionManager.groups.idle = '__none__';  // 元気な待機モーションは使わない（ダルめ）
-		m.internalModel.on('beforeModelUpdate', () => anaParams(m.internalModel.coreModel));
-		ANA.rt = PIXI.RenderTexture.create({ width: 8, height: 8, resolution: app.renderer.resolution });
-		// 長毛種の形：モデルのうしろと前に、毛の房（ほおの毛・たてがみ・ふくらんだ体・太いしっぽ・耳の先の毛）を重ねる
-		const rig = new PIXI.Container(), back = new PIXI.Graphics(), tail = new PIXI.Graphics(), front = new PIXI.Graphics();
-		anaFluff(back, tail, front); rig.addChild(tail, back, m, front); ANA.rig = rig; ANA.back = back; ANA.tail = tail; ANA.front = front;
-		const sp = new PIXI.Sprite(ANA.rt); const f = new PIXI.Filter(undefined, FUR_FRAG, { uLen: 8, uTime: 0 }); f.padding = 24; sp.filters = [f]; ANA.filter = f;
-		app.stage.addChildAt(sp, app.stage.getChildIndex(william));  // William のうしろ
-		ANA.model = m; ANA.sprite = sp; ANA.blinkAt = performance.now() + 3000; ANA.nextYawn = performance.now() + 20000;
-	} catch (e) { console.error(e); }
-}
-// 毛の房の形（モデルの座標：まん中 x=1000、足もと y=2201、頭のてっぺん y≈380）
-function anaFluff(back, tail, front) {
-	let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-	const GREY = 0x8a8078, GREY_D = 0x6a635e, WHITE = 0xf9f7f5, SHADE = 0xe4ddd6;
-	// まわりがとがった房になっている、もこもこの形（a0〜a1 の角度のあいだ。下向きの房ほど長い）
-	const blob = (g, col, cx, cy, rx, ry, n, depth, a0 = 0, a1 = Math.PI * 2) => {
-		const pts = [];
-		for (let i = 0; i <= n; i++) {
-			const a = a0 + (a1 - a0) * i / n, grav = 0.6 + 0.4 * Math.max(0, Math.sin(a));
-			pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
-			if (i < n) { const am = a + (a1 - a0) / n * (0.35 + rnd() * 0.3), d = 1 + depth * (0.5 + rnd() * 0.8) * grav; pts.push([cx + Math.cos(am) * rx * d, cy + Math.sin(am) * ry * d + depth * ry * 0.25 * grav]); }
+// ---------- アナちゃん（試し中・playground だけ）：William のモデルは使わず、アナちゃん専用に描いた猫 ----------
+// ノルウェージャンフォレストキャット：大きめの長毛種。毛は 1 本ずつの筆のすじ（数万本）で描く。短毛の William とは毛の質感がちがうので、絵も動きも別に作る
+// ふだんはダルめ：半目でぼーっと、ゆっくりまばたき、ときどきあくび。さわっても ちょっと目をあけるだけ
+// 絵の座標：足もと y=570、体のまん中 x=230、耳の先 y≈55（高さ 515）。しっぽは右へ寝かせる
+const ANA = { parts: null, blinkAt: 0, yawnT: -1e9, nextYawn: 0, lookT: -1e9, earT: -1e9, nextEar: 0 };
+function buildAna() {
+	const R2 = Math.min(2, devicePixelRatio || 1) >= 2 ? 2 : 1.5;
+	let seed = 20240607; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+	const nz = (x, y) => { const v = Math.sin(x * 0.071 + y * 0.113) + Math.sin(x * 0.19 - y * 0.057 + 1.7) * 0.6 + Math.sin(x * 0.031 + y * 0.029 + 4.1) * 0.9; return v / 2.5; };  // ゆるやかな むら（-1〜1）
+	const WHITE = [[251, 249, 246], [243, 239, 233], [232, 226, 219]], GREY = [[132, 123, 116], [112, 105, 100], [154, 143, 133], [96, 91, 88]], DARK = [[92, 87, 85], [76, 73, 72], [110, 103, 98]];
+	const pal = (P, x, y) => P[Math.min(P.length - 1, Math.floor(Math.abs(nz(x * 2.3, y * 2.3) * 0.9 + rnd() * 0.75) * P.length))];
+	// だ円の集まりで形を作る。d<1 が中（d は ふちで 1）
+	const dist = (E, x, y) => { let m = 9; for (const [cx, cy, rx, ry] of E) { const d = Math.hypot((x - cx) / rx, (y - cy) / ry); if (d < m) m = d; } return m; };
+	const bbox = (E, pad) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [cx, cy, rx, ry] of E) { x0 = Math.min(x0, cx - rx); y0 = Math.min(y0, cy - ry); x1 = Math.max(x1, cx + rx); y1 = Math.max(y1, cy + ry); } return { x: Math.floor(x0 - pad), y: Math.floor(y0 - pad), w: Math.ceil(x1 - x0 + pad * 2), h: Math.ceil(y1 - y0 + pad * 2) }; };
+	const mk = (b) => { const cv = document.createElement('canvas'); cv.width = Math.ceil(b.w * R2); cv.height = Math.ceil(b.h * R2); const c = cv.getContext('2d'); c.scale(R2, R2); c.translate(-b.x, -b.y); return { cv, c, b }; };
+	// 毛を描く：形 E の中に根もとをばらまき、流れ flow の向きへ先の細いすじを引く。下流（order が大きい）から先に描いて、上の毛が下の毛にかぶさるようにする
+	const fur = (c, E, o) => {
+		const b = bbox(E, 0), list = [], n = Math.round(b.w * b.h * o.density);
+		for (let i = 0; i < n; i++) { const x = b.x + rnd() * b.w, y = b.y + rnd() * b.h, d = dist(E, x, y); if (d < 1 && (!o.mask || o.mask(x, y))) list.push([x, y, d, o.order(x, y) + rnd() * 6]); }
+		list.sort((p, q) => q[3] - p[3]);
+		// 下ぬり（すきまが出ないように）
+		for (let y = b.y; y < b.y + b.h; y += 4) for (let x = b.x; x < b.x + b.w; x += 4) { const d = dist(E, x, y); if (d < 0.96 && (!o.mask || o.mask(x, y))) { const k = o.col(x, y), sh = 1 - 0.16 * d * d * d; c.fillStyle = `rgb(${k[0] * sh | 0},${k[1] * sh | 0},${k[2] * sh | 0})`; c.fillRect(x - 0.5, y - 0.5, 5, 5); } }
+		for (const [x, y, d] of list) {
+			const f = o.flow(x, y), a = Math.atan2(f[1], f[0]) + (rnd() - 0.5) * (o.spread ?? 0.7), L = o.len * (0.55 + rnd() * 0.9) * (d > 0.8 ? 1.15 : 1), w = o.width * (0.7 + rnd() * 0.6);
+			const tx = x + Math.cos(a) * L, ty = y + Math.sin(a) * L, bend = (rnd() - 0.5) * 0.35 * L, mx = (x + tx) / 2 - Math.sin(a) * bend, my = (y + ty) / 2 + Math.cos(a) * bend, px = -Math.sin(a) * w / 2, py = Math.cos(a) * w / 2;
+			const k = o.col(x, y), sh = (1 - 0.2 * d * d * d) * (0.9 + rnd() * 0.16);
+			c.fillStyle = `rgba(${Math.min(255, k[0] * sh) | 0},${Math.min(255, k[1] * sh) | 0},${Math.min(255, k[2] * sh) | 0},${o.alpha ?? 0.9})`;
+			c.beginPath(); c.moveTo(x + px, y + py); c.quadraticCurveTo(mx + px * 0.5, my + py * 0.5, tx, ty); c.quadraticCurveTo(mx - px * 0.5, my - py * 0.5, x - px, y - py); c.closePath(); c.fill();
 		}
-		g.beginFill(col); g.moveTo(pts[0][0], pts[0][1]);
-		for (let i = 1; i < pts.length - 1; i += 2) { const v = pts[i + 1], tip = pts[i], pv = pts[i - 1]; g.quadraticCurveTo((pv[0] + tip[0]) / 2 + (tip[0] - cx) * 0.04, (pv[1] + tip[1]) / 2 + (tip[1] - cy) * 0.04, tip[0], tip[1]); g.quadraticCurveTo((v[0] + tip[0]) / 2, (v[1] + tip[1]) / 2, v[0], v[1]); }
-		g.closePath(); g.endFill();
 	};
-	// 毛並みのすじ（房の中の、うすい影の線）
-	const strokes = (g, col, list) => { g.lineStyle({ width: 9, color: col, alpha: 0.75, cap: 'round' }); for (const [x0, y0, x1, y1, bend] of list) { g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2 + bend, (y0 + y1) / 2, x1, y1); } g.lineStyle(0); };
-	// しっぽ：太い羽のようなしっぽを、体の右に寝かせる
-	tail.pivot.set(1330, 2090); tail.position.set(1330, 2090);
-	blob(tail, GREY_D, 1640, 2040, 400, 150, 18, 0.34);
-	blob(tail, 0x7d746d, 1560, 2020, 290, 95, 12, 0.3);
-	strokes(tail, 0x554f4b, [[1400, 2010, 1700, 1960, -10], [1450, 2070, 1800, 2060, 14], [1520, 2120, 1880, 2130, 10]]);
-	// 体：横にふくらんだ毛（おなかの下は白、わきは灰色）
-	blob(back, 0x80766f, 1000, 1710, 525, 480, 24, 0.1);
-	blob(back, WHITE, 1000, 2010, 400, 185, 16, 0.12, 0, Math.PI);
-	// 頭：ほおの毛（上は灰色、下は白くて長い）
-	blob(back, GREY, 1000, 850, 405, 345, 20, 0.07, Math.PI * 0.95, Math.PI * 2.05);
-	blob(back, GREY, 655, 930, 110, 170, 6, 0.26, Math.PI * 0.35, Math.PI * 1.45);
-	blob(back, GREY, 1345, 930, 110, 170, 6, 0.26, -Math.PI * 0.45, Math.PI * 0.65);
-	blob(back, WHITE, 745, 1075, 150, 115, 6, 0.3, Math.PI * 0.15, Math.PI * 1.15);
-	blob(back, WHITE, 1255, 1075, 150, 115, 6, 0.3, -Math.PI * 0.15, Math.PI * 0.85);
-	// 耳の先の毛（リンクスティップ）
-	for (const sx of [-1, 1]) { back.beginFill(GREY_D); back.moveTo(1000 + sx * 250, 470); back.quadraticCurveTo(1000 + sx * 300, 380, 1000 + sx * 345, 270); back.quadraticCurveTo(1000 + sx * 335, 400, 1000 + sx * 345, 480); back.closePath(); back.endFill(); }
-	// 胸のたてがみ（前）：あごの下から、房になって下がる白い毛
-	blob(front, WHITE, 1000, 1200, 350, 420, 13, 0.18, -Math.PI * 0.1, Math.PI * 1.1);
-	blob(front, 0xfdfcfb, 1000, 1180, 275, 280, 9, 0.2, -Math.PI * 0.08, Math.PI * 1.08);
-	strokes(front, SHADE, [[820, 1260, 850, 1420, -22], [930, 1300, 945, 1500, -12], [1070, 1300, 1055, 1500, 12], [1180, 1260, 1150, 1420, 22], [1000, 1330, 1000, 1540, 0], [760, 1330, 800, 1470, -18], [1240, 1330, 1200, 1470, 18]]);
+	const P = {};
+	// --- しっぽ：太い羽のよう。体の右から前へ回して寝かせる ---
+	{ const E = [[335, 528, 46, 34], [382, 536, 50, 36], [428, 538, 48, 34], [468, 530, 40, 30], [498, 516, 28, 24]]; const p = mk(bbox(E, 56));
+	  fur(p.c, E, { density: 0.9, len: 40, width: 4.4, spread: 1.0, flow: (x, y) => [1, (y - 530) * 0.02 - 0.12], col: (x, y) => (nz(x, y * 3) > 0.45 ? pal(GREY, x, y) : pal(DARK, x, y)), order: (x) => x });
+	  p.pivot = [330, 535]; P.tail = p; }
+	// --- 体：白い胸とおなか、わき腹とおしりは灰色。足は白 ---
+	{ const E = [[230, 345, 98, 105], [230, 455, 150, 112], [138, 485, 74, 82], [322, 485, 74, 82]], LEG = [[201, 478, 30, 82], [259, 478, 30, 82]], PAW = [[198, 551, 36, 19], [262, 551, 36, 19]]; const p = mk(bbox(E, 48));
+	  const grey = (x, y) => Math.abs(x - 230) > 96 + (y - 300) * 0.16 + nz(x, y) * 16;
+	  fur(p.c, E, { density: 0.85, len: 34, width: 4.2, flow: (x, y) => [(x - 230) * 0.012, 1], col: (x, y) => (grey(x, y) ? pal(GREY, x, y) : pal(WHITE, x, y)), order: (x, y) => y });
+	  fur(p.c, LEG, { density: 0.9, len: 22, width: 3.6, spread: 0.45, flow: () => [0, 1], col: (x, y) => pal(WHITE, x, y), order: (x, y) => y });
+	  fur(p.c, PAW, { density: 1.1, len: 9, width: 3.4, spread: 0.6, flow: (x, y) => [(x - (x < 230 ? 198 : 262)) * 0.03, 1], col: (x, y) => pal(WHITE, x, y), order: (x, y) => y });
+	  p.c.strokeStyle = 'rgba(150,130,125,.55)'; p.c.lineWidth = 1.3; p.c.lineCap = 'round'; for (const cx of [198, 262]) for (const dx of [-11, 0, 11]) { p.c.beginPath(); p.c.moveTo(cx + dx, 552); p.c.lineTo(cx + dx * 1.05, 564); p.c.stroke(); }  // 指のあいだ
+	  p.c.strokeStyle = 'rgba(170,160,152,.5)'; p.c.lineWidth = 2; p.c.beginPath(); p.c.moveTo(230, 430); p.c.lineTo(230, 545); p.c.stroke();  // 前足のあいだの影
+	  p.pivot = [230, 570]; P.body = p; }
+	// --- 胸のたてがみ：あごの下から長く下がる白い毛 ---
+	{ const E = [[230, 292, 104, 74], [230, 330, 84, 78]]; const p = mk(bbox(E, 70));
+	  fur(p.c, E, { density: 1.0, len: 52, width: 4.6, spread: 0.5, flow: (x, y) => [(x - 230) * 0.011, 1], col: (x, y) => pal(WHITE, x, y), order: (x, y) => y });
+	  p.pivot = [230, 270]; P.mane = p; }
+	// --- 頭：耳、ほおの長い毛。上と目のまわりは灰色、まん中の白い筋が口元へ広がる ---
+	{ const E = [[230, 188, 100, 84], [150, 222, 52, 46], [310, 222, 52, 46], [230, 232, 74, 50]]; const p = mk({ x: 60, y: 20, w: 340, h: 320 }); const c = p.c;
+	  for (const sx of [-1, 1]) {  // 耳（外は灰色、中はピンク、白い房、先に長い毛）
+		const X = (v) => 230 + sx * v * 1.08; c.save(); c.translate(0, -30);  /* 耳は頭の毛より上に出す */
+		c.fillStyle = 'rgb(104,97,92)'; c.beginPath(); c.moveTo(X(98), 150); c.quadraticCurveTo(X(100), 95, X(84), 62); c.quadraticCurveTo(X(52), 84, X(22), 122); c.closePath(); c.fill();
+		c.fillStyle = 'rgb(226,176,178)'; c.beginPath(); c.moveTo(X(86), 142); c.quadraticCurveTo(X(88), 104, X(80), 82); c.quadraticCurveTo(X(58), 98, X(38), 126); c.closePath(); c.fill();
+		for (let i = 0; i < 46; i++) { const u = rnd(), x0 = X(40 + u * 42), y0 = 136 - u * 8 + rnd() * 6, L = 22 + rnd() * 30, a = -Math.PI / 2 + sx * (0.25 + rnd() * 0.5); c.strokeStyle = `rgba(250,247,243,${0.5 + rnd() * 0.4})`; c.lineWidth = 0.9 + rnd() * 0.9; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(x0 + Math.cos(a) * L * 0.5 + sx * 3, y0 + Math.sin(a) * L * 0.5, x0 + Math.cos(a) * L, y0 + Math.sin(a) * L); c.stroke(); }
+		for (let i = 0; i < 9; i++) { c.strokeStyle = `rgba(84,79,76,${0.5 + rnd() * 0.4})`; c.lineWidth = 0.9 + rnd(); c.beginPath(); c.moveTo(X(83) + (rnd() - 0.5) * 5, 66); c.quadraticCurveTo(X(88), 52, X(90) + (rnd() - 0.5) * 8, 34 + rnd() * 10); c.stroke(); }
+		c.restore();
+	  }
+	  const grey = (x, y) => { const u = (x - 125) / 210, v = (y - 100) / 180, du = Math.abs(u - 0.5) + nz(x * 1.5, y * 1.5) * 0.02; const bl = 0.035 + 0.2 * Math.pow(Math.max(0, Math.min(1, (v - 0.2) / 0.42)), 1.5); if (du < bl) return false; if (v > 0.6 && du < 0.3 + (v - 0.6) * 1.1) return false; return v < 0.8; };
+	  fur(c, E, { density: 1.15, len: 20, width: 3.4, spread: 0.6, flow: (x, y) => { const dx = x - 230, dy = y - 205; return y > 215 && Math.abs(dx) > 40 ? [dx * 0.02, 1] : [dx, dy * 0.8 + 6]; }, col: (x, y) => (grey(x, y) ? pal(GREY, x, y) : pal(WHITE, x, y)), order: (x, y) => Math.hypot(x - 230, (y - 205) * 1.1) + (y > 215 ? (y - 215) * 0.8 : 0) });
+	  // ほおの毛の先（長く、下へ）
+	  fur(c, [[146, 240, 44, 30], [314, 240, 44, 30]], { density: 0.8, len: 36, width: 3.8, spread: 0.5, flow: (x) => [(x - 230) * 0.006, 1], col: (x, y) => (y < 232 && Math.abs(x - 230) > 92 ? pal(GREY, x, y) : pal(WHITE, x, y)), order: (x, y) => y });
+	  p.pivot = [230, 262]; P.head = p; }
+	ANA.parts = P; ANA.blinkAt = performance.now() + 3000; ANA.nextYawn = performance.now() + 22000; ANA.nextEar = performance.now() + 9000;
 }
 function anaSpot() {
-	if (stacked) { const p = IMG_PL.top, q = M(p.x + 62, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
-	const p = IMG_PL.floor, q = M(p.x, p.y); return { x: q.x, y: q.y };                    // PC：いちばん下の台
+	if (stacked) { const p = IMG_PL.top, q = M(p.x + 58, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
+	const p = IMG_PL.floor, q = M(p.x - 18, p.y); return { x: q.x, y: q.y };               // PC：いちばん下の台
 }
-function anaH() { return catH * 1.12; }
-// ダルめの顔と体：半目、頭は少し下げてゆらゆら、耳は少し寝かせ、しっぽはゆっくり。ときどきあくび
-function anaParams(c) {
-	const t = performance.now(), set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
-	let eye = 0.42;
-	const bk = (t - ANA.blinkAt) / 700; if (bk >= 0 && bk < 1) eye *= 1 - Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 5000 + Math.random() * 5000;  // ゆっくりまばたき
-	const lk = (t - ANA.lookT) / 2200; if (lk >= 0 && lk < 1) eye = 0.42 + 0.4 * Math.sin(lk * Math.PI);  // さわると、ちょっとだけ目をあける
-	const yk = (t - ANA.yawnT) / 2600;
-	if (yk >= 0 && yk < 1) { const e = Math.sin(yk * Math.PI), ec = Math.min(1, e * 1.6); set('PARAM_MOUTH_OPEN_Y', e); set('PARAM_MOUTH_FORM', e * 0.8); set('PARAM_TONGUE', e * 0.8); eye = eye * (1 - ec); add('PARAM_ANGLE_Y', e * 14); }
+function anaH() { return catH * 1.14; }
+function drawAna(t) {
+	if (!ANA.parts) { try { buildAna(); } catch (e) { console.error(e); ANA.parts = {}; } }
+	const P = ANA.parts; if (!P.head) return;
+	const sp = anaSpot(), h = anaH(), k = h / 515, c = ctx;
+	// ダルめの動き
+	let eye = 0.4, mouth = 0, up = 0;
+	const bk = (t - ANA.blinkAt) / 800; if (bk >= 0 && bk < 1) eye *= 1 - Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 5000 + Math.random() * 6000;
+	const lk = (t - ANA.lookT) / 2400; if (lk >= 0 && lk < 1) eye = 0.4 + 0.45 * Math.sin(lk * Math.PI);
+	const yk = (t - ANA.yawnT) / 2800; if (yk >= 0 && yk < 1) { const e = Math.sin(yk * Math.PI); mouth = e; eye *= 1 - Math.min(1, e * 1.7); up = e; }
 	if (t > ANA.nextYawn) { ANA.yawnT = t; ANA.nextYawn = t + 35000 + Math.random() * 40000; }
-	set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye); set('PARAM_EYE_FORM', 0.4);
-	set('PARAM_BIG_FACE', 0.85);  // 長毛でほっぺがふくらんで見える
-	add('PARAM_ANGLE_Y', -5 + Math.sin(t / 3100) * 1.5); add('PARAM_ANGLE_Z', Math.sin(t / 4300) * 1.5); add('PARAM_ANGLE_X', Math.sin(t / 5200) * 2);
-	add('PARAM_BODY_ANGLE_X', Math.sin(t / 5200) * 2);
-	add('PARAM_EAR_L', -0.25); add('PARAM_EAR_R', -0.25);
-	set('PARAM_BREATH', 0.5 + 0.5 * Math.sin(t / 1400));
+	const br = reduce ? 0 : Math.sin(t / 1500), sway = reduce ? 0 : Math.sin(t / 4300);
+	const part = (p, rot, sx, sy, dx, dy) => { c.save(); c.translate(p.pivot[0] + (dx || 0), p.pivot[1] + (dy || 0)); c.rotate(rot || 0); c.scale(sx || 1, sy || 1); c.drawImage(p.cv, p.b.x - p.pivot[0], p.b.y - p.pivot[1], p.b.w, p.b.h); c.restore(); };
+	c.save(); c.translate(sp.x, sp.y);
+	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(h * 0.12, 2, h * 0.5, h * 0.04, 0, 0, Math.PI * 2); c.fill();
+	c.scale(k, k); c.translate(-230, -570);
+	part(P.tail, reduce ? 0 : Math.sin(t / 2600) * 0.045);
+	part(P.body, 0, 1 + br * 0.006, 1 + br * 0.008);
+	part(P.mane, sway * 0.008, 1 + br * 0.008, 1 + br * 0.012, 0, -br * 1.2);
+	// 頭（少し下げて、ゆっくりゆれる。あくびのときは上を向く）
+	c.save(); c.translate(230, 262 - br * 1.6 - up * 5); c.rotate(sway * 0.03 - up * 0.02); c.translate(-230, -262 + 5);
+	c.drawImage(P.head.cv, P.head.b.x, P.head.b.y, P.head.b.w, P.head.b.h);
+	for (const sx of [-1, 1]) {  // 目：黄みどりがかった金色。半分とじたまぶた
+		c.save(); c.translate(230 + sx * 41, 186); c.rotate(-sx * 0.13);
+		c.beginPath(); c.ellipse(0, 0, 19.5, 14.5, 0, 0, Math.PI * 2); c.fillStyle = '#3d3531'; c.fill();
+		c.beginPath(); c.ellipse(0, 0, 17.5, 12.5, 0, 0, Math.PI * 2); c.clip();
+		const g = c.createRadialGradient(0, 1, 2, 0, 1, 17); g.addColorStop(0, '#dccf5a'); g.addColorStop(0.55, '#cfae3a'); g.addColorStop(1, '#a8842c'); c.fillStyle = g; c.fillRect(-20, -15, 40, 30);
+		c.fillStyle = '#15110f'; c.beginPath(); c.ellipse(0, 1, 6.2, 10, 0, 0, Math.PI * 2); c.fill();
+		c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(-sx * 5, -4, 2.3, 0, Math.PI * 2); c.fill();
+		const ly = -12.5 + (1 - eye) * 25;  // まぶたの下のふち
+		c.fillStyle = sx * 0 + 1 && '#8d837b'; c.beginPath(); c.moveTo(-22, -16); c.lineTo(22, -16); c.lineTo(22, ly - 2); c.quadraticCurveTo(0, ly + 3, -22, ly - 2); c.closePath(); c.fill();
+		c.strokeStyle = '#3d3531'; c.lineWidth = 2; c.beginPath(); c.moveTo(-22, ly - 2); c.quadraticCurveTo(0, ly + 3, 22, ly - 2); c.stroke();
+		c.restore();
+	}
+	// 鼻と口
+	c.fillStyle = '#e7a0a8'; c.beginPath(); c.moveTo(222, 215); c.quadraticCurveTo(230, 212, 238, 215); c.quadraticCurveTo(234, 224, 230, 225); c.quadraticCurveTo(226, 224, 222, 215); c.fill();
+	c.strokeStyle = 'rgba(120,95,95,.8)'; c.lineWidth = 1.5; c.lineCap = 'round';
+	if (mouth > 0.08) { c.fillStyle = '#7c2f3c'; c.beginPath(); c.ellipse(230, 236 + mouth * 9, 9 + mouth * 6, 3 + mouth * 15, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e58a98'; c.beginPath(); c.ellipse(230, 240 + mouth * 16, 6 + mouth * 3, 2 + mouth * 6, 0, 0, Math.PI * 2); c.fill(); }
+	else { c.beginPath(); c.moveTo(230, 225); c.lineTo(230, 231); c.quadraticCurveTo(224, 238, 217, 234); c.moveTo(230, 231); c.quadraticCurveTo(236, 238, 243, 234); c.stroke(); }
+	// ひげ
+	c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 0.9;
+	for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(230 + sx * 22, 228 + i * 3); c.quadraticCurveTo(230 + sx * 70, 222 + i * 7, 230 + sx * (118 + i * 4), 214 + i * 13); c.stroke(); }
+	c.restore(); c.restore();
 }
-function placeAna(t) {
-	const m = ANA.model; if (!m) return;
-	const sp = anaSpot(), h = anaH(), k = h / 1820;
-	const hk = ANA.hopT ? Math.min(1, (t - ANA.hopT) / 520) : 1, hop = hk < 1 ? Math.sin(hk * Math.PI) * h * 0.04 : 0;
-	const kx = k * 1.1, ky = k;  // ふさふさなので横に少し広く
-	// 画像（RenderTexture）に描く：まわりに毛を生やす余白をとる
-	const pad = Math.ceil(h * 0.12), bw = Math.ceil(h * 1.8), bh = Math.ceil(h * 1.3);
-	if (ANA.rt.width !== bw || ANA.rt.height !== bh) ANA.rt.resize(bw, bh);
-	for (const o of [m, ANA.back, ANA.front]) { o.scale.set(kx, ky); o.x = bw * 0.44 - 1000 * kx; o.y = bh - pad * 0.5 - hop - 2201 * ky; }
-	ANA.tail.scale.set(kx, ky); ANA.tail.x = bw * 0.44 + (1330 - 1000) * kx; ANA.tail.y = bh - pad * 0.5 - hop + (2090 - 2201) * ky; ANA.tail.rotation = reduce ? 0 : Math.sin(t / 2300) * 0.05;  // しっぽの先がゆっくり動く
-	W2D.app.renderer.render(ANA.rig, { renderTexture: ANA.rt, clear: true });
-	ANA.sprite.x = sp.x - bw * 0.44; ANA.sprite.y = sp.y + pad * 0.5 - bh;
-	ANA.filter.uniforms.uLen = Math.max(2.5, h * 0.022) * W2D.app.renderer.resolution; ANA.filter.uniforms.uTime = t / 1000;
-}
-function anaBox() { if (!ANA.model) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.45, y: sp.y - h, w: h * 0.9, h }; }
+function anaBox() { if (!ANA.parts || !ANA.parts.head) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.42, y: sp.y - h, w: h * 0.84, h }; }
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
 function applyParams(c) {
 	const P = W2D.P; if (!P) return;
@@ -1525,7 +1496,7 @@ addEventListener('pointermove', (e) => {
 	room.style.cursor = over ? 'grab' : '';
 }, { passive: true });
 room.addEventListener('pointerdown', (e) => {
-	if (PLAYGROUND && ANA.model) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { const now = performance.now(); if (Math.random() < 0.35) ANA.yawnT = now; else ANA.lookT = now; return; } }  /* ダルめ：さわってもちょっと目をあけるか、あくびするだけ */
+	if (PLAYGROUND) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { const now = performance.now(); if (Math.random() < 0.35) ANA.yawnT = now; else ANA.lookT = now; return; } }  /* ダルめ：さわってもちょっと目をあけるか、あくびするだけ */
 	unhide();
 	const p = local(e);
 	if (inBox(p, catBox()) && !S.jump) {
@@ -1691,14 +1662,13 @@ function frame(t) {
 	const squashY = 1 - S.crouch * 0.1 - land - Math.max(0, hopLand) + airStretch * 0.08 + hopE * 0.05;
 	const squashX = 1 + S.crouch * 0.04 + land * 0.7 + Math.max(0, hopLand) * 0.8 - airStretch * 0.04;
 
-	if (PLAYGROUND && ANA.model) { const sp = anaSpot(), h = anaH(); ctx.fillStyle = 'rgba(60,30,40,.26)'; ctx.beginPath(); ctx.ellipse(sp.x + 4, sp.y + 2, h * 0.3, h * 0.035, 0, 0, Math.PI * 2); ctx.fill(); }
+	if (PLAYGROUND) drawAna(t);
 	if (!S.jump && !S.hidden) { ctx.fillStyle = 'rgba(60,30,40,.28)'; ctx.beginPath(); ctx.ellipse(S.pos.x + 4, S.pos.y + 2, catH * 0.25 * (1 - hopE * 0.3), catH * 0.035, 0, 0, Math.PI * 2); ctx.fill(); }
 	if (S.hidden) { const hc = M(IMG_HOLE.x, IMG_HOLE.y); S.pos.x = hc.x; S.pos.y = hc.y + catH * 0.66 + Math.sin(s * 1.5) * 2; }
 	if (W2D.model) {
 		const m = W2D.model, k = catH / 1820, st = 1 + Math.max(-0.1, S.stretch) / 260;
 		const kx = k * squashX / Math.sqrt(st), ky = k * squashY * st;
 		m.scale.set(kx, ky); m.x = S.pos.x + jitter - 1000 * kx; m.y = S.pos.y - hopY - 2201 * ky;
-		if (PLAYGROUND) placeAna(t);
 		if (S.hidden) { const hc = M(IMG_HOLE.x, IMG_HOLE.y); W2D.mask.clear(); W2D.mask.beginFill(0xffffff); W2D.mask.drawEllipse(hc.x, hc.y, IMG_HOLE.rx * SC, IMG_HOLE.ry * SC); W2D.mask.endFill(); m.mask = W2D.mask; } else m.mask = null;
 		// 夕日の色に合わせる（過熱中は赤く）
 		l2dCanvas.classList.toggle('heat', !!heating);
