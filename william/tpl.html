@@ -711,7 +711,7 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 	} catch (e) { console.error(e); }
 })();
 // ---------- アナちゃん（試し中・playground だけ）----------
-// 細い毛を 1 本ずつ描いた一枚絵（william/ana/make_ana.py）を、頭・体・しっぽの部品に分けて動かす。William のモデル（Tororo）は使わない
+// Tororo（William）と同じ絵柄（なめらかな塗り＋やわらかい影、長毛は輪郭の毛の房）で 0 から描いた絵（william/ana/make_ana.py）を、しっぽ・体・耳・頭の部品に分けて動かす。動きも Tororo と同じ考え方（ポインターを追って頭が回る、目玉、まばたき、耳、しっぽ、呼吸）
 // 絵の座標（890×980）：足もと (370, 890)、首 (370, 480)、しっぽのつけ根 (560, 800)、耳のつけ根 (260, 240) (480, 240)、目 (296, 350) (444, 350)、鼻 (370, 395)
 // 性格は食いしん坊：正解すると ごはんがもらえて もぐもぐ。空のときは ときどき ぺろっ、「ごはん まだ？」
 const ANA = { img: {}, n: 0, blinkAt: 0, lookT: -1e9, lickT: -1e9, nextLick: 0, eatT: -1e9, food: 0, taps: 0, wantT: -1e9, nextWant: 0 };
@@ -725,6 +725,8 @@ function anaH() { return catH * (stacked ? 1.0 : 1.25); }
 function drawAna(t) {
 	if (ANA.n < 4) return; const I = ANA.img, c = ctx, sp = anaSpot(), h = anaH(), k = h / 850;
 	let lid = 0, mouth = 0, up = 0, dip = 0, lick = 0;
+	// Tororo と同じ動き：ポインターの方を向く（顔の部品が 頭の上で ずれて、頭が回って見える）
+	ANA.lx = (ANA.lx || 0) + ((pointer.nx || 0) * 0.9 - (ANA.lx || 0)) * 0.08; ANA.ly = (ANA.ly || 0) + ((pointer.ny || 0) * 0.7 - (ANA.ly || 0)) * 0.08; const lx = reduce ? 0 : ANA.lx * (1 - 0), ly = reduce ? 0 : ANA.ly;
 	const bk = (t - ANA.blinkAt) / 240; if (bk >= 0 && bk < 1) lid = Math.max(lid, Math.sin(bk * Math.PI)); else if (bk >= 1) ANA.blinkAt = t + 3000 + Math.random() * 4000;
 	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) { up = Math.sin(lk * Math.PI); lid *= 1 - up; }
 	const ek = (t - ANA.eatT) / 4500;
@@ -742,19 +744,21 @@ function drawAna(t) {
 	// 体（足もとを中心に 呼吸で ふくらむ。食べるときは 少し前へ）
 	c.save(); c.translate(370, 890); c.scale(1 + br * 0.006, 1 + br * 0.01 - dip * 0.03); c.drawImage(I.body, -370, -890); c.restore();
 	// 頭（首を中心に かたむく・上を向く・おさらへ下げる）。耳は 頭のうしろで、つけ根を中心に ぴくっ
-	c.save(); c.translate(370 - dip * 60, 480 - br * 3 - up * 10 + dip * 80 + chew * 5); c.rotate(sway * 0.035 - dip * 0.24); c.scale(1, 1 + up * 0.02); c.translate(-370, -480);
+	c.save(); c.translate(370 - dip * 60 + lx * 10 * (1 - dip), 480 - br * 3 - up * 10 + dip * 80 + chew * 5 + ly * 6 * (1 - dip)); c.rotate(sway * 0.03 - dip * 0.24 + lx * 0.035 * (1 - dip)); c.scale(1, 1 + up * 0.02); c.translate(-370, -480);
 	{ const tw = (t % 6100) / 260, a1 = tw < 1 ? Math.sin(tw * Math.PI) : 0, tw2 = ((t + 2700) % 8300) / 260, a2 = tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0;
-	  for (const [sx, px, py, a] of [[-1, 260, 240, a1], [1, 480, 240, a2]]) { c.save(); c.translate(px, py); c.rotate(sx * (a * 0.16 + dip * 0.14 - up * 0.07)); c.translate(-px, -py); c.beginPath(); c.rect(sx < 0 ? -200 : 370, -200, 570, 1200); c.clip(); c.drawImage(I.ears, 0, 0); c.restore(); } }
+	  for (const [sx, px, py, a] of [[-1, 260, 240, a1], [1, 480, 240, a2]]) { c.save(); c.translate(px, py); c.rotate(sx * (a * 0.16 + dip * 0.14 - up * 0.07)); c.translate(-px, -py); c.beginPath(); c.rect(sx < 0 ? -200 : 370, -200, 570, 1200); c.clip(); c.drawImage(I.ears, -lx * 7, -ly * 5); c.restore(); } }
 	c.drawImage(I.head, 0, 0);
+	c.save(); c.translate(lx * 13, ly * 9);  // 顔の部品（目・鼻・口・ひげ）は 頭より多く動く
+	c.fillStyle = '#eda2b4'; c.strokeStyle = '#c8869a'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(355, 387); c.quadraticCurveTo(370, 383, 385, 387); c.quadraticCurveTo(378, 402, 370, 404); c.quadraticCurveTo(362, 402, 355, 387); c.fill(); c.stroke();  // 鼻
 	// 目：大きく まるい こはく色の目（顔の下より・はなして置く＝かわいい顔）。ふだんは 上まぶたが少し下りた おっとりした目
 	for (const [sx, ex, ey] of [[-1, 296, 350], [1, 444, 350]]) {
 		c.save(); c.translate(ex, ey); c.rotate(sx * -0.06);
 		const shape = () => { c.beginPath(); c.ellipse(0, 0, 36, 33, 0, 0, Math.PI * 2); };
 		shape(); c.lineWidth = 6; c.strokeStyle = '#3b312c'; c.stroke(); c.save(); shape(); c.clip();
 		const g = c.createRadialGradient(0, 4, 4, 0, 0, 36); g.addColorStop(0, '#c9cc66'); g.addColorStop(0.5, '#e0b744'); g.addColorStop(1, '#b07a1e'); c.fillStyle = g; c.fillRect(-40, -38, 80, 76);
-		c.fillStyle = '#17120f'; c.beginPath(); c.ellipse(0, 1, 15 + up * 5, 24, 0, 0, Math.PI * 2); c.fill();
+		c.fillStyle = '#17120f'; c.beginPath(); c.ellipse(lx * 5, 1 + ly * 4, 15 + up * 5, 24, 0, 0, Math.PI * 2); c.fill();  /* 目玉も ポインターを追う */
 		c.fillStyle = 'rgba(255,255,255,.95)'; c.beginPath(); c.arc(-10, -11, 7.5, 0, Math.PI * 2); c.fill(); c.beginPath(); c.arc(9, 12, 3.2, 0, Math.PI * 2); c.fill();
-		const ly = -36 + Math.max(lid, 0.16 * (1 - up)) * 72; c.fillStyle = '#a8a39f'; c.fillRect(-40, -40, 80, ly + 40); c.strokeStyle = '#3b312c'; c.lineWidth = 4; c.beginPath(); c.moveTo(-40, ly - 3); c.quadraticCurveTo(0, ly + 5, 40, ly - 3); c.stroke();
+		const ly2 = -36 + Math.max(lid, 0.16 * (1 - up)) * 72; c.fillStyle = '#a8a39f'; c.fillRect(-40, -40, 80, ly2 + 40); c.strokeStyle = '#3b312c'; c.lineWidth = 4; c.beginPath(); c.moveTo(-40, ly2 - 3); c.quadraticCurveTo(0, ly2 + 5, 40, ly2 - 3); c.stroke();
 		c.restore(); c.restore();
 	}
 	// 口：ω の形。食べるときは あけて もぐもぐ、ぺろっ は 小さい舌
@@ -765,6 +769,7 @@ function drawAna(t) {
 	// ひげ
 	c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1.4; c.lineCap = 'round';
 	for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(370 + sx * 48, 408 + i * 6); c.quadraticCurveTo(370 + sx * 150, 396 + i * 14, 370 + sx * (250 + i * 8), 386 + i * 28); c.stroke(); }
+	c.restore();
 	c.restore();
 	// ごはんのおさら（体の左まえ）
 	{ const bx = 0, by = 0; c.save(); c.translate(70, 872); c.scale(1.9, 1.9); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();

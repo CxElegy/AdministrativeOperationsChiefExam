@@ -51,6 +51,29 @@ def paint(mask, col, flow, n, length, width, order):
         cv2.fillConvexPoly(rgb, pts.astype(np.int32), tuple(float(v) for v in c.clip(0, 255)), cv2.LINE_AA, 3); cv2.fillConvexPoly(al, pts.astype(np.int32), 255, cv2.LINE_AA, 3)
     return np.dstack([rgb, al])
 
+def flat(mask, col, tufts, ring, grav=0.5, marks=0, mark_y=(0.0, 1.0)):
+    """Tororo と同じ絵柄：なめらかな塗り＋やわらかい影。長毛は 輪郭の毛の房（とがった房が 外へ出る）と、中の 少しの房のしるしで表す"""
+    m = mask.astype(np.uint8); core = cv2.erode(m, np.ones((5, 5), np.uint8)); cs = cv2.GaussianBlur(col, (0, 0), 7)
+    dist, lab = cv2.distanceTransformWithLabels(1 - core, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+    cyx = np.argwhere(core > 0); lut = np.zeros((lab.max() + 1, 2), np.int32); lut[lab[core > 0]] = cyx
+    ny, nx = lut[lab][..., 0], lut[lab][..., 1]
+    ys, xs = np.where(core > 0); cx, cy, w, h = xs.mean(), ys.mean(), xs.max() - xs.min(), ys.max() - ys.min()
+    th = np.arctan2(ny - cy, (nx - cx) * (h / w)); u = (th / (2 * math.pi) + 0.5) * tufts; tid = np.floor(u).astype(np.int32) % tufts; f = u - np.floor(u)
+    lens = 0.5 + 0.5 * rng.rand(tufts); skew = 0.3 + 0.4 * rng.rand(tufts)
+    prof = np.where(f < skew[tid], f / skew[tid], (1 - f) / (1 - skew[tid])) ** 0.75
+    L = ring * lens[tid] * (0.2 + 0.8 * prof) * (1 - grav + grav * (0.5 + 0.5 * np.sin(th)) * 2).clip(0.5, 1.6)
+    alpha = np.where(core > 0, 1.0, np.clip((L - (dist - 2)) / 1.4, 0, 1))
+    din = cv2.distanceTransform(core, cv2.DIST_L2, 5)
+    rgb = cs[ny, nx] * (1 - 0.07 * np.exp(-din / 14))[..., None]                         # ふちは ほんの少し暗く（立体感）
+    rgb = np.ascontiguousarray(rgb.clip(0, 255).astype(np.uint8))
+    for _ in range(marks):                                                               # 中の 房のしるし（小さな「く」の字）
+        i = rng.randint(len(xs)); x, y = xs[i], ys[i]
+        if not (mark_y[0] <= (y - ys.min()) / h <= mark_y[1]) or din[y, x] < 16: continue
+        tw = rng.uniform(16, 30); lean = (x - cx) / w * 0.8; c = tuple(float(v) for v in cs[y, x] * 0.93)
+        pts = (np.array([[x - tw / 2, y - tw * 0.9], [x + lean * tw, y], [x + tw / 2, y - tw * 0.9]]) * 8).astype(np.int32)
+        cv2.polylines(rgb, [pts], False, c, 2, cv2.LINE_AA, 3)
+    return np.dstack([rgb, (alpha * 255).astype(np.uint8)])
+
 def norm2(fx, fy):
     m = np.hypot(fx, fy) + 1e-6; return fx / m, fy / m
 def lerp(a, b, k): return a * (1 - k[..., None]) + b * k[..., None]
@@ -70,11 +93,11 @@ bcol *= (1 - 0.07 * ss(0, 240, np.abs(xx - CX)) ** 2)[..., None]                
 bcol *= (1 - 0.16 * ss(560, 470, yy) * ss(210, 60, np.abs(xx - CX)))[..., None]              # あごの下の影
 bcol *= (1 - 0.10 * ss(770, 880, yy))[..., None]                                             # 体の下の影
 bflow = norm2((xx - CX) / 330.0, np.ones_like(xx))
-body = paint(bm, bcol, bflow, 80000, np.where(yy < 720, 40.0, 24.0).astype(np.float32), 1.9, yy)
+body = flat(bm, bcol, 30, 34, grav=0.55, marks=60, mark_y=(0.05, 0.8))
 # 足先（まるい。体の毛の下から 出る）
 pm, ph, pn = solid([(302, 858, 60, 36, 40), (438, 858, 60, 36, 40)])
 pcol = (np.zeros((H, W, 3), np.float32) + WHITE) * shade(pn, 0.88, 0.14)[..., None]
-paws = paint(pm, pcol, norm2(np.where(xx < CX, xx - 302, xx - 438) * 0.02, np.ones_like(xx)), 9000, 9.0, 1.7, yy)
+paws = flat(pm, pcol, 14, 5, grav=0.3)
 pb = np.ascontiguousarray(paws[..., :3])
 for cx in (302, 438):
     for dx in (-17, 0, 17): cv2.line(pb, (int((cx + dx) * 8), 866 * 8), (int((cx + dx * 1.1) * 8), 886 * 8), (196, 190, 200), 2, cv2.LINE_AA, 3)   # 指のあいだ
@@ -96,35 +119,29 @@ muz = np.exp(-(((xx - MX) / 62) ** 2 + ((yy - 412) / 40) ** 2)); hcol = np.clip(
 fx, fy = xx - MX, (yy - (MY - 30)) * 0.9; lowc = (yy > MY - 10) & (np.abs(xx - MX) > 70)
 fx, fy = np.where(lowc, (xx - MX) * 0.016, fx), np.where(lowc, 1.0, fy)
 hlen = (7 + np.clip(np.hypot(xx - MX, yy - MY) * 0.11, 0, 22)) * np.where(lowc, 1.6, 1.0)
-head = paint(hm, hcol, norm2(fx, fy), 62000, hlen.astype(np.float32), 1.6, np.hypot(xx - MX, (yy - MY) * 1.1) + np.where(yy > MY, (yy - MY) * 0.7, 0))
-hb = np.ascontiguousarray(head[..., :3])
-# 鼻（小さい ピンクの逆三角）
-nose = np.array([[MX - 15, MY - 8], [MX + 15, MY - 8], [MX + 6, MY + 5], [MX, MY + 9], [MX - 6, MY + 5]]) * 8
-cv2.fillPoly(hb, [nose.astype(np.int32)], (178, 160, 232), cv2.LINE_AA, 3); cv2.polylines(hb, [nose.astype(np.int32)], True, (150, 128, 200), 1, cv2.LINE_AA, 3)
-cv2.ellipse(hb, (int((MX - 4) * 8), int((MY - 4) * 8)), (5 * 8, 2 * 8), 0, 0, 360, (215, 205, 248), -1, cv2.LINE_AA, 3)
-head[..., :3] = hb
+head = flat(hm, hcol, 26, 30, grav=0.75, marks=14, mark_y=(0.72, 0.95))
 
 # ---------- 耳（べつの部品。大きく、少し外向き。中は うすいピンクと 白い長い毛、先に 長い毛） ----------
 ears = np.zeros((H, W, 4), np.uint8); eb = np.ascontiguousarray(ears[..., :3]); ea = np.ascontiguousarray(ears[..., 3])
 for sx in (-1, 1):
     X = lambda d: HX + sx * d
     pts = np.array([[X(46), 236], [X(150), 56], [X(226), 290]], np.float32); tip = pts[1]; cen = pts.mean(axis=0)
-    cv2.fillPoly(eb, [(pts * 8).astype(np.int32)], (120, 126, 134), cv2.LINE_AA, 3); cv2.fillPoly(ea, [(pts * 8).astype(np.int32)], 255, cv2.LINE_AA, 3)
+    cv2.fillPoly(eb, [(pts * 8).astype(np.int32)], (128, 134, 142), cv2.LINE_AA, 3); cv2.fillPoly(ea, [(pts * 8).astype(np.int32)], 255, cv2.LINE_AA, 3)
     inner = cen + (pts - cen) * 0.66 + [0, 12]
     cv2.fillPoly(eb, [(inner * 8).astype(np.int32)], (188, 180, 224), cv2.LINE_AA, 3)
-    for i in range(420):                                                                     # 外側の短い毛（ふちを やわらかく）
+    for i in range(0):
         t = rng.rand(); q = (pts[0] if rng.rand() < 0.5 else pts[2]) * (1 - t) + tip * t; q = q + (cen - q) * rng.uniform(-0.03, 0.2)
         L = rng.uniform(5, 12); ang = math.atan2(tip[1] - cen[1], tip[0] - cen[0]) + rng.uniform(-0.7, 0.7); gcol = rng.uniform(100, 150)
         l2 = np.array([q, q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8
         cv2.line(eb, tuple(l2[0].astype(int)), tuple(l2[1].astype(int)), (gcol, gcol + 5, gcol + 12), 2, cv2.LINE_AA, 3); cv2.line(ea, tuple(l2[0].astype(int)), tuple(l2[1].astype(int)), 255, 2, cv2.LINE_AA, 3)
-    for i in range(14):                                                                      # 耳の先の長い毛
+    for i in range(4):                                                                       # 耳の先の毛
         L = rng.uniform(18, 40); ang = math.radians(-90 + sx * rng.uniform(0, 26)); q = tip + rng.uniform(-2, 2, 2)
         l2 = (np.array([q, q + [math.cos(ang) * L * 0.5 + sx * 2, math.sin(ang) * L * 0.5], q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8).astype(np.int32)
-        cv2.polylines(eb, [l2], False, (84, 88, 96), 1, cv2.LINE_AA, 3); cv2.polylines(ea, [l2], False, 255, 1, cv2.LINE_AA, 3)
-    for i in range(80):                                                                      # 耳の中から 外へ流れる 白い長い毛
-        t = rng.uniform(0.1, 0.9); q = inner[0] * (1 - t) + inner[2] * t + [0, -rng.uniform(0, 40)]; L = rng.uniform(30, 78); ang = math.radians(-90 + sx * rng.uniform(8, 72))
+        cv2.polylines(eb, [l2], False, (96, 100, 108), 3, cv2.LINE_AA, 3); cv2.polylines(ea, [l2], False, 255, 3, cv2.LINE_AA, 3)
+    for i in range(12):                                                                      # 耳の中から 外へ流れる 白い毛の房
+        t = rng.uniform(0.1, 0.9); q = inner[0] * (1 - t) + inner[2] * t + [0, -rng.uniform(0, 30)]; L = rng.uniform(26, 50); ang = math.radians(-90 + sx * rng.uniform(10, 50))
         l2 = (np.array([q, q + [math.cos(ang) * L * 0.5 + sx * 4, math.sin(ang) * L * 0.5], q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8).astype(np.int32)
-        cv2.polylines(eb, [l2], False, (248, 250, 252), 1, cv2.LINE_AA, 3); cv2.polylines(ea, [l2], False, 255, 1, cv2.LINE_AA, 3)
+        cv2.polylines(eb, [l2], False, (248, 250, 252), 3, cv2.LINE_AA, 3); cv2.polylines(ea, [l2], False, 255, 3, cv2.LINE_AA, 3)
 ears = np.dstack([eb, ea])
 
 # ---------- しっぽ（羽のよう。体の右うしろから 上へ） ----------
@@ -137,7 +154,7 @@ d = (xx[..., None] - spine[None, None, ::6, 0]) ** 2 + (yy[..., None] - spine[No
 ni = np.argmin(d, axis=2) * 6; sx_, sy_ = spine[ni, 0], spine[ni, 1]; nj = np.clip(ni + 6, 0, len(spine) - 1); tx_, ty_ = spine[nj, 0] - sx_, spine[nj, 1] - sy_
 rad = np.sqrt(d.min(axis=2)); core = np.clip(1 - rad / 70, 0, 1)
 tcol = lerp(DARK[None, None] * 0.92, GREY[None, None] * 1.02, ss(0.2, 1.0, core) * 0.7 + n2 * 0.25) * (0.86 + 0.2 * ss(60, 0, (xx - sx_) * 0.5 + (yy - sy_) * 0.7 + 30))[..., None]
-tail = paint(tm > 0, tcol, norm2(tx_ * 0.5 + (xx - sx_) * 1.5, ty_ * 0.5 + (yy - sy_) * 1.5), 26000, 34.0, 2.0, -rad)
+tail = flat(tm > 0, tcol, 30, 30, grav=0.2, marks=0)
 
 def save(img, name):
     from PIL import Image
