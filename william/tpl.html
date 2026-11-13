@@ -467,6 +467,7 @@ if (PHONE && !matchMedia(MOBILE_Q).matches) {
 	const st = document.createElement('style'); st.textContent = css.join('\n'); document.head.appendChild(st);
 }
 const DATA = __DATA__;
+const PLAYGROUND = __PLAY__;  // playground.html だけ true（試し中の機能：アナちゃん）
 // 新しい版が出ていたら読み込み直す（ブラウザに古いページが残っていても、開いたときに最新になる）
 const BUILD = '__BUILD__';
 (async () => {
@@ -707,8 +708,34 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 		model.internalModel.on('beforeModelUpdate', () => applyParams(model.internalModel.coreModel));
 		const _upd = model.internalModel.update.bind(model.internalModel); model.internalModel.update = (dt, now) => { _upd(dt, now); }; // 形は Live2D の元のまま（変えるのはテクスチャ画像だけ）
 		W2D.model = model; W2D.app = app; L.ready = true; paintCollar();
+		if (PLAYGROUND) loadAna(app, model);
 	} catch (e) { console.error(e); }
 })();
+// ---------- アナちゃん（試し中・playground だけ）：同じ Tororo のモデルに、アナちゃんの柄を描いたテクスチャ ----------
+// ノルウェージャンフォレストキャット：大きめでふさふさ。William より少し大きく、横にも少し広く描く
+const ANA = { model: null, hopT: 0, nextAct: 0 };
+async function loadAna(app, william) {
+	try {
+		const m = await PIXI.live2d.Live2DModel.from('w/ana.model3.json', { autoInteract: false });
+		app.stage.addChildAt(m, app.stage.getChildIndex(william));  // William のうしろ
+		ANA.model = m; ANA.nextAct = performance.now() + 8000;
+	} catch (e) { console.error(e); }
+}
+function anaSpot() {
+	if (stacked) { const p = IMG_PL.top, q = M(p.x + 62, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
+	const p = IMG_PL.floor, q = M(p.x, p.y); return { x: q.x, y: q.y };                    // PC：いちばん下の台
+}
+function anaH() { return catH * 1.12; }
+function placeAna(t) {
+	const m = ANA.model; if (!m) return;
+	const sp = anaSpot(), h = anaH(), k = h / 1820;
+	const hk = ANA.hopT ? Math.min(1, (t - ANA.hopT) / 520) : 1, hop = hk < 1 ? Math.sin(hk * Math.PI) * h * 0.07 : 0;
+	const breathe = reduce ? 0 : Math.sin(t / 1300) * 0.012;
+	const kx = k * 1.1 * (1 + breathe * 0.5), ky = k * (1 - breathe * 0.3);  // ふさふさなので横に少し広く
+	m.scale.set(kx, ky); m.x = sp.x - 1000 * kx; m.y = sp.y - hop - 2201 * ky;
+	if (t > ANA.nextAct) { const n = (m.internalModel.settings.motions.Idle || []).length; if (n) m.motion('Idle', Math.floor(Math.random() * n), 2); ANA.nextAct = t + 9000 + Math.random() * 9000; }
+}
+function anaBox() { if (!ANA.model) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.4, y: sp.y - h, w: h * 0.8, h }; }
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
 function applyParams(c) {
 	const P = W2D.P; if (!P) return;
@@ -829,7 +856,7 @@ function drawBg() {
 	const v = c.createRadialGradient(W * 0.6, H * 0.45, Math.min(W, H) * 0.3, W * 0.6, H * 0.45, Math.max(W, H) * 0.8);
 	v.addColorStop(0, 'rgba(20,10,30,0)'); v.addColorStop(1, 'rgba(20,10,30,.3)'); c.fillStyle = v; c.fillRect(0, 0, W, H);
 }
-const plat = (id) => { const p = IMG_PL[id], q = M(p.x, p.y); return { x: q.x, y: q.y, w: p.w * SC }; };
+const plat = (id) => { const p = IMG_PL[id], q = M(p.x - (PLAYGROUND && stacked && id === 'top' ? 34 : 0), p.y); return { x: q.x, y: q.y, w: p.w * SC }; };  /* playground のスマホ：右どなりにアナちゃん */
 function cardRect() { return { x: card.offsetLeft, y: card.offsetTop, w: card.offsetWidth, h: card.offsetHeight }; }
 function perchCard() { const c = cardRect(); if (stacked) return { x: c.x + c.w - catH * 0.45, y: c.y + 8, w: 90 };  // スマホ：題卡の上のふちに座る（体はタワーの帯の中）
 	return { x: c.x + c.w - catH * 0.16, y: c.y + catH + 26, w: 90 }; }
@@ -1381,6 +1408,7 @@ addEventListener('pointermove', (e) => {
 	room.style.cursor = over ? 'grab' : '';
 }, { passive: true });
 room.addEventListener('pointerdown', (e) => {
+	if (PLAYGROUND && ANA.model) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { ANA.hopT = performance.now(); const n = (ANA.model.internalModel.settings.motions.Tap || []).length; if (n) ANA.model.motion('Tap', Math.floor(Math.random() * n), 3); se('nya'); return; } }
 	unhide();
 	const p = local(e);
 	if (inBox(p, catBox()) && !S.jump) {
@@ -1463,7 +1491,7 @@ function frame(t) {
 	const calm = isLateNight();
 	if (free && t > S.nextIdle && calm && Math.random() < 0.5) S.nextIdle = t + 4000 + Math.random() * 4000;  // 夜はしぐさを半分に
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
-	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
+	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on && !(PLAYGROUND && i === 'floor')); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
 	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); sayIdle(pick('cardNap'), 2.2); }); S.nextMischief = t + 480000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
 	if (!answered && (S.hintN || 0) < 3 && t - S.qStart > HINT_AT[S.hintN || 0] && t > sayUntil && !document.hidden && !S.drag && !S.jump && !S.hidden && !document.querySelector('.scrim, .cutin') && (!isMobile() || app.classList.contains('show-room'))) giveHint(free);
@@ -1546,12 +1574,14 @@ function frame(t) {
 	const squashY = 1 - S.crouch * 0.1 - land - Math.max(0, hopLand) + airStretch * 0.08 + hopE * 0.05;
 	const squashX = 1 + S.crouch * 0.04 + land * 0.7 + Math.max(0, hopLand) * 0.8 - airStretch * 0.04;
 
+	if (PLAYGROUND && ANA.model) { const sp = anaSpot(), h = anaH(); ctx.fillStyle = 'rgba(60,30,40,.26)'; ctx.beginPath(); ctx.ellipse(sp.x + 4, sp.y + 2, h * 0.3, h * 0.035, 0, 0, Math.PI * 2); ctx.fill(); }
 	if (!S.jump && !S.hidden) { ctx.fillStyle = 'rgba(60,30,40,.28)'; ctx.beginPath(); ctx.ellipse(S.pos.x + 4, S.pos.y + 2, catH * 0.25 * (1 - hopE * 0.3), catH * 0.035, 0, 0, Math.PI * 2); ctx.fill(); }
 	if (S.hidden) { const hc = M(IMG_HOLE.x, IMG_HOLE.y); S.pos.x = hc.x; S.pos.y = hc.y + catH * 0.66 + Math.sin(s * 1.5) * 2; }
 	if (W2D.model) {
 		const m = W2D.model, k = catH / 1820, st = 1 + Math.max(-0.1, S.stretch) / 260;
 		const kx = k * squashX / Math.sqrt(st), ky = k * squashY * st;
 		m.scale.set(kx, ky); m.x = S.pos.x + jitter - 1000 * kx; m.y = S.pos.y - hopY - 2201 * ky;
+		if (PLAYGROUND) placeAna(t);
 		if (S.hidden) { const hc = M(IMG_HOLE.x, IMG_HOLE.y); W2D.mask.clear(); W2D.mask.beginFill(0xffffff); W2D.mask.drawEllipse(hc.x, hc.y, IMG_HOLE.rx * SC, IMG_HOLE.ry * SC); W2D.mask.endFill(); m.mask = W2D.mask; } else m.mask = null;
 		// 夕日の色に合わせる（過熱中は赤く）
 		l2dCanvas.classList.toggle('heat', !!heating);

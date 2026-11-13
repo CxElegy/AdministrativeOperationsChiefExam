@@ -77,6 +77,9 @@ def main():
             '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
             '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n')
     out = head + s[:i] + '\n</head>\n<body>\n' + s[i:] + '\n</body>\n</html>\n'
+    # playground.html：試し中の機能（アナちゃん）を入れたページ。本番（index.html）には出さない
+    open(os.path.join(ROOT, 'public', 'playground.html'), 'w', encoding='utf-8').write(out.replace('__PLAY__', 'true').replace('<title>', '<title>[playground] ', 1))
+    out = out.replace('__PLAY__', 'false')
     open(os.path.join(ROOT, 'public', 'index.html'), 'w', encoding='utf-8').write(out)
     print('public/index.html', len(out) // 1024, 'KB')
     # 進度ダッシュボード（dashboard.html?u=<ID>）：部屋の並びと、問題の年度・番号だけ入れる

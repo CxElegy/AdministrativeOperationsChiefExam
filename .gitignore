@@ -28,3 +28,4 @@ server/data/
 # william/build.py が作るページ（npm run build で作り直す）
 public/index.html
 public/dashboard.html
+public/playground.html
