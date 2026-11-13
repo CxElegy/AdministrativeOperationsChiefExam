@@ -744,11 +744,10 @@ function drawAna(t) {
 	c.save(); c.rotate(sway * 0.012 - dip * 0.2); c.scale(1 + br * 0.004 + dip * 0.03, 1 + br * 0.008 + up * 0.03 - dip * 0.1); c.translate(-228, -540 + chew * 4);
 	c.drawImage(im, 0, 0, 456, 540);
 	if (lid > 0.02) for (const [ex, ey, rot] of [[195, 182, 0.1], [280, 180, -0.1]]) {  // まぶた（目の上から下りる）
-		c.save(); c.translate(ex, ey); c.rotate(rot); c.beginPath(); c.ellipse(0, 0, 21, 16, 0, 0, Math.PI * 2); c.clip();
-		const ly = -16 + lid * 32; c.fillStyle = '#d6cfc8'; c.fillRect(-22, -17, 44, ly + 17); c.strokeStyle = '#4a403a'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(-22, ly - 2); c.quadraticCurveTo(0, ly + 3, 22, ly - 2); c.stroke(); c.restore();
+		c.save(); c.translate(ex, ey); c.rotate(rot); c.beginPath(); c.ellipse(0, 0, 25, 19, 0, 0, Math.PI * 2); c.clip();
+		const ly = -19 + lid * 38; c.fillStyle = '#ddd6cf'; c.fillRect(-26, -20, 52, ly + 20); c.strokeStyle = '#4a403a'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(-26, ly - 2); c.quadraticCurveTo(0, ly + 3, 26, ly - 2); c.stroke(); c.restore();
 	}
-	if (mouth > 0.08) { c.fillStyle = '#7c2f3c'; c.beginPath(); c.ellipse(234, 262 + mouth * 3, 8 + mouth * 3, 2 + mouth * 7, 0, 0, Math.PI * 2); c.fill(); }
-	else if (lick > 0.05) { c.fillStyle = '#e58a98'; c.beginPath(); c.ellipse(234 + (lick - 0.5) * 14, 264, 6.5, 3 + lick * 6, (lick - 0.5) * 0.8, 0, Math.PI * 2); c.fill(); }  // ぺろっ
+	if (lick > 0.05) { c.fillStyle = '#ee9aa6'; c.strokeStyle = '#d27a88'; c.lineWidth = 1; c.beginPath(); c.moveTo(229, 262); c.quadraticCurveTo(228, 262 + lick * 11, 234, 263 + lick * 12); c.quadraticCurveTo(240, 262 + lick * 11, 239, 262); c.closePath(); c.fill(); c.stroke(); }  // ぺろっ（口は写真のまま、小さい舌だけ）
 	c.restore();
 	// ごはんのおさら（体の左まえ）
 	{ const bx = 0, by = 0; c.save(); c.translate(-150, -14); c.scale(1.25, 1.25); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
