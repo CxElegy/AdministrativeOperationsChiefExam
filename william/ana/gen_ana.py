@@ -125,3 +125,5 @@ for y in range(1810, 1940):
             px[x, y] = (int(rr * 255), int(gg * 255), int(bb * 255), a)
 im.save(out)
 print('saved', out)
+# （このあと、しっぽの絵は透明にしている：x 420〜1402, y 1080〜1392。ただし x 600〜860, y 1270〜1330 は残す。
+#   太いしっぽは tpl.html の anaFluff で描く）
