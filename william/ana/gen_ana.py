@@ -7,7 +7,7 @@ src, out = sys.argv[1], sys.argv[2]
 im = Image.open(src).convert('RGBA'); W, H = im.size
 px = im.load()
 random.seed(7)
-GREY = (146, 130, 115); GREY_D = (112, 98, 86); GREY_L = (182, 168, 152); WHITE = (249, 247, 245)  # 写真に合わせて、茶色がかった あたたかい灰色
+GREY = (140, 132, 126); GREY_D = (110, 102, 97); GREY_L = (180, 172, 165); WHITE = (249, 247, 245)  # 写真に合わせて、茶色がかった あたたかい灰色
 
 def lum(c): return 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
 def mix(a, b, k): return tuple(int(a[i] * (1 - k) + b[i] * k) for i in range(3))
@@ -73,14 +73,14 @@ def head_grey(u, v):
     if v > 0.40 and du < 0.36: return 0         # 目の下〜横も白
     return 1
 def head_col(u, v):
-    return tabby(u, v, mix(GREY_D, GREY, min(1, v / 0.55)), (88, 76, 66), 46) if v < 0.55 else mix(GREY, GREY_L, min(1, (v - 0.55) / 0.3))
+    return tabby(u, v, mix(GREY_D, GREY, min(1, v / 0.55)), (88, 82, 78), 46) if v < 0.55 else mix(GREY, GREY_L, min(1, (v - 0.55) / 0.3))
 paint(HEAD, head_grey, head_col, blur=10)
 
 # --- 目のふち・まぶた：William では こい灰色の太いふち。写真のアナちゃんは 細くて うすいので、まわりの毛に近い色にする ---
 for box in [(505, 1535, 705, 1810), (730, 1535, 940, 1810)]:   # 目のふち（上下）
-    paint(box, lambda u, v: 1, lambda u, v: mix((150, 132, 116), (228, 220, 212), min(1, max(0, (v - 0.35) / 0.3))), blur=0, keep_shade=False)  # 上は灰色、下は白に近く
+    paint(box, lambda u, v: 1, lambda u, v: mix((150, 143, 138), (240, 237, 233), min(1, max(0, (v - 0.22) / 0.22))), blur=0, keep_shade=False)  # 上は灰色、下は白に近く
 for box in [(535, 1340, 675, 1528), (780, 1340, 915, 1528)]:   # まぶた
-    paint(box, lambda u, v: 1, lambda u, v: (198, 186, 172), blur=0, keep_shade=False)
+    paint(box, lambda u, v: 1, lambda u, v: (188, 182, 177), blur=0, keep_shade=False)
 # --- 耳の内側：写真では 白い長い毛で ほとんど かくれている。ピンクを うすくして 白い毛を描く ---
 from PIL import ImageDraw
 for box in [(1247, 1432, 1400, 1693), (1427, 1427, 1588, 1692)]:
@@ -124,7 +124,7 @@ def back_grey(u, v):
     if v < 0.30: return 1                      # 肩・せなか
     if du > 0.30 - (v - 0.30) * 0.15: return 1  # わき腹・おしりの外側
     return 0
-paint(BACK, back_grey, lambda u, v: tabby(u, v, mix(GREY_D, GREY, v), (90, 78, 68), 30), blur=18)
+paint(BACK, back_grey, lambda u, v: tabby(u, v, mix(GREY_D, GREY, v), (90, 84, 80), 30), blur=18)
 
 # --- しっぽ：濃い灰色、ふさふさ（根もとは少し明るい） ---
 TAIL = (420, 1080, 1400, 1390)
