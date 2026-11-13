@@ -724,7 +724,7 @@ async function loadAna(app, william) {
 		ANA.rt = PIXI.RenderTexture.create({ width: 8, height: 8, resolution: app.renderer.resolution });
 		// ふわふわ：同じ絵を ぼかして少し大きくしたものを うしろに 2 まい重ねる（輪郭が やわらかい毛のふちになる）。その上に くっきりした絵
 		const grp = new PIXI.Container(), sp = new PIXI.Sprite(ANA.rt); ANA.halo = [];
-		for (let i = 0; i < 3; i++) { const hs = new PIXI.Sprite(ANA.rt); hs.anchor.set(0.5, 1); const bf = new PIXI.filters.BlurFilter(8, 4); bf.padding = 40; hs.filters = [bf]; grp.addChild(hs); ANA.halo.push(hs); }
+		for (let i = 0; i < 1; i++) { const hs = new PIXI.Sprite(ANA.rt); hs.anchor.set(0.5, 1); const bf = new PIXI.filters.BlurFilter(8, 4); bf.padding = 40; hs.filters = [bf]; grp.addChild(hs); ANA.halo.push(hs); }
 		grp.addChild(sp); ANA.grp = grp;
 		app.stage.addChildAt(grp, app.stage.getChildIndex(william));  // William のうしろ
 		ANA.model = m; ANA.sprite = sp; ANA.blinkAt = performance.now() + 3000; ANA.nextLick = performance.now() + 12000;
@@ -735,7 +735,7 @@ function anaSpot() {
 	if (stacked) { const p = IMG_PL.top, q = M(p.x + 62, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
 	const p = IMG_PL.floor, q = M(p.x + 14, p.y); return { x: q.x, y: q.y };              // PC：いちばん下の台
 }
-function anaH() { return catH * 1.12; }
+function anaH() { return catH * 1.02; }  // テクスチャの中で絵を 0.86 倍に縮めて まわりに毛の房を描いてあるので、モデルは 1/0.86 倍に大きく描く（william/ana/fluff_ana.py）
 // Tororo のパラメータで動かす（全身）：食べるときは顔を下げて口をもぐもぐ、ぺろっ は舌
 function anaParams(c) {
 	const t = performance.now(), st = ANA.s, set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
@@ -768,12 +768,12 @@ function drawAna(t) {
 	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
 	Object.assign(st, { lid, mouth, up, dip, lick });
 	// Live2D のモデルを画像（RenderTexture）に描く
-	const k = h / 1820, kx = k * 1.12, ky = k, pad = Math.ceil(h * 0.14), bw = Math.ceil(h * 1.7), bh = Math.ceil(h * 1.3);
+	const k = h / 1820 / 0.86, kx = k * 1.2, ky = k * 0.97, pad = Math.ceil(h * 0.14), bw = Math.ceil(h * 2.0), bh = Math.ceil(h * 1.5);
 	if (ANA.rt.width !== bw || ANA.rt.height !== bh) ANA.rt.resize(bw, bh);
 	m.scale.set(kx, ky); m.x = bw / 2 - 1000 * kx; m.y = bh - pad * 0.5 - 2201 * ky + dip * h * 0.02;
 	W2D.app.renderer.render(m, { renderTexture: ANA.rt, clear: true });
 	ANA.sprite.x = sp.x - bw / 2; ANA.sprite.y = sp.y + pad * 0.5 - bh;
-	ANA.halo.forEach((hs, i) => { hs.x = sp.x; hs.y = sp.y + pad * 0.5 + h * 0.012; hs.scale.set(1.075 - i * 0.012, 1.035); hs.filters[0].blur = Math.max(2, h * (0.028 - i * 0.006)); });
+	ANA.halo.forEach((hs, i) => { hs.x = sp.x; hs.y = sp.y + pad * 0.5 + h * 0.012; hs.scale.set(1.03, 1.015); hs.filters[0].blur = Math.max(1.5, h * 0.012); hs.alpha = 0.8; });
 	c.save(); c.translate(sp.x, sp.y);
 	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(4, 2, h * 0.3, h * 0.035, 0, 0, Math.PI * 2); c.fill();
 	c.scale(h / 540, h / 540);
