@@ -708,49 +708,73 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 		model.internalModel.on('beforeModelUpdate', () => applyParams(model.internalModel.coreModel));
 		const _upd = model.internalModel.update.bind(model.internalModel); model.internalModel.update = (dt, now) => { _upd(dt, now); }; // 形は Live2D の元のまま（変えるのはテクスチャ画像だけ）
 		W2D.model = model; W2D.app = app; L.ready = true; paintCollar();
+		if (PLAYGROUND) loadAna(app, model);
 	} catch (e) { console.error(e); }
 })();
 // ---------- アナちゃん（試し中・playground だけ）：William のモデルは使わず、アナちゃん専用に描いた猫 ----------
-// ノルウェージャンフォレストキャット：大きめの長毛種。毛の質感は本物の写真（送ってもらった写真の切り抜き）をそのまま使う
+// ノルウェージャンフォレストキャット：大きめの長毛種。William と同じ Live2D の Tororo モデル（全身）に、アナちゃんの柄のテクスチャ（public/w/ana.2048）。輪郭の長い毛は、ぼかした絵を うしろに重ねて ふわっとさせる
 // 性格は食いしん坊：正解するとごはんがもらえて、もぐもぐ食べる。おさらが空だと、ときどき口をぺろっとして ごはんを待つ
 // 絵の座標：足もと y=570、体のまん中 x=230、耳の先 y≈55（高さ 515）。しっぽは右へ寝かせる
-const ANA = { img: null, blinkAt: 0, lookT: -1e9, lickT: -1e9, nextLick: 0, eatT: -1e9, food: 0, taps: 0, wantT: -1e9, nextWant: 0 };
-if (PLAYGROUND) { const im = new Image(); im.onload = () => { ANA.img = im; ANA.blinkAt = performance.now() + 3000; ANA.nextLick = performance.now() + 12000; }; im.src = __ANA__; }
+const ANA = { model: null, sprite: null, rt: null, s: { lid: 0, mouth: 0, up: 0, dip: 0, lick: 0 }, blinkAt: 0, lookT: -1e9, lickT: -1e9, nextLick: 0, eatT: -1e9, food: 0, taps: 0, wantT: -1e9, nextWant: 0 };
+async function loadAna(app, william) {
+	try {
+		const m = await PIXI.live2d.Live2DModel.from('w/ana.model3.json', { autoInteract: false });
+		m.internalModel.motionManager.groups.idle = '__none__';  // 動きは下の anaParams で付ける
+		m.internalModel.on('beforeModelUpdate', () => anaParams(m.internalModel.coreModel));
+		ANA.rt = PIXI.RenderTexture.create({ width: 8, height: 8, resolution: app.renderer.resolution });
+		// ふわふわ：同じ絵を ぼかして少し大きくしたものを うしろに 2 まい重ねる（輪郭が やわらかい毛のふちになる）。その上に くっきりした絵
+		const grp = new PIXI.Container(), sp = new PIXI.Sprite(ANA.rt); ANA.halo = [];
+		for (let i = 0; i < 3; i++) { const hs = new PIXI.Sprite(ANA.rt); hs.anchor.set(0.5, 1); const bf = new PIXI.filters.BlurFilter(8, 4); bf.padding = 40; hs.filters = [bf]; grp.addChild(hs); ANA.halo.push(hs); }
+		grp.addChild(sp); ANA.grp = grp;
+		app.stage.addChildAt(grp, app.stage.getChildIndex(william));  // William のうしろ
+		ANA.model = m; ANA.sprite = sp; ANA.blinkAt = performance.now() + 3000; ANA.nextLick = performance.now() + 12000;
+	} catch (e) { console.error(e); }
+}
 function anaFeed() { if (!PLAYGROUND) return; const t = performance.now(); if (t - ANA.eatT < 5200) { ANA.food = 1; return; } ANA.food = 1; ANA.eatT = t + 700; ANA.lookT = t; }  // ごはんをあげる（正解したとき・3回さわったとき）
 function anaSpot() {
-	if (stacked) { const p = IMG_PL.top, q = M(p.x + 66, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
-	const p = IMG_PL.floor, q = M(p.x - 6, p.y); return { x: q.x, y: q.y };               // PC：いちばん下の台
+	if (stacked) { const p = IMG_PL.top, q = M(p.x + 62, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
+	const p = IMG_PL.floor, q = M(p.x + 14, p.y); return { x: q.x, y: q.y };              // PC：いちばん下の台
 }
-function anaH() { return catH * (stacked ? 0.98 : 1.1); }
-// 絵は写真の切り抜き（william/assets/ana.webp、456×540。足もとのまん中 = (228, 540)）。動きは絵全体の ゆれ・呼吸・かたむきと、上から描く まぶた・口
+function anaH() { return catH * 1.12; }
+// Tororo のパラメータで動かす（全身）：食べるときは顔を下げて口をもぐもぐ、ぺろっ は舌
+function anaParams(c) {
+	const t = performance.now(), st = ANA.s, set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
+	const eye = Math.max(0, 1 - st.lid);
+	set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
+	set('PARAM_BIG_FACE', 0.85);  // 長毛でほっぺがふくらんで見える
+	add('PARAM_ANGLE_Y', st.up * 16 - st.dip * 30 + Math.sin(t / 3100) * 2); add('PARAM_ANGLE_X', -st.dip * 14 + Math.sin(t / 5200) * 4); add('PARAM_ANGLE_Z', Math.sin(t / 4300) * 3);
+	add('PARAM_BODY_ANGLE_X', -st.dip * 6 + Math.sin(t / 5200) * 2);
+	if (st.mouth > 0.02) { set('PARAM_MOUTH_OPEN_Y', 0.15 + st.mouth * 0.5); set('PARAM_MOUTH_FORM', 0.6); }
+	if (st.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.35 * st.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', st.lick); }
+	set('PARAM_TAIL', Math.sin(t / 1500) * 0.7);
+	set('PARAM_BREATH', 0.5 + 0.5 * Math.sin(t / 1400));
+}
 function drawAna(t) {
-	const im = ANA.img; if (!im) return;
-	const sp = anaSpot(), h = anaH(), k = h / 540, c = ctx;
-	// 食いしん坊の動き：ごはんが来ると おさらへ体をたおして もぐもぐ。空のときは、ときどき ぺろっ
+	const m = ANA.model; if (!m) return;
+	const sp = anaSpot(), h = anaH(), c = ctx, st = ANA.s;
+	// 食いしん坊の動き：ごはんが来ると おさらへ顔を下げて もぐもぐ。空のときは、ときどき ぺろっ
 	let lid = 0, mouth = 0, up = 0, dip = 0, lick = 0;
 	const bk = (t - ANA.blinkAt) / 220; if (bk >= 0 && bk < 1) lid = Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 2800 + Math.random() * 3500;
-	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) up = Math.sin(lk * Math.PI);  // ごはん？と のびあがる
+	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) up = Math.sin(lk * Math.PI);  // ごはん？と顔を上げる
 	const ek = (t - ANA.eatT) / 4500;
-	if (ek >= 0 && ek < 1) { const e = Math.min(1, ek * 6, (1 - ek) * 6); dip = e; up = 0; mouth = e * Math.abs(Math.sin(t / 95)); lid = Math.max(lid, 0.6 * e); ANA.food = Math.max(0, 1 - ek * 1.05); if (ek > 0.93) ANA.lickT = ANA.eatT + 4500; }
+	if (ek >= 0 && ek < 1) { const e = Math.min(1, ek * 6, (1 - ek) * 6); dip = e; up = 0; mouth = e * Math.abs(Math.sin(t / 95)); lid = Math.max(lid, 0.55 * e); ANA.food = Math.max(0, 1 - ek * 1.05); if (ek > 0.93) ANA.lickT = ANA.eatT + 4500; }
 	else if (ek >= 1 && ANA.food > 0 && ANA.food < 1) ANA.food = 0;
 	if (t > ANA.nextLick && !(ek >= 0 && ek < 1)) { ANA.lickT = t; ANA.nextLick = t + 16000 + Math.random() * 20000; }
 	const ck = (t - ANA.lickT) / 900; if (ck >= 0 && ck < 1) lick = Math.sin(ck * Math.PI);
 	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
-	const br = reduce ? 0 : Math.sin(t / 1500), sway = reduce ? 0 : Math.sin(t / 4300), chew = reduce ? 0 : Math.abs(Math.sin(t / 95)) * dip;
+	Object.assign(st, { lid, mouth, up, dip, lick });
+	// Live2D のモデルを画像（RenderTexture）に描く
+	const k = h / 1820, kx = k * 1.12, ky = k, pad = Math.ceil(h * 0.14), bw = Math.ceil(h * 1.7), bh = Math.ceil(h * 1.3);
+	if (ANA.rt.width !== bw || ANA.rt.height !== bh) ANA.rt.resize(bw, bh);
+	m.scale.set(kx, ky); m.x = bw / 2 - 1000 * kx; m.y = bh - pad * 0.5 - 2201 * ky + dip * h * 0.02;
+	W2D.app.renderer.render(m, { renderTexture: ANA.rt, clear: true });
+	ANA.sprite.x = sp.x - bw / 2; ANA.sprite.y = sp.y + pad * 0.5 - bh;
+	ANA.halo.forEach((hs, i) => { hs.x = sp.x; hs.y = sp.y + pad * 0.5 + h * 0.012; hs.scale.set(1.075 - i * 0.012, 1.035); hs.filters[0].blur = Math.max(2, h * (0.028 - i * 0.006)); });
 	c.save(); c.translate(sp.x, sp.y);
-	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(0, 2, h * 0.36, h * 0.035, 0, 0, Math.PI * 2); c.fill();
-	c.scale(k, k);
-	// 体（写真）：足もとを中心に ゆれる・のびる・おさらへ たおれる
-	c.save(); c.rotate(sway * 0.012 - dip * 0.2); c.scale(1 + br * 0.004 + dip * 0.03, 1 + br * 0.008 + up * 0.03 - dip * 0.1); c.translate(-228, -540 + chew * 4);
-	c.drawImage(im, 0, 0, 456, 540);
-	if (lid > 0.02) for (const [ex, ey, rot] of [[195, 182, 0.1], [280, 180, -0.1]]) {  // まぶた（目の上から下りる）
-		c.save(); c.translate(ex, ey); c.rotate(rot); c.beginPath(); c.ellipse(0, 0, 25, 19, 0, 0, Math.PI * 2); c.clip();
-		const ly = -19 + lid * 38; c.fillStyle = '#ddd6cf'; c.fillRect(-26, -20, 52, ly + 20); c.strokeStyle = '#4a403a'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(-26, ly - 2); c.quadraticCurveTo(0, ly + 3, 26, ly - 2); c.stroke(); c.restore();
-	}
-	if (lick > 0.05) { c.fillStyle = '#ee9aa6'; c.strokeStyle = '#d27a88'; c.lineWidth = 1; c.beginPath(); c.moveTo(229, 262); c.quadraticCurveTo(228, 262 + lick * 11, 234, 263 + lick * 12); c.quadraticCurveTo(240, 262 + lick * 11, 239, 262); c.closePath(); c.fill(); c.stroke(); }  // ぺろっ（口は写真のまま、小さい舌だけ）
-	c.restore();
+	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(4, 2, h * 0.3, h * 0.035, 0, 0, Math.PI * 2); c.fill();
+	c.scale(h / 540, h / 540);
 	// ごはんのおさら（体の左まえ）
-	{ const bx = 0, by = 0; c.save(); c.translate(-150, -14); c.scale(1.25, 1.25); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
+	{ const bx = 0, by = 0; c.save(); c.translate(-250, -12); c.scale(1.25, 1.25); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
 	  c.fillStyle = '#f4ead9'; c.beginPath(); c.moveTo(bx - 46, by - 4); c.quadraticCurveTo(bx - 40, by + 16, bx, by + 16); c.quadraticCurveTo(bx + 40, by + 16, bx + 46, by - 4); c.closePath(); c.fill();
 	  c.fillStyle = '#e3d3bb'; c.beginPath(); c.ellipse(bx, by - 4, 46, 10, 0, 0, Math.PI * 2); c.fill();
 	  if (ANA.food > 0.02) { c.save(); c.beginPath(); c.ellipse(bx, by - 4, 42, 8.5, 0, 0, Math.PI * 2); c.clip(); const n = Math.ceil(26 * ANA.food); for (let i = 0; i < n; i++) { const a = i * 2.39996, r = Math.sqrt((i + 0.5) / 26); c.fillStyle = i % 3 ? '#a86f3e' : '#8f5a30'; c.beginPath(); c.ellipse(bx + Math.cos(a) * r * 38, by - 5 + Math.sin(a) * r * 7 - ANA.food * 3, 5.5, 4, 0, 0, Math.PI * 2); c.fill(); } c.restore(); }
@@ -758,7 +782,7 @@ function drawAna(t) {
 	const wk = (t - ANA.wantT) / 3200; if (wk >= 0 && wk < 1) { const a = Math.min(1, wk * 6, (1 - wk) * 6); c.globalAlpha = a; c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = '#2b2522'; c.lineWidth = 2.5; const bx = 40, by = -500; c.beginPath(); c.ellipse(bx, by, 96, 32, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(bx - 30, by + 42, 7, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#2b2522'; c.font = '500 26px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ごはん まだ？', bx, by + 1); c.globalAlpha = 1; }
 	c.restore();
 }
-function anaBox() { if (!ANA.img) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.4, y: sp.y - h, w: h * 0.8, h }; }
+function anaBox() { if (!ANA.model) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.4, y: sp.y - h, w: h * 0.8, h }; }
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
 function applyParams(c) {
 	const P = W2D.P; if (!P) return;
