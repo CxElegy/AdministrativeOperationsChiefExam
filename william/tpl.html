@@ -841,7 +841,7 @@ const S = {
 	lastInput: performance.now(), sleeping: false, look: { x: 0, y: 0 }, lookAt: null, lookUntil: 0,
 	tilt: 0, earL: 0, earR: 0, tailAmp: 0.25, tailSpeed: 1.6, stretch: 0, sv: 0, drag: null, heat: 0, clicks: [],
 	blink: 0, nextBlink: 0, hover: 0, fx: [], dilate: 0, happyEyes: 0, crouch: 0, land: 0, swipe: 0, streak: 0,
-	hidden: false, surpriseT: 0, pose: 'rig', poseT: 0, poseUntil: 0, poseThen: null, stk: [], wingUntil: 0, wrongRun: 0, playN: 0, purrPosed: false, keys: [], lastKey: 0, nextRemind: performance.now() + 25 * 60000, remindN: 0, qStart: performance.now(), thought: false, punchT: 0, hopT: 0, st: '',
+	hidden: false, surpriseT: 0, pose: 'rig', poseT: 0, poseUntil: 0, poseThen: null, stk: [], wingUntil: 0, wrongRun: 0, playN: 0, purrPosed: false, keys: [], lastKey: 0, nextRemind: performance.now() + 40 * 60000, remindN: 0, qStart: performance.now(), thought: false, punchT: 0, hopT: 0, st: '',
 };
 const pointer = { x: -9999, y: -9999, speed: 0, last: 0, nx: 0, ny: 0 };
 const ACTS = { eat: 3.6, purrDeep: 3, lookAround: 2.6, earTwitch: 0.6, tailSwish: 1.8, headTilt: 1.6, knead: 1.8, hop: 0.6, doubleBlink: 0.8, sleepy: 4, correct: 1.8, wrong: 2.6, thinking: 3.2, play: 1.4, stalk: 0.7, bigWin: 2.4, punch: 0.5, stretchUp: 1.8, water: 2.4, groom: 2.2 };
@@ -933,10 +933,10 @@ bubble.addEventListener('pointerdown', (e) => { if (!bubble.classList.contains('
 bubble.addEventListener('click', (e) => e.stopPropagation());
 let sayTimer = 0, sayUntil = 0, sayText = '', talkUntil = 0, lastSayAt = -1e9, lastAnsSay = -1e9, idleSaid = [];
 /* ウィリアムは主役になりすぎない：自分から話すのは 1 分以上あけて、10 分に 3 回まで。話している途中には重ねない（さわる・答えるときはすぐ反応） */
-function idleOk() { const now = performance.now(); idleSaid = idleSaid.filter((x) => now - x < 600000); return now > sayUntil && now - lastSayAt > 20000 && idleSaid.length < 3 && (!idleSaid.length || now - idleSaid[idleSaid.length - 1] > 60000); }
+function idleOk() { const now = performance.now(); idleSaid = idleSaid.filter((x) => now - x < 900000); return now > sayUntil && now - lastSayAt > 30000 && idleSaid.length < 2 && (!idleSaid.length || now - idleSaid[idleSaid.length - 1] > 180000); }
 function sayIdle(t, sec) { if (!idleOk()) return false; idleSaid.push(performance.now()); say(t, sec); return true; }
 /* 正解のひとことは、続けて答えたときは毎回は言わない（動きと光だけ） */
-function sayAns(t, sec) { const now = performance.now(); if (now - lastAnsSay < 7000 && now < sayUntil + 3000) return; lastAnsSay = now; say(t, sec); }
+function sayAns(t, sec) { const now = performance.now(); if (now - lastAnsSay < 25000) return; lastAnsSay = now; say(t, sec); }
 function say(t, sec = 2, dream = false) {
 	bubble.classList.toggle('dream', dream);
 	sayText = t; lastSayAt = performance.now(); sayUntil = lastSayAt + Math.max(3200, sec * 1000 + 1200) + t.length * 110;  /* 読み終わるまで消さない */ talkUntil = performance.now() + Math.min(1400, t.length * 55 + 150);
@@ -1253,7 +1253,7 @@ function answer(i) {
 		se('ng'); S.streak = 0; bump('pS', `<span class="heart">♥</span><span class="lbl">連続 </span>0`);
 		card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
 		S.wrongRun++;
-		jumpTo('card', () => { start('wrong'); setTimeout(() => say(loses ? pick('lose', roomNo(fi, r)) : S.wrongRun >= 2 ? pick('wrongAgain') : pick('wrong'), 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
+		jumpTo('card', () => { start('wrong'); setTimeout(() => sayAns(loses ? pick('lose', roomNo(fi, r)) : S.wrongRun >= 2 ? pick('wrongAgain') : pick('wrong'), 2.4), 1400); sticker('ふぁ〜', { font: '"Kiwi Maru"', color: '#7a6aa8', size: 22, dx: 0.4, dy: -1.0 }); const n = card.querySelector('.ok'); if (n) { const rc = n.getBoundingClientRect(); S.lookAt = { x: rc.left - rr.left + 40, y: rc.top - rr.top + 20 }; S.lookUntil = performance.now() + 2600; } });
 	}
 }
 // 部屋の相談に全部答えた：明かりがついたらカギ、足りなければ「もう少し」
@@ -1464,10 +1464,10 @@ function frame(t) {
 	if (free && t > S.nextIdle && calm && Math.random() < 0.5) S.nextIdle = t + 4000 + Math.random() * 4000;  // 夜はしぐさを半分に
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
 	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
-	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); sayIdle(pick('cardNap'), 2.2); }); S.nextMischief = t + 180000; S.nextWander = t + 60000; }
+	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); sayIdle(pick('cardNap'), 2.2); }); S.nextMischief = t + 480000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
 	if (!answered && (S.hintN || 0) < 3 && t - S.qStart > HINT_AT[S.hintN || 0] && t > sayUntil && !document.hidden && !S.drag && !S.jump && !S.hidden && !document.querySelector('.scrim, .cutin') && (!isMobile() || app.classList.contains('show-room'))) giveHint(free);
-	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); sayIdle(pick('stretchRemind'), 2.6); } else { start('water'); sayIdle(pick('water'), 2.4); } S.nextRemind = t + 25 * 60000; }
+	if (free && t > S.nextRemind) { S.remindN++; if (S.remindN % 2) { setPose('melt', 2.8); sayIdle(pick('stretchRemind'), 2.6); } else { start('water'); sayIdle(pick('water'), 2.4); } S.nextRemind = t + 40 * 60000; }
 	if (!S.drag && !S.sleeping && !S.jump && !S.hidden && pointer.speed > 900 && t - S.punchT > 900 && t - pointer.last < 80) { const d = Math.hypot(pointer.x - S.pos.x, pointer.y - (S.pos.y - catH * 0.5)); if (d < catH * 0.9) { start('punch'); S.punchT = t; } else if (d < catH * 2.2 && !S.act) start('stalk'); }
 
 	// 視線
@@ -1710,7 +1710,7 @@ requestAnimationFrame(frame);
 new ResizeObserver(() => layout()).observe(card);
 // 夜10時〜朝4時は「あんまり無理せずにがんばってね」と声をかける（開いたときと、5分に1回くらい）
 let lateNextAt = 0;  // 夜は 5 分に 1 回くらい（4〜6 分のあいだでばらつかせる）
-function sayLate() { if (!idleOk()) return; lateNextAt = Date.now() + (4 + Math.random() * 2) * 60000; sayIdle(pick('late'), 3); }
+function sayLate() { if (!idleOk()) return; lateNextAt = Date.now() + (10 + Math.random() * 5) * 60000; sayIdle(pick('late'), 3); }
 // あいさつ：朝・昼・夜で変える（22時以降は夜の「無理せず」）
 function greeting() { const h = new Date().getHours(); return h >= 5 && h < 11 ? rnd(['おはようにゃ', 'おはよ〜にゃ', 'あさにゃ。おはようにゃ']) : h >= 11 && h < 17 ? rnd(['おひるにゃ', 'こんにちはにゃ', 'おひるの勉強にゃ']) : rnd(['こんばんはにゃ', 'こんばんにゃ〜', 'よるの勉強にゃ']); }
 setTimeout(() => { if (isLateNight()) sayLate(); else sayIdle(greeting() + '。' + pick('welcome', roomNo(cur.f, roomOf(cur.k)), curFloor().rooms[roomOf(cur.k)].title), 2.6); }, 1900);
