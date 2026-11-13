@@ -1,27 +1,12 @@
-# アナちゃん（playground）：一枚絵から Live2D を作り直す
+# アナちゃん（playground）
 
-Tororo のテクスチャを塗り替える方法は やめた（毛の質感も体型もちがう猫なので、似ない）。
-Live2D の作り方どおり、**一枚絵 → 部品分け → PSD → メッシュ・デフォーマ・パラメータ → 書き出し** の順で 0 から作る。
-Tororo は「猫のモデルは どんな部品と動きで できているか」の参考にだけ使い、モデル自体は使わない。
+細い毛を 1 本ずつ描いた一枚絵を作り、頭・体・しっぽの部品に分けて動かす。William のモデル（Tororo）は使わない。
 
-## 参考にした作り方
+- `make_ana.py`：正面で座っている写真（背景を消したもの）から「どこが どの色か」と「形」だけをもらい、先の細い毛を 約 12 万本、
+  毛の流れ（顔は鼻から外へ、ほおと体は上から下へ）にそって 下の毛から順に重ねて描く。色の面では塗らない。
+  出力は `william/assets/ana_body.webp` `ana_head.webp` `ana_tail.webp`（同じ座標の 3 枚）。
+- `tpl.html` の `drawAna`：3 枚を 首・足もと・しっぽのつけ根を中心に動かす（呼吸、頭のかたむき、まばたき、もぐもぐ、ぺろっ、しっぽ）。
+- 作り直し：`python3 william/ana/make_ana.py <切り抜いた写真>` → `npm run build`
 
-- GMO「See-Through × Kaggle × Claude Code で1枚絵からLive2Dモデルを（ほぼ）自動生成する」
-  https://recruit.group.gmo/engineer/jisedai/blog/see-through-x-kaggle-x-claude-code/
-- See-through（一枚絵を 重なり順つきの部品に分けて PSD にする。SIGGRAPH 2026、Apache-2.0）
-  https://github.com/shitagaki-lab/see-through ／ ComfyUI 版 https://github.com/jtydhr88/ComfyUI-See-through
-
-## 工程
-
-| # | 工程 | 道具 | どこで動かすか |
-|---|---|---|---|
-| 1 | 一枚絵（正面で座っているアナちゃんのイラスト） | 画像生成 AI か 手描き | ― |
-| 2 | 部品分け（かくれた所も描き足す） | See-through（GPU が要る。T4×2 で 1 回 25〜30 分、seed を 3 つほど試す） | Kaggle |
-| 3 | PSD を作る（部品をグループにまとめる。グループが Cubism のパーツになる） | GIMP + スクリプト | PC か この環境 |
-| 4 | メッシュ・顔のデフォーマ・顔の動きの自動生成、目と口の開閉、しっぽ・耳・呼吸 | Live2D Cubism Editor 5 | PC（Windows / Mac の画面つきソフト） |
-| 5 | moc3 を書き出して、ページに組み込む | pixi-live2d-display（今の William と同じ） | この環境 |
-
-## Tororo から参考にすること（猫のモデルの部品と動き）
-
-- 部品：しっぽ／せなか・おしり／前足・うしろ足（上・下・足先）／胸／顔の土台／口（上あご・下あご・舌・歯）／耳（外・内・耳の毛）／目（白目・まぶた・ひとみ・ハイライト）／ひげ／鼻
-- 動き：頭の向き XYZ、体の向き、目の開閉、目玉、口の開閉と形、舌、耳、しっぽ、呼吸、ほお、ひげ、前足
+本式の Live2D（moc3）にする場合の工程（See-through で部品分け → PSD → Cubism Editor）は、GMO の記事を参照：
+https://recruit.group.gmo/engineer/jisedai/blog/see-through-x-kaggle-x-claude-code/
