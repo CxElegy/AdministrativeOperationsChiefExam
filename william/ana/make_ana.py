@@ -25,15 +25,20 @@ bgr = cv2.edgePreservingFilter(bgr, flags=1, sigma_s=30, sigma_r=0.35).astype(np
 bgr = 255 * (bgr / 255) ** 0.72 * 1.06
 hsv = cv2.cvtColor(bgr.clip(0, 255).astype(np.uint8), cv2.COLOR_BGR2HSV).astype(np.float32); hsv[..., 1] *= 1.15
 col = cv2.cvtColor(hsv.clip(0, 255).astype(np.uint8), cv2.COLOR_HSV2BGR).astype(np.float32)
+# 目は ページの側で デザインした目を描く（まばたきできるように）。写真の目は まわりの毛の色でうめる
+em = np.zeros((H, W), np.uint8)
+for (x, y) in [(545, 532), (748, 536)]: cv2.ellipse(em, tuple(int(v) for v in (x * SC + PAD, y * SC + PAD)), (34, 27), 0, 0, 360, 255, -1)
+col = cv2.inpaint(col.clip(0, 255).astype(np.uint8), em, 9, cv2.INPAINT_TELEA).astype(np.float32)
 # --- 部品の境目：頭（あごの線より上）と 体 ---
 NX, NY = P(640, 640)                                                     # 鼻
 yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
 chin = P(0, 790)[1] - 45 * ((xx - NX) / 180) ** 2                        # あご〜ほおの毛の下のふち
-head_m = (a > 0) & (yy < chin)
+skull = P(0, 372)[1] - 22 * np.cos(np.clip((xx - NX) / 150, -1.5, 1.5))          # 頭のてっぺんの線（写真の耳は 切り落とす）
+head_m = (a > 0) & (yy < chin) & (yy > skull)
 body_m = (a > 0) & (yy > chin - 34)
 # 顔の部品（目・鼻・口）には 毛をかけない
 feat = np.zeros((H, W), np.uint8)
-for (x, y, rx, ry) in [(545, 532, 48, 38), (748, 536, 48, 38), (640, 640, 40, 36)]:
+for (x, y, rx, ry) in [(640, 640, 40, 36)]:
     cv2.ellipse(feat, tuple(int(v) for v in P(x, y)), (int(rx * SC), int(ry * SC)), 0, 0, 360, 255, -1)
 feat = cv2.GaussianBlur(feat, (0, 0), 4)
 
@@ -83,30 +88,38 @@ def head_len(x, y):
     d = math.hypot(x - NX, (y - NY) * 1.1)
     return (8 + min(30, d * 0.16)) * (1.5 if y > NY and abs(x - NX) > 60 else 1)                  # ほおの毛は長い
 head = paint(head_m, head_flow, lambda x, y: np.hypot(x - NX, (y - NY) * 1.1) + np.where(y > NY, (y - NY) * 0.6, 0), 36000, head_len, 2.0)
-# 耳：頭の毛に うもれないように、あとから 短い毛で 上に描く（耳の中の白い長い毛も）
-ear_m = np.zeros((H, W), np.uint8)
-for poly in ([(400, 395), (392, 150), (415, 215), (470, 225), (545, 330), (540, 400)], [(770, 400), (790, 300), (870, 232), (905, 175), (912, 300), (900, 400)]):
-    cv2.fillPoly(ear_m, [np.array([P(*q) for q in poly], np.int32)], 1)
-ear_m = (ear_m > 0) & (a > 0)
-ears = paint(ear_m, lambda x, y: ((x - NX) * 0.25, -1.0), lambda x, y: -y, 5000, lambda x, y: 9, 1.8)
-eb = np.ascontiguousarray(ears[..., :3]); ea = np.ascontiguousarray(ears[..., 3])
-for (cx, cy, sx) in [(470, 330, -1), (835, 335, 1)]:                       # 耳の中から 外へ出る 白い長い毛
-    for i in range(46):
-        x0, y0 = P(cx + rng.uniform(-30, 30), cy + rng.uniform(-10, 45)); L = rng.uniform(26, 60); ang = math.radians(-90 + sx * rng.uniform(15, 75))
-        pts = np.array([[x0, y0], [x0 + math.cos(ang) * L * 0.5 + sx * 3, y0 + math.sin(ang) * L * 0.5], [x0 + math.cos(ang) * L, y0 + math.sin(ang) * L]]) * 8
-        cv2.polylines(eb, [pts.astype(np.int32)], False, (246, 248, 250), 1, cv2.LINE_AA, 3); cv2.polylines(ea, [pts.astype(np.int32)], False, 255, 1, cv2.LINE_AA, 3)
-k = (ea.astype(np.float32) / 255)[..., None]
-head[..., :3] = (head[..., :3] * (1 - k) + eb * k).astype(np.uint8); head[..., 3] = np.maximum(head[..., 3], ea)
+# 耳：べつの部品（頭のうしろに置く）。ノルウェージャンらしく 大きく、高い位置に、先に 長い毛（リンクスティップ）、中から 白い長い毛
+EAR = {-1: [(385, 420), (398, 190), (560, 345), (560, 420)], 1: [(735, 420), (735, 345), (892, 200), (912, 420)]}
+ears = np.zeros((H, W, 4), np.uint8); eb = np.ascontiguousarray(ears[..., :3]); ea = np.ascontiguousarray(ears[..., 3])
+for sx, poly in EAR.items():
+    pts = np.array([P(*q) for q in poly]); tip = pts[1] if sx < 0 else pts[2]
+    cv2.fillPoly(eb, [(pts * 8).astype(np.int32)], (128, 134, 142), cv2.LINE_AA, 3); cv2.fillPoly(ea, [(pts * 8).astype(np.int32)], 255, cv2.LINE_AA, 3)   # 外側：灰色
+    cen = pts.mean(axis=0); inner = cen + (pts - cen) * 0.68 + np.array([sx * 4, 10])
+    cv2.fillPoly(eb, [(inner * 8).astype(np.int32)], (196, 190, 226), cv2.LINE_AA, 3)                                                              # 内側：うすいピンク
+    for i in range(240):                                                                                                                           # 外側の短い毛
+        t = rng.rand(); q = pts[0] * (1 - t) + tip * t if rng.rand() < 0.5 else pts[-1] * (1 - t) + tip * t
+        q = q + (cen - q) * rng.uniform(0, 0.22); L = rng.uniform(5, 11); ang = math.atan2(tip[1] - cen[1], tip[0] - cen[0]) + rng.uniform(-0.6, 0.6)
+        g = rng.uniform(105, 150); l2 = np.array([q, q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8
+        cv2.polylines(eb, [l2.astype(np.int32)], False, (g, g + 5, g + 12), 2, cv2.LINE_AA, 3); cv2.polylines(ea, [l2.astype(np.int32)], False, 255, 2, cv2.LINE_AA, 3)
+    for i in range(12):                                                                                                                            # 耳の先の長い毛
+        L = rng.uniform(16, 34); ang = math.radians(-90 + sx * rng.uniform(-4, 22)); q = tip + rng.uniform(-2, 2, 2)
+        l2 = np.array([q, q + [math.cos(ang) * L * 0.5 + sx * 2, math.sin(ang) * L * 0.5], q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8
+        cv2.polylines(eb, [l2.astype(np.int32)], False, (86, 90, 98), 1, cv2.LINE_AA, 3); cv2.polylines(ea, [l2.astype(np.int32)], False, 255, 1, cv2.LINE_AA, 3)
+    for i in range(60):                                                                                                                            # 耳の中から 外へ流れる 白い長い毛
+        t = rng.uniform(0.15, 0.85); q = inner[0] * (1 - t) + inner[-1] * t + [0, -rng.uniform(0, 34)]; L = rng.uniform(26, 62); ang = math.radians(-90 + sx * rng.uniform(5, 70))
+        l2 = np.array([q, q + [math.cos(ang) * L * 0.5 + sx * 3, math.sin(ang) * L * 0.5], q + [math.cos(ang) * L, math.sin(ang) * L]]) * 8
+        cv2.polylines(eb, [l2.astype(np.int32)], False, (248, 250, 252), 1, cv2.LINE_AA, 3); cv2.polylines(ea, [l2.astype(np.int32)], False, 255, 1, cv2.LINE_AA, 3)
+ears = np.dstack([eb, ea])
 # 顔の部品は 写真の形のまま（なめらかにした色）を上にのせる
 k = (feat.astype(np.float32) / 255)[..., None]
 head[..., :3] = (head[..., :3] * (1 - k) + col * k).astype(np.uint8)
 # 口：鼻の下の たての線と、左右へ上がる口もと（写真の形）
-hb = np.ascontiguousarray(head[..., :3]); mc = (176, 170, 200)
+hb = np.ascontiguousarray(head[..., :3]); mc = (128, 120, 168)
 m0, m1 = P(640, 672), P(640, 700)
-cv2.line(hb, tuple(int(v * 8) for v in m0), tuple(int(v * 8) for v in m1), mc, 1, cv2.LINE_AA, 3)
+cv2.line(hb, tuple(int(v * 8) for v in m0), tuple(int(v * 8) for v in m1), mc, 2, cv2.LINE_AA, 3)
 for sx in (-1, 1):
-    pts = np.array([P(640, 700), P(640 + sx * 22, 716), P(640 + sx * 48, 708)]) * 8
-    cv2.polylines(hb, [pts.astype(np.int32)], False, mc, 1, cv2.LINE_AA, 3)
+    pts = np.array([P(640, 700), P(640 + sx * 14, 714), P(640 + sx * 30, 716), P(640 + sx * 50, 706)]) * 8
+    cv2.polylines(hb, [pts.astype(np.int32)], False, mc, 2, cv2.LINE_AA, 3)
 head[..., :3] = hb
 # しっぽ：写真では 体の右うしろに こい灰色の ふさふさ。しんの線にそって 毛を外へ
 tail_m = np.zeros((H, W), bool); spine = []
@@ -121,9 +134,9 @@ def tail_flow(x, y):
     ox, oy = x - spine[i][0], y - spine[i][1]; return (tx * 0.6 + ox * 1.4, ty * 0.6 + oy * 1.4)
 tail = paint(tail_m, tail_flow, lambda x, y: -np.hypot(x - spine[100][0], y - spine[100][1]), 16000, lambda x, y: 34, 2.6)
 col = tcol
-save(body, 'ana_body.webp'); save(head, 'ana_head.webp'); save(tail, 'ana_tail.webp')
+save(body, 'ana_body.webp'); save(head, 'ana_head.webp'); save(tail, 'ana_tail.webp'); save(ears, 'ana_ears.webp')
 comp = np.zeros((H, W, 4), np.float32)
-for im in (tail, body, head):
+for im in (tail, body, ears, head):
     f = im.astype(np.float32); k = f[..., 3:] / 255; comp[..., :3] = comp[..., :3] * (1 - k) + f[..., :3] * k; comp[..., 3:] = np.maximum(comp[..., 3:], f[..., 3:])
 bgc = np.full((H, W, 3), (150, 170, 196), np.float32); k = comp[..., 3:] / 255
 cv2.imwrite(os.path.join(os.path.dirname(sys.argv[1]), 'ana_illust_preview.jpg'), (bgc * (1 - k) + comp[..., :3] * k).astype(np.uint8))
