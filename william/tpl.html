@@ -191,7 +191,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 
 /* William の吹き出し */
 .bubble { position: absolute; z-index: 8; left: 0; top: 0; max-width: 230px; pointer-events: none; background: #fff; border: 2px solid var(--ink); border-radius: 18px; padding: 12px 16px 9px; font-family: var(--kiwi); font-size: 15px; line-height: 1.55; color: var(--ink); box-shadow: 0 4px 0 rgba(43, 37, 34, .15); opacity: 0; transition: opacity .18s; }
-.bubble.on { opacity: 1; }
+.bubble.on { opacity: 1; pointer-events: auto; cursor: pointer; }  /* 吹き出しはポチっと押すと消える */
 .bubble.pop { animation: pop .28s var(--ease-back); }
 .bubble::after { content: ""; position: absolute; left: var(--tx, 50%); bottom: -10px; width: 16px; height: 16px; margin-left: -8px; background: #fff; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
 .bubble.side::after { display: none; }
@@ -928,6 +928,9 @@ const pick = (k, ...a) => {
 
 // 吹き出し（タイプライター）
 const bubble = $('bubble'), btext = $('btext');
+function hideBubble() { clearInterval(sayTimer); sayUntil = 0; talkUntil = 0; bubble.classList.remove('on', 'pop'); }
+bubble.addEventListener('pointerdown', (e) => { if (!bubble.classList.contains('on')) return; e.preventDefault(); e.stopPropagation(); hideBubble(); });
+bubble.addEventListener('click', (e) => e.stopPropagation());
 let sayTimer = 0, sayUntil = 0, sayText = '', talkUntil = 0, lastSayAt = -1e9, lastAnsSay = -1e9, idleSaid = [];
 /* ウィリアムは主役になりすぎない：自分から話すのは 1 分以上あけて、10 分に 3 回まで。話している途中には重ねない（さわる・答えるときはすぐ反応） */
 function idleOk() { const now = performance.now(); idleSaid = idleSaid.filter((x) => now - x < 600000); return now > sayUntil && now - lastSayAt > 20000 && idleSaid.length < 3 && (!idleSaid.length || now - idleSaid[idleSaid.length - 1] > 60000); }
