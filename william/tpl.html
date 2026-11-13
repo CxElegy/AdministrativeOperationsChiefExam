@@ -744,9 +744,13 @@ function anaParams(c) {
 	set('PARAM_BIG_FACE', 0.85);  // 長毛でほっぺがふくらんで見える
 	add('PARAM_ANGLE_Y', st.up * 16 - st.dip * 30 + Math.sin(t / 3100) * 2); add('PARAM_ANGLE_X', -st.dip * 14 + Math.sin(t / 5200) * 4); add('PARAM_ANGLE_Z', Math.sin(t / 4300) * 3);
 	add('PARAM_BODY_ANGLE_X', -st.dip * 6 + Math.sin(t / 5200) * 2);
-	if (st.mouth > 0.02) { set('PARAM_MOUTH_OPEN_Y', 0.15 + st.mouth * 0.5); set('PARAM_MOUTH_FORM', 0.6); }
+	if (st.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.1 + st.mouth * 0.75); set('PARAM_MOUTH_FORM', 0.6); set('PARAM_TONGUE', st.mouth * 0.5); }  // もぐもぐ：口を大きく あけたり とじたり
 	if (st.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.35 * st.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', st.lick); }
-	set('PARAM_TAIL', Math.sin(t / 1500) * 0.7);
+	// しっぽ：ふだんは ゆっくり、ごはんのときは うれしくて 大きく速く
+	set('PARAM_TAIL', Math.sin(t / (st.dip > 0.1 || st.up > 0.1 ? 420 : 1500)) * (st.dip > 0.1 || st.up > 0.1 ? 1 : 0.7));
+	// 耳：ときどき ぴくっ。ごはん？のときは ぴんと立てる。食べているときは 少し寝かせる
+	const tw = (t % 6100) / 260, twitch = tw < 1 ? Math.sin(tw * Math.PI) : 0, tw2 = ((t + 2700) % 8300) / 260, twitch2 = tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0;
+	add('PARAM_EAR_L', st.up * 0.8 - st.dip * 0.5 - twitch * 0.9); add('PARAM_EAR_R', st.up * 0.8 - st.dip * 0.5 - twitch2 * 0.9);
 	set('PARAM_BREATH', 0.5 + 0.5 * Math.sin(t / 1400));
 }
 function drawAna(t) {
