@@ -712,9 +712,10 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 })();
 // ---------- アナちゃん（試し中・playground だけ）：William のモデルは使わず、アナちゃん専用に描いた猫 ----------
 // ノルウェージャンフォレストキャット：大きめの長毛種。毛は 1 本ずつの筆のすじ（数万本）で描く。短毛の William とは毛の質感がちがうので、絵も動きも別に作る
-// ふだんはダルめ：半目でぼーっと、ゆっくりまばたき、ときどきあくび。さわっても ちょっと目をあけるだけ
+// 性格は食いしん坊：正解するとごはんがもらえて、もぐもぐ食べる。おさらが空だと、ときどき口をぺろっとして ごはんを待つ
 // 絵の座標：足もと y=570、体のまん中 x=230、耳の先 y≈55（高さ 515）。しっぽは右へ寝かせる
-const ANA = { parts: null, blinkAt: 0, yawnT: -1e9, nextYawn: 0, lookT: -1e9, earT: -1e9, nextEar: 0 };
+const ANA = { parts: null, blinkAt: 0, lookT: -1e9, lickT: -1e9, nextLick: 0, eatT: -1e9, food: 0, taps: 0, wantT: -1e9, nextWant: 0 };
+function anaFeed() { if (!PLAYGROUND) return; const t = performance.now(); if (t - ANA.eatT < 5200) { ANA.food = 1; return; } ANA.food = 1; ANA.eatT = t + 700; ANA.lookT = t; }  // ごはんをあげる（正解したとき・3回さわったとき）
 function buildAna() {
 	const R2 = Math.min(2, devicePixelRatio || 1) >= 2 ? 2 : 1.5;
 	let seed = 20240607; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -773,7 +774,7 @@ function buildAna() {
 	  // ほおの毛の先（長く、下へ）
 	  fur(c, [[146, 240, 44, 30], [314, 240, 44, 30]], { density: 0.8, len: 36, width: 3.8, spread: 0.5, flow: (x) => [(x - 230) * 0.006, 1], col: (x, y) => (y < 232 && Math.abs(x - 230) > 92 ? pal(GREY, x, y) : pal(WHITE, x, y)), order: (x, y) => y });
 	  p.pivot = [230, 262]; P.head = p; }
-	ANA.parts = P; ANA.blinkAt = performance.now() + 3000; ANA.nextYawn = performance.now() + 22000; ANA.nextEar = performance.now() + 9000;
+	ANA.parts = P; ANA.blinkAt = performance.now() + 3000; ANA.nextLick = performance.now() + 12000;
 }
 function anaSpot() {
 	if (stacked) { const p = IMG_PL.top, q = M(p.x + 58, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
@@ -784,22 +785,32 @@ function drawAna(t) {
 	if (!ANA.parts) { try { buildAna(); } catch (e) { console.error(e); ANA.parts = {}; } }
 	const P = ANA.parts; if (!P.head) return;
 	const sp = anaSpot(), h = anaH(), k = h / 515, c = ctx;
-	// ダルめの動き
-	let eye = 0.4, mouth = 0, up = 0;
-	const bk = (t - ANA.blinkAt) / 800; if (bk >= 0 && bk < 1) eye *= 1 - Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 5000 + Math.random() * 6000;
-	const lk = (t - ANA.lookT) / 2400; if (lk >= 0 && lk < 1) eye = 0.4 + 0.45 * Math.sin(lk * Math.PI);
-	const yk = (t - ANA.yawnT) / 2800; if (yk >= 0 && yk < 1) { const e = Math.sin(yk * Math.PI); mouth = e; eye *= 1 - Math.min(1, e * 1.7); up = e; }
-	if (t > ANA.nextYawn) { ANA.yawnT = t; ANA.nextYawn = t + 35000 + Math.random() * 40000; }
+	// 食いしん坊の動き：ぱっちり目。ごはんが来ると顔を下げてもぐもぐ。空のときは、ときどき ぺろっ
+	let eye = 0.86, mouth = 0, up = 0, dip = 0, lick = 0;
+	const bk = (t - ANA.blinkAt) / 220; if (bk >= 0 && bk < 1) eye *= 1 - Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 2800 + Math.random() * 3500;
+	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) { eye = Math.max(eye, 0.86 + 0.14 * Math.sin(lk * Math.PI)); up = Math.sin(lk * Math.PI) * 0.6; }  // ごはん？と顔を上げる
+	const ek = (t - ANA.eatT) / 4500;
+	if (ek >= 0 && ek < 1) { const e = Math.min(1, ek * 6, (1 - ek) * 6); dip = e; up = 0; mouth = e * (0.25 + 0.3 * Math.abs(Math.sin(t / 95))); eye = 0.86 - 0.7 * e; ANA.food = Math.max(0, 1 - ek * 1.05); if (ek > 0.93) { ANA.lickT = ANA.eatT + 4500; } }
+	else if (ek >= 1 && ANA.food > 0 && ANA.food < 1) ANA.food = 0;
+	if (t > ANA.nextLick && !(ek >= 0 && ek < 1)) { ANA.lickT = t; ANA.nextLick = t + 16000 + Math.random() * 20000; }
+	const ck = (t - ANA.lickT) / 900; if (ck >= 0 && ck < 1) { lick = Math.sin(ck * Math.PI); eye = Math.min(eye, 0.86 - 0.3 * lick); }
+	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
 	const br = reduce ? 0 : Math.sin(t / 1500), sway = reduce ? 0 : Math.sin(t / 4300);
 	const part = (p, rot, sx, sy, dx, dy) => { c.save(); c.translate(p.pivot[0] + (dx || 0), p.pivot[1] + (dy || 0)); c.rotate(rot || 0); c.scale(sx || 1, sy || 1); c.drawImage(p.cv, p.b.x - p.pivot[0], p.b.y - p.pivot[1], p.b.w, p.b.h); c.restore(); };
 	c.save(); c.translate(sp.x, sp.y);
 	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(h * 0.12, 2, h * 0.5, h * 0.04, 0, 0, Math.PI * 2); c.fill();
 	c.scale(k, k); c.translate(-230, -570);
 	part(P.tail, reduce ? 0 : Math.sin(t / 2600) * 0.045);
-	part(P.body, 0, 1 + br * 0.006, 1 + br * 0.008);
-	part(P.mane, sway * 0.008, 1 + br * 0.008, 1 + br * 0.012, 0, -br * 1.2);
+	part(P.body, 0, 1 + br * 0.006 + dip * 0.05, 1 + br * 0.008 - dip * 0.1);  // 食べるときは体を少し低く
+	// ごはんのおさら（体の左まえ）
+	{ const bx = 0, by = 0; c.save(); c.translate(118, 552); c.scale(1.3, 1.3); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
+	  c.fillStyle = '#f4ead9'; c.beginPath(); c.moveTo(bx - 46, by - 4); c.quadraticCurveTo(bx - 40, by + 16, bx, by + 16); c.quadraticCurveTo(bx + 40, by + 16, bx + 46, by - 4); c.closePath(); c.fill();
+	  c.fillStyle = '#e3d3bb'; c.beginPath(); c.ellipse(bx, by - 4, 46, 10, 0, 0, Math.PI * 2); c.fill();
+	  if (ANA.food > 0.02) { c.save(); c.beginPath(); c.ellipse(bx, by - 4, 42, 8.5, 0, 0, Math.PI * 2); c.clip(); const n = Math.ceil(26 * ANA.food); for (let i = 0; i < n; i++) { const a = i * 2.39996, r = Math.sqrt((i + 0.5) / 26); c.fillStyle = i % 3 ? '#a86f3e' : '#8f5a30'; c.beginPath(); c.ellipse(bx + Math.cos(a) * r * 38, by - 5 + Math.sin(a) * r * 7 - ANA.food * 3, 5.5, 4, 0, 0, Math.PI * 2); c.fill(); } c.restore(); }
+	  c.fillStyle = '#b98a8f'; c.font = '700 11px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.fillText('ANA', bx, by + 10); c.restore(); }
+	part(P.mane, sway * 0.008 - dip * 0.08, 1 + br * 0.008, 1 + br * 0.012 - dip * 0.12, -dip * 18, -br * 1.2 + dip * 62);
 	// 頭（少し下げて、ゆっくりゆれる。あくびのときは上を向く）
-	c.save(); c.translate(230, 262 - br * 1.6 - up * 5); c.rotate(sway * 0.03 - up * 0.02); c.translate(-230, -262 + 5);
+	c.save(); c.translate(230 - dip * 40, 262 - br * 1.6 - up * 6 + dip * 122); c.rotate(sway * 0.025 - up * 0.03 - dip * 0.16); c.translate(-230, -262 + (reduce ? 0 : Math.abs(Math.sin(t / 95)) * dip * 3));  // 食べるときは おさらへ顔を下げる
 	c.drawImage(P.head.cv, P.head.b.x, P.head.b.y, P.head.b.w, P.head.b.h);
 	for (const sx of [-1, 1]) {  // 目：黄みどりがかった金色。半分とじたまぶた
 		c.save(); c.translate(230 + sx * 41, 186); c.rotate(-sx * 0.13);
@@ -817,11 +828,14 @@ function drawAna(t) {
 	c.fillStyle = '#e7a0a8'; c.beginPath(); c.moveTo(222, 215); c.quadraticCurveTo(230, 212, 238, 215); c.quadraticCurveTo(234, 224, 230, 225); c.quadraticCurveTo(226, 224, 222, 215); c.fill();
 	c.strokeStyle = 'rgba(120,95,95,.8)'; c.lineWidth = 1.5; c.lineCap = 'round';
 	if (mouth > 0.08) { c.fillStyle = '#7c2f3c'; c.beginPath(); c.ellipse(230, 236 + mouth * 9, 9 + mouth * 6, 3 + mouth * 15, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e58a98'; c.beginPath(); c.ellipse(230, 240 + mouth * 16, 6 + mouth * 3, 2 + mouth * 6, 0, 0, Math.PI * 2); c.fill(); }
+	else if (lick > 0.05) { c.fillStyle = '#e58a98'; c.beginPath(); c.ellipse(230 + (lick - 0.5) * 16, 236, 7, 3 + lick * 6, (lick - 0.5) * 0.8, 0, Math.PI * 2); c.fill(); c.beginPath(); c.moveTo(217, 233); c.quadraticCurveTo(230, 238, 243, 233); c.stroke(); }  // ぺろっ
 	else { c.beginPath(); c.moveTo(230, 225); c.lineTo(230, 231); c.quadraticCurveTo(224, 238, 217, 234); c.moveTo(230, 231); c.quadraticCurveTo(236, 238, 243, 234); c.stroke(); }
 	// ひげ
 	c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 0.9;
 	for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(230 + sx * 22, 228 + i * 3); c.quadraticCurveTo(230 + sx * 70, 222 + i * 7, 230 + sx * (118 + i * 4), 214 + i * 13); c.stroke(); }
-	c.restore(); c.restore();
+	c.restore();
+	const wk = (t - ANA.wantT) / 3200; if (wk >= 0 && wk < 1) { const a = Math.min(1, wk * 6, (1 - wk) * 6); c.globalAlpha = a; c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = '#2b2522'; c.lineWidth = 2.5; const bx = 300, by = 70; c.beginPath(); c.ellipse(bx, by, 86, 30, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(bx - 48, by + 38, 7, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#2b2522'; c.font = '500 24px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ごはん まだ？', bx, by + 1); c.globalAlpha = 1; }
+	c.restore();
 }
 function anaBox() { if (!ANA.parts || !ANA.parts.head) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.42, y: sp.y - h, w: h * 0.84, h }; }
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
@@ -976,7 +990,7 @@ function sticker(text, o = {}) { S.stk.push({ text, t: performance.now(), dur: o
 function cutin(k, text, sub, icon, small) { const el = document.createElement('div'); el.className = 'cutin' + (icon ? ' withicon' : '') + (small ? ' small' : ''); el.innerHTML = `<div class="band"></div>${icon ? `<span class="icon"><img src="${icon}" alt=""></span>` : `<img src="${CUTIN}" alt="">`}<b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
 function drawWing(c, x, y, s, dir, flap) { c.save(); c.translate(x, y); c.scale(dir, 1); c.rotate(-0.25 - flap * 0.4); c.fillStyle = '#ffffff'; c.strokeStyle = '#7fd3ef'; c.lineWidth = 2.5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(s * 0.3, -s * 0.9, s * 1.1, -s * 0.95, s * 1.28, -s * 0.6); c.quadraticCurveTo(s * 1.0, -s * 0.48, s * 1.14, -s * 0.3); c.quadraticCurveTo(s * 0.82, -s * 0.22, s * 0.94, -s * 0.03); c.quadraticCurveTo(s * 0.58, -0.0, s * 0.62, s * 0.18); c.quadraticCurveTo(s * 0.26, s * 0.12, 0, 0); c.fill(); c.stroke(); c.restore(); }
 function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); c.fill(); }
-const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; };
+const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; if (a === 'correct' || a === 'bigWin') anaFeed(); };
 
 // ---------------- William の言葉（場面ごとに何種類か。その都度ランダムに 1 つ） ----------------
 const LINES = {
@@ -1496,7 +1510,7 @@ addEventListener('pointermove', (e) => {
 	room.style.cursor = over ? 'grab' : '';
 }, { passive: true });
 room.addEventListener('pointerdown', (e) => {
-	if (PLAYGROUND) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { const now = performance.now(); if (Math.random() < 0.35) ANA.yawnT = now; else ANA.lookT = now; return; } }  /* ダルめ：さわってもちょっと目をあけるか、あくびするだけ */
+	if (PLAYGROUND) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { const now = performance.now(); ANA.lookT = now; ANA.lickT = now + 500; if (++ANA.taps % 3 === 0) anaFeed(); return; } }  /* 食いしん坊：さわると「ごはん？」と顔を上げて ぺろっ。3 回めで おやつ */
 	unhide();
 	const p = local(e);
 	if (inBox(p, catBox()) && !S.jump) {
