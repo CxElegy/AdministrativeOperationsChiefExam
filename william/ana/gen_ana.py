@@ -7,7 +7,7 @@ src, out = sys.argv[1], sys.argv[2]
 im = Image.open(src).convert('RGBA'); W, H = im.size
 px = im.load()
 random.seed(7)
-GREY = (138, 128, 120); GREY_D = (106, 99, 94); GREY_L = (174, 165, 156); WHITE = (249, 247, 245)
+GREY = (146, 130, 115); GREY_D = (112, 98, 86); GREY_L = (182, 168, 152); WHITE = (249, 247, 245)  # 写真に合わせて、茶色がかった あたたかい灰色
 
 def lum(c): return 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
 def mix(a, b, k): return tuple(int(a[i] * (1 - k) + b[i] * k) for i in range(3))
@@ -35,6 +35,11 @@ def paint(box, maskfn, colfn, blur=8, keep_shade=True):
             n = random.uniform(-6, 6); c = tuple(max(0, min(255, int(v + n))) for v in c)
             px[x0 + x, y0 + y] = (*mix((r, g, b), c, k), a)
 
+def tabby(u, v, base, dark, freq=34):
+    # 毛色のむら（うすい しま）：写真では 頭やせなかの灰色に こい すじが入っている
+    k = 0.5 + 0.5 * math.sin(u * freq + math.sin(v * 7.0) * 2.2 + v * 3.0)
+    return mix(base, dark, 0.55 * k * k)
+
 def clean_white(box, thresh=200):
     """William の灰色の模様を白にもどす（明るい所はそのまま）"""
     x0, y0, x1, y1 = box
@@ -60,19 +65,39 @@ for y in range(668, 900):
 HEAD = (1431, 19, 2000, 537)
 clean_white(HEAD, 238)
 def head_grey(u, v):
+    # 写真のアナちゃん：顔は ほとんど白。灰色は ひたいの上と 目の上・外がわ、耳のつけ根だけ。目の下・ほお・口元は白
     du = abs(u - 0.5)
-    blaze = 0.03 + 0.22 * max(0, min(1, (v - 0.18) / 0.42)) ** 1.6  # 上は細く、下へ広がる
-    if du < blaze and v > 0.06: return 0
-    if v > 0.60 and du < 0.30 + (v - 0.60) * 1.1: return 0  # 口元・ほお
-    if v > 0.80: return 0
+    blaze = 0.07 + 0.30 * max(0, min(1, (v - 0.10) / 0.36)) ** 1.4   # ひたいの白い筋（上は細く、目の高さで 目の内がわまで広がる）
+    if du < blaze: return 0
+    if v > 0.50: return 0                       # 目の下は白
+    if v > 0.40 and du < 0.36: return 0         # 目の下〜横も白
     return 1
 def head_col(u, v):
-    return mix(GREY_D, GREY, min(1, v / 0.55)) if v < 0.55 else mix(GREY, GREY_L, min(1, (v - 0.55) / 0.3))
+    return tabby(u, v, mix(GREY_D, GREY, min(1, v / 0.55)), (88, 76, 66), 46) if v < 0.55 else mix(GREY, GREY_L, min(1, (v - 0.55) / 0.3))
 paint(HEAD, head_grey, head_col, blur=10)
 
-# --- まぶた（目を閉じたときに見える皮）：目のまわりと同じ灰色に ---
-for box in [(510, 1540, 700, 1690), (740, 1540, 930, 1690), (510, 1690, 700, 1800), (760, 1690, 940, 1800)]:
-    paint(box, lambda u, v: 1, lambda u, v: GREY, blur=0)
+# --- 目のふち・まぶた：William では こい灰色の太いふち。写真のアナちゃんは 細くて うすいので、まわりの毛に近い色にする ---
+for box in [(505, 1535, 705, 1810), (730, 1535, 940, 1810)]:   # 目のふち（上下）
+    paint(box, lambda u, v: 1, lambda u, v: mix((150, 132, 116), (228, 220, 212), min(1, max(0, (v - 0.35) / 0.3))), blur=0, keep_shade=False)  # 上は灰色、下は白に近く
+for box in [(535, 1340, 675, 1528), (780, 1340, 915, 1528)]:   # まぶた
+    paint(box, lambda u, v: 1, lambda u, v: (198, 186, 172), blur=0, keep_shade=False)
+# --- 耳の内側：写真では 白い長い毛で ほとんど かくれている。ピンクを うすくして 白い毛を描く ---
+from PIL import ImageDraw
+for box in [(1247, 1432, 1400, 1693), (1427, 1427, 1588, 1692)]:
+    x0, y0, x1, y1 = box
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            r, g, b, a = px[x, y]
+            if a: px[x, y] = (*mix((r, g, b), (236, 224, 214), 0.72), a)
+    lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    for i in range(46):
+        bx = x0 + random.uniform(0.15, 0.85) * (x1 - x0); by = y1 - random.uniform(0.02, 0.35) * (y1 - y0); L = random.uniform(0.3, 0.75) * (y1 - y0); dx = random.uniform(-0.18, 0.18) * L
+        d.line([(bx, by), (bx + dx * 0.5, by - L * 0.5), (bx + dx, by - L)], fill=(252, 250, 246, random.randint(150, 235)), width=random.choice([2, 3, 3, 4]))
+    lp = lay.load()
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            r, g, b, a = px[x, y]; lr, lg, lb, la = lp[x, y]
+            if a and la: px[x, y] = (*mix((r, g, b), (lr, lg, lb), la / 255), a)
 
 # --- 耳の外側（灰色） ---
 for box in [(1260, 1700, 1590, 1990), (1600, 1450, 2020, 1700)]:
@@ -99,7 +124,7 @@ def back_grey(u, v):
     if v < 0.30: return 1                      # 肩・せなか
     if du > 0.30 - (v - 0.30) * 0.15: return 1  # わき腹・おしりの外側
     return 0
-paint(BACK, back_grey, lambda u, v: mix(GREY_D, GREY, v), blur=18)
+paint(BACK, back_grey, lambda u, v: tabby(u, v, mix(GREY_D, GREY, v), (90, 78, 68), 30), blur=18)
 
 # --- しっぽ：濃い灰色、ふさふさ（根もとは少し明るい） ---
 TAIL = (420, 1080, 1400, 1390)
@@ -112,16 +137,19 @@ for y in range(y0, y1):
         c = mix(GREY_L, (76, 73, 72), min(1, u * 1.25)); n = random.uniform(-8, 8)
         px[x, y] = (*(max(0, min(255, int(v + n))) for v in c), a)
 
-# --- 目：黄みどりがかった金色に（写真のアナちゃん） ---
-import colorsys
-for y in range(1810, 1940):
-    for x in range(530, 910):
-        r, g, b, a = px[x, y]
-        if a == 0: continue
-        h, l, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-        if sat > 0.35 and 0.03 < h < 0.16:
-            h = h + 0.05; l = min(1, l * 1.05)
-            rr, gg, bb = colorsys.hls_to_rgb(h, l, sat)
-            px[x, y] = (int(rr * 255), int(gg * 255), int(bb * 255), a)
+# --- 目：こはく色（外は金色、ひとみの近くは 少し黄みどり）。ひとみは 写真のように 大きめのたて長 ---
+for (cx, cy) in [(610, 1882), (845, 1882)]:
+    for y in range(cy - 62, cy + 62):
+        for x in range(cx - 66, cx + 66):
+            r, g, b, a = px[x, y]
+            if a == 0: continue
+            d = math.hypot((x - cx) / 56, (y - cy) / 56)
+            if max(r, g, b) - min(r, g, b) > 40 or lum((r, g, b)) < 90:   # 目の色の所と ひとみ
+                c = mix((176, 168, 70), (204, 150, 38), min(1, d * 1.15))
+                if d > 0.86: c = mix(c, (96, 66, 24), min(1, (d - 0.86) / 0.14))
+                e = math.hypot((x - cx) / 21, (y - cy) / 40)
+                if e < 1: c = (22, 18, 14)
+                elif e < 1.12: c = mix((22, 18, 14), c, (e - 1) / 0.12)
+                px[x, y] = (*c, a)
 im.save(out)
 print('saved', out)

@@ -53,6 +53,31 @@ def fluff(did, tufts, grav=0.5, lmax_k=1.0, shrink=S):
 fluff('D_FACE_00', 34, grav=0.55)     # 顔：ほおの毛（下が長い）
 fluff('D_CHEST_00', 30, grav=0.6)     # 胸：たてがみ
 fluff('D_BODY_00', 40, grav=0.45)     # せなか・おしり
+# 胸のたてがみ・ほおの毛：房が重なって見えるように、白い毛の中に うすい影の「房の先」を何段も描く
+def tuft_shading(did, n, y_from=0.0, size=(26, 60), col=(205, 214, 226)):
+    m = mesh_mask(meshes[did]); ys, xs = np.where(m > 0); x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    reg = tex[y0:y1, x0:x1]; h, w = reg.shape[:2]; lay = np.zeros((h, w), np.float32)
+    for _ in range(n):
+        cx = rng.uniform(0.08, 0.92) * w; cy = rng.uniform(y_from, 0.97) * h; tw = rng.uniform(*size); th = tw * rng.uniform(1.1, 1.9); lean = (cx - w / 2) / w * 0.5
+        pts = np.array([[cx - tw / 2, cy - th], [cx - tw * 0.25 + lean * th * 0.5, cy - th * 0.35], [cx + lean * th, cy], [cx + tw * 0.25 + lean * th * 0.5, cy - th * 0.35], [cx + tw / 2, cy - th]], np.int32)
+        side = pts[:3] if rng.rand() < 0.5 else pts[2:]
+        cv2.polylines(lay, [side], False, 1.0, 3, cv2.LINE_AA)   # 房の片がわの影（下へ流れる毛のすじ）
+    lay = cv2.GaussianBlur(lay, (0, 0), 3.0).clip(0, 1) * 0.42
+    white = (reg[..., :3].astype(np.float32).mean(axis=2) > 205) & (reg[..., 3] > 200)   # 白い毛の所だけ
+    k = (lay * white)[..., None]
+    reg[..., :3] = (reg[..., :3] * (1 - k) + np.array(col, np.float32) * k).astype(np.uint8)   # col は BGR
+tuft_shading('D_CHEST_00', 110, size=(30, 70))
+tuft_shading('D_FACE_00', 26, y_from=0.72, size=(18, 40))
+# 前足：写真では 胸の長い毛にかくれて、足先だけが見える。足の下の部分（ひざから下）の 上 6 割を 毛先のように ぎざぎざに消す
+for did in ['D_ARM_L_01', 'D_ARM_R_05']:
+    m = mesh_mask(meshes[did]); ys, xs = np.where(m > 0); x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    reg = tex[y0:y1, x0:x1]; h, w = reg.shape[:2]
+    edge = (0.58 + 0.07 * np.sin(np.arange(w) / w * math.pi * 9 + rng.rand() * 6)) * h
+    yy = np.arange(h)[:, None]; k = np.clip((yy - edge[None, :]) / 10.0, 0, 1)
+    reg[..., 3] = (reg[..., 3] * k).astype(np.uint8)
+# しっぽ：Tororo のしっぽは細くて、メッシュに太くする余白がない。透明にして、ページの側で ふさふさのしっぽを描く（tpl.html の anaTail）
+for did in ['D_TAIL_00', 'D_TAIL_03']:
+    tex[..., 3][mesh_mask(meshes[did]) > 0] = 0
 os.makedirs(os.path.join(ROOT, 'public', 'w', 'ana.2048'), exist_ok=True)
 cv2.imwrite(os.path.join(ROOT, 'public', 'w', 'ana.2048', 'texture_00.png'), tex, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 print('ok')

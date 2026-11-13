@@ -726,9 +726,22 @@ async function loadAna(app, william) {
 		const grp = new PIXI.Container(), sp = new PIXI.Sprite(ANA.rt); ANA.halo = [];
 		for (let i = 0; i < 1; i++) { const hs = new PIXI.Sprite(ANA.rt); hs.anchor.set(0.5, 1); const bf = new PIXI.filters.BlurFilter(8, 4); bf.padding = 40; hs.filters = [bf]; grp.addChild(hs); ANA.halo.push(hs); }
 		grp.addChild(sp); ANA.grp = grp;
+		ANA.tail = anaTail(); ANA.rig = new PIXI.Container(); ANA.rig.addChild(ANA.tail, m);  // しっぽは モデルのうしろ
 		app.stage.addChildAt(grp, app.stage.getChildIndex(william));  // William のうしろ
 		ANA.model = m; ANA.sprite = sp; ANA.blinkAt = performance.now() + 3000; ANA.nextLick = performance.now() + 12000;
 	} catch (e) { console.error(e); }
+}
+// ふさふさのしっぽ（羽のような長い毛）。Tororo のしっぽは細く、太くする余白がメッシュにないので、ここで描いてモデルのうしろに置く
+function anaTail() {
+	const cv = document.createElement('canvas'); cv.width = 560; cv.height = 360; const c = cv.getContext('2d');
+	let seed = 4242; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+	// しんの線：根もと (40,300) から 右へ のびて、先が ふわっと上がる
+	const P = (s) => { const u = 1 - s; return [u * u * 40 + 2 * u * s * 300 + s * s * 470, u * u * 300 + 2 * u * s * 250 + s * s * 110]; };
+	const strokes = [];
+	for (let i = 0; i < 2600; i++) { const s = Math.pow(rnd(), 0.8), p = P(s), q = P(Math.min(1, s + 0.01)), ta = Math.atan2(q[1] - p[1], q[0] - p[0]), r = 26 + 60 * Math.sin(Math.PI * Math.min(1, 0.12 + s * 0.95)) ** 0.7, side = rnd() < 0.5 ? -1 : 1, off = rnd() * r * 0.55, a = ta + side * (0.45 + rnd() * 0.75), L = r * (0.55 + rnd() * 0.75); strokes.push([p[0] - Math.sin(ta) * side * off, p[1] + Math.cos(ta) * side * off, a, L, s, off / r]); }
+	strokes.sort((x, y) => y[5] - x[5]);  // 外側の毛から先に描いて、しんに近い毛を上に
+	for (const [x, y, a, L, s, o] of strokes) { const w = 3 + rnd() * 3, tx = x + Math.cos(a) * L, ty = y + Math.sin(a) * L, px = -Math.sin(a) * w / 2, py = Math.cos(a) * w / 2, k = 0.55 + 0.45 * o + (rnd() - 0.5) * 0.2, dk = 1 - 0.25 * s; c.fillStyle = `rgba(${(70 + 52 * k) * dk | 0},${(62 + 46 * k) * dk | 0},${(56 + 42 * k) * dk | 0},.94)`; c.beginPath(); c.moveTo(x + px, y + py); c.quadraticCurveTo((x + tx) / 2 + px, (y + ty) / 2 + py, tx, ty); c.quadraticCurveTo((x + tx) / 2 - px, (y + ty) / 2 - py, x - px, y - py); c.fill(); }
+	const sp = new PIXI.Sprite(PIXI.Texture.from(cv)); sp.anchor.set(40 / 560, 300 / 360); return sp;
 }
 function anaFeed() { if (!PLAYGROUND) return; const t = performance.now(); if (t - ANA.eatT < 5200) { ANA.food = 1; return; } ANA.food = 1; ANA.eatT = t + 700; ANA.lookT = t; }  // ごはんをあげる（正解したとき・3回さわったとき）
 function anaSpot() {
@@ -739,9 +752,9 @@ function anaH() { return catH * 1.02; }  // テクスチャの中で絵を 0.86 
 // Tororo のパラメータで動かす（全身）：食べるときは顔を下げて口をもぐもぐ、ぺろっ は舌
 function anaParams(c) {
 	const t = performance.now(), st = ANA.s, set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
-	const eye = Math.max(0, 1 - st.lid);
+	const eye = Math.max(0, 0.68 * (1 - st.lid) + st.up * 0.3);  // ふだんは 少し ねむそうな目（写真の おちついた目つき）。ごはん？のときだけ ぱっちり
 	set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
-	set('PARAM_BIG_FACE', 0.85);  // 長毛でほっぺがふくらんで見える
+	set('PARAM_BIG_FACE', 0.85); set('PARAM_BODY', 1);  // 長毛でほっぺがふくらんで見える
 	add('PARAM_ANGLE_Y', st.up * 16 - st.dip * 30 + Math.sin(t / 3100) * 2); add('PARAM_ANGLE_X', -st.dip * 14 + Math.sin(t / 5200) * 4); add('PARAM_ANGLE_Z', Math.sin(t / 4300) * 3);
 	add('PARAM_BODY_ANGLE_X', -st.dip * 6 + Math.sin(t / 5200) * 2);
 	if (st.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.1 + st.mouth * 0.75); set('PARAM_MOUTH_FORM', 0.6); set('PARAM_TONGUE', st.mouth * 0.5); }  // もぐもぐ：口を大きく あけたり とじたり
@@ -768,10 +781,12 @@ function drawAna(t) {
 	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
 	Object.assign(st, { lid, mouth, up, dip, lick });
 	// Live2D のモデルを画像（RenderTexture）に描く
-	const k = h / 1820 / 0.86, kx = k * 1.2, ky = k * 0.97, pad = Math.ceil(h * 0.14), bw = Math.ceil(h * 2.0), bh = Math.ceil(h * 1.5);
+	const k = h / 1820 / 0.86, kx = k * 1.3, ky = k * 0.9, pad = Math.ceil(h * 0.14), bw = Math.ceil(h * 2.0), bh = Math.ceil(h * 1.5);
 	if (ANA.rt.width !== bw || ANA.rt.height !== bh) ANA.rt.resize(bw, bh);
 	m.scale.set(kx, ky); m.x = bw / 2 - 1000 * kx; m.y = bh - pad * 0.5 - 2201 * ky + dip * h * 0.02;
-	W2D.app.renderer.render(m, { renderTexture: ANA.rt, clear: true });
+	{ const tl = ANA.tail, ts = h / 760;  // しっぽ：体の右うしろから。ふだんは ゆっくり、ごはんのときは 速くふる
+	  tl.scale.set(ts, ts); tl.x = bw / 2 + 150 * kx; tl.y = bh - pad * 0.5 - 330 * ky; tl.rotation = reduce ? 0 : Math.sin(t / (dip > 0.1 || up > 0.1 ? 260 : 1500)) * (dip > 0.1 || up > 0.1 ? 0.1 : 0.06); }
+	W2D.app.renderer.render(ANA.rig, { renderTexture: ANA.rt, clear: true });
 	ANA.sprite.x = sp.x - bw / 2; ANA.sprite.y = sp.y + pad * 0.5 - bh;
 	ANA.halo.forEach((hs, i) => { hs.x = sp.x; hs.y = sp.y + pad * 0.5 + h * 0.012; hs.scale.set(1.03, 1.015); hs.filters[0].blur = Math.max(1.5, h * 0.012); hs.alpha = 0.8; });
 	c.save(); c.translate(sp.x, sp.y);
