@@ -1377,7 +1377,7 @@ addEventListener('pointermove', (e) => {
 	pointer.x = p.x; pointer.y = p.y; pointer.last = t; S.lastInput = t;
 	pointer.nx = Math.max(-1, Math.min(1, p.x / Math.max(1, W) * 2 - 1)); pointer.ny = Math.max(-1, Math.min(1, p.y / Math.max(1, H) * 2 - 1));
 	if (S.drag) S.stretch = Math.max(0, Math.min(230, (S.drag.y0 - e.clientY) * 1.7 / (catH / 180)));
-	const over = inBox(p, catBox()); if (over && !S.hover) S.hover = t; if (!over) S.hover = 0;
+	const over = e.pointerType === 'mouse' && inBox(p, catBox()); if (over && !S.hover) S.hover = t; if (!over) S.hover = 0;  /* なでる（ゴロゴロ）はマウスだけ。指で押したあとに残らないように */
 	room.style.cursor = over ? 'grab' : '';
 }, { passive: true });
 room.addEventListener('pointerdown', (e) => {
@@ -1403,7 +1403,7 @@ room.addEventListener('pointerdown', (e) => {
 	if (!S.jump && !S.act) start('stalk');
 });
 const up = () => { if (!S.drag) return; if (performance.now() - S.drag.t < 220 && S.stretch < 8) { start('hop'); say(pick('tap'), 0.8); se('nya'); } else if (S.stretch > 20) say(pick('stretch'), 1); S.drag = null; S.sv = 0; };
-room.addEventListener('pointerup', up); room.addEventListener('pointercancel', up);
+room.addEventListener('pointerup', up); room.addEventListener('pointercancel', up); room.addEventListener('pointerleave', () => { S.hover = 0; });
 addEventListener('resize', layout);
 addEventListener('keydown', (e) => {
 	if (document.querySelector('.scrim')) return;
@@ -1482,6 +1482,7 @@ function frame(t) {
 	S.look.x = lerp(S.look.x, lx, dt * 8); S.look.y = lerp(S.look.y, ly, dt * 8);
 
 	let tilt = 0, earL = 0, earR = 0, tailAmp = 0.22, tailSpeed = 1.5, crouch = preCrouch, happy = 0, close = 0, dilate = 0, shake = 0, bodyRot = 0, headDrop = 0, swipe = 0, lick = 0;
+	if (S.hover && !inBox({ x: pointer.x, y: pointer.y }, catBox())) S.hover = 0;  /* ウィリアムが動いて、マウスの下からいなくなったら終わり */
 	const purr = S.hover && t - S.hover > 500 && !S.drag && !S.sleeping && !S.jump;
 	const heating = S.heat && t - S.heat < 2600;
 	if (purr && t - S.hover > 2600 && S.pose === 'rig' && !S.purrPosed) { S.purrPosed = true; setPose('lieHappy', 3); for (let i = 0; i < 3; i++) S.fx.push({ heart: true, x: S.pos.x + (i - 1) * catH * 0.18, y: S.pos.y - catH * 0.75, t: t + i * 150 }); S.fx.push({ splash: true, x: S.pos.x - catH * 0.3, y: S.pos.y - catH * 0.55, t }); }
@@ -1541,7 +1542,7 @@ function frame(t) {
 	const lk = (t - S.land) / 260, land = lk >= 0 && lk < 1 ? Math.sin(lk * Math.PI) * 0.12 * (1 - lk * 0.5) : 0;
 	const hopLand = hopK >= 1 && t - S.hopT < 760 ? Math.sin(((t - S.hopT - 520) / 240) * Math.PI) * 0.07 : 0;
 	const breathe = reduce ? 0 : Math.sin(s * (S.sleeping ? 1.2 : 2.4)) * (S.sleeping ? 0.02 : 0.012);
-	const jitter = shake && !reduce ? (Math.random() - 0.5) * shake : 0;
+	const jitter = shake && !reduce ? (heating ? (Math.random() - 0.5) * shake : Math.sin(t * 0.06) * shake * 0.35) : 0;  /* ゴロゴロはなめらかな小さいゆれ（ばらばらに動くとピクピクして見える） */
 	const squashY = 1 - S.crouch * 0.1 - land - Math.max(0, hopLand) + airStretch * 0.08 + hopE * 0.05;
 	const squashX = 1 + S.crouch * 0.04 + land * 0.7 + Math.max(0, hopLand) * 0.8 - airStretch * 0.04;
 
