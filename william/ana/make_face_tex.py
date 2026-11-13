@@ -14,15 +14,26 @@ def drop_components(x0, y0, x1, y1, pred):
         if pred(st[i]): reg[lab == i] = 0
 drop_components(410, 1085, 1400, 1390, lambda s: s[cv2.CC_STAT_AREA] > 20000)                 # しっぽ（大きい かたまり）
 drop_components(1235, 1415, 2040, 2040, lambda s: s[cv2.CC_STAT_TOP] < 560 - 0 and s[cv2.CC_STAT_AREA] > 3000 and s[cv2.CC_STAT_TOP] + 1415 < 1960)   # 耳
-# 目のまわりの皮（まぶた）：William では 右目に灰色のぶち。アナちゃんは 目の上と外がわが 灰色（グレージュ）、内がわと下は 白 → 顔の模様と つながる色にする
-WHITE = np.array([249, 251, 253], np.float32); GREIGE = np.array([156, 166, 180], np.float32)   # BGR
-for (x0, y0, x1, y1, outer_left) in [(500, 1535, 710, 1812, True), (728, 1535, 945, 1812, False)]:
-    reg = t[y0:y1, x0:x1]; h, w = reg.shape[:2]; yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    u = (1 - xx / w) if outer_left else (xx / w)                       # 0=鼻がわ、1=外がわ
-    k = np.clip((u - 0.34) / 0.3, 0, 1) * np.clip((0.62 - yy / h) / 0.2, 0, 1)   # 外がわ かつ 上がわ ほど 灰色
-    k = cv2.GaussianBlur(k, (0, 0), 6)[..., None]
-    m = reg[..., 3] > 0; col = WHITE * (1 - k) + GREIGE * k; reg[m, :3] = col[m].astype(np.uint8)
-    reg[..., 3] = np.minimum(reg[..., 3], cv2.GaussianBlur(reg[..., 3], (0, 0), 2.5))   # ふちを ぼかして 顔になじませる
+# 目のまわりの皮（まぶた。D_EYE_02〜05）：その場所の アナちゃんの顔の色を そのまま写す（顔の土台と まぶたが 同じ色で つながる）
+#   face_rims.json = まぶたの網目（テクスチャ上の位置 uv と、モデル上の位置 pos）。モデル上の位置 → アナちゃんの絵の座標 → 頭の絵の色
+import json
+from PIL import Image
+FS, FX, FY = 850 / 1820 * 1.06, 0, 6                                   # tpl.html の ANA_FACE と同じ
+rims = json.load(open(os.path.join(ROOT, 'william', 'ana', 'face_rims.json'))); cv_ = rims['canvas']
+head = np.array(Image.open(os.path.join(ROOT, 'william', 'assets', 'ana_head.webp')).convert('RGBA'))[..., [2, 1, 0, 3]].astype(np.float32)
+hrgb = cv2.GaussianBlur(head[..., :3], (0, 0), 2)
+for part in rims['parts']:
+    uv = np.array(part['uv'], np.float32).reshape(-1, 2); pos = np.array(part['pos'], np.float32).reshape(-1, 2)
+    tx = np.stack([uv[:, 0] * 2048, (1 - uv[:, 1]) * 2048], 1)                                             # テクスチャ上
+    mx = np.stack([pos[:, 0] * cv_['ppu'] + cv_['ox'], -pos[:, 1] * cv_['ppu'] + cv_['oy']], 1)            # モデル上（画素）
+    art = np.stack([370 + FX + (mx[:, 0] - 1000) * FS, 890 + FY + (mx[:, 1] - 2201) * FS], 1).astype(np.float32)   # アナちゃんの絵の座標
+    for k in range(0, len(part['idx']), 3):
+        ii = part['idx'][k:k + 3]; T = cv2.getAffineTransform(tx[ii], art[ii])                             # テクスチャ → 絵
+        x0, y0 = np.floor(tx[ii].min(axis=0)).astype(int) - 1; x1, y1 = np.ceil(tx[ii].max(axis=0)).astype(int) + 2
+        m = np.zeros((y1 - y0, x1 - x0), np.uint8); cv2.fillConvexPoly(m, np.round(tx[ii] - [x0, y0]).astype(np.int32), 255); m = cv2.dilate(m, np.ones((3, 3), np.uint8))
+        gy, gx = np.mgrid[y0:y1, x0:x1].astype(np.float32); ax = T[0, 0] * gx + T[0, 1] * gy + T[0, 2]; ay = T[1, 0] * gx + T[1, 1] * gy + T[1, 2]
+        smp = cv2.remap(hrgb, ax.astype(np.float32), ay.astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+        reg = t[y0:y1, x0:x1]; sel = (m > 0) & (reg[..., 3] > 0); reg[sel, :3] = smp[sel].clip(0, 255).astype(np.uint8)
 os.makedirs(os.path.join(ROOT, 'public', 'w', 'ana.2048'), exist_ok=True)
 cv2.imwrite(os.path.join(ROOT, 'public', 'w', 'ana.2048', 'texture_00.png'), t, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 print('ok')
