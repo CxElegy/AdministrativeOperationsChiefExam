@@ -13,7 +13,7 @@ W, H = 890, 980; CX = 370
 rng = np.random.RandomState(5)
 yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
 WHITE = np.array([251, 253, 255], np.float32); SHADOW = np.array([234, 226, 240], np.float32)      # BGR：白と、ピンクがかった影
-GREY = np.array([126, 128, 134], np.float32); DARK = np.array([98, 98, 106], np.float32)
+GREY = np.array([150, 162, 176], np.float32); DARK = np.array([112, 120, 132], np.float32)   # BGR：写真のアナちゃんは あたたかい灰色（グレージュ）
 LIGHT = np.array([-0.3, -0.6, 0.74]); LIGHT /= np.linalg.norm(LIGHT)
 def ss(a, b, v): t = np.clip((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t)
 def lerp(a, b, k): return a * (1 - k[..., None]) + b * k[..., None]
@@ -61,12 +61,12 @@ def clumps(img, mask, n, ybox, size=(34, 64), strength=0.5):
     kk = (lay * white)[..., None]; img[..., :3] = (img[..., :3] * (1 - kk) + (SHADOW * 0.96) * kk).astype(np.uint8)
 
 # ---------- 体（Tororo と同じく たて長。胸の毛が ゆたかで、前足は 毛の下から出る） ----------
-bm, bl = solid([(CX, 470, 150, 150, 170), (CX, 560, 185, 170, 180), (CX, 700, 215, 175, 180)])
+bm, bl = solid([(CX, 385, 150, 115, 150), (296, 340, 74, 62, 70), (444, 340, 74, 62, 70), (CX, 540, 180, 175, 180), (CX, 700, 208, 178, 180)])   # 首まわりの ゆたかな毛で、ほおと体を なだらかに つなぐ
 legs_m, legs_l = solid([(326, 770, 44, 110, 60), (414, 770, 44, 110, 60), (322, 866, 54, 27, 50), (418, 866, 54, 27, 50)], blur=8)
-flank = ss(150, 200, np.abs(xx - CX) + n1 * 30 + (700 - yy) * 0.05) * ss(520, 600, yy)                 # 体のわきは灰色
-shadow = 0.45 * ss(450, 385, yy) * ss(150, 40, np.abs(xx - CX)) + 0.25 * ss(820, 890, yy)             # あごの下・体の下の影
-body = soft(bm, bl, cv2.GaussianBlur(flank, (0, 0), 12), np.where(yy < 640, 22.0, 16.0).astype(np.float32), shadow)
-clumps(body, bm, 46, (430, 700))
+flank = ss(145, 195, np.abs(xx - CX) + n1 * 30 + (700 - yy) * 0.05) * ss(470, 560, yy)                 # 体のわきは灰色
+shadow = 0.45 * ss(390, 310, yy) * ss(140, 40, np.abs(xx - CX)) + 0.25 * ss(820, 890, yy)             # あごの下・体の下の影
+body = soft(bm, bl, cv2.GaussianBlur(flank, (0, 0), 12), np.where(yy < 600, 22.0, 16.0).astype(np.float32), shadow)
+clumps(body, bm, 34, (360, 680), strength=0.38)
 legs = soft(legs_m, legs_l * 0.75 + 0.25, np.zeros((H, W), np.float32), 4.0, 0.5 * ss(790, 700, yy) + 0.5 * ss(22, 0, np.abs(xx - CX)) * (yy < 850))
 lb = np.ascontiguousarray(legs[..., :3])
 for cx in (322, 418):
@@ -78,25 +78,25 @@ k = legs[..., 3:].astype(np.float32) / 255 * (1 - cover[..., None])
 out = body.astype(np.float32); out[..., :3] = out[..., :3] * (1 - k) + legs[..., :3] * k; out[..., 3] = np.maximum(out[..., 3], k[..., 0] * 255); body = out.astype(np.uint8)
 
 # ---------- 頭（小さめの まるい頭＋ほおの ゆたかな毛） ----------
-HX, HY = CX, 255
-hm, hl = solid([(HX, HY, 140, 118, 130), (262, 302, 68, 58, 60), (478, 302, 68, 58, 60), (HX, 322, 112, 60, 90)], blur=16)
+HX, HY = CX, 208
+hm, hl = solid([(HX, HY, 128, 100, 120), (268, 246, 56, 50, 55), (472, 246, 56, 50, 55), (HX, 264, 104, 52, 85)], blur=14)
 du = np.abs(xx - HX) + (n1 - 0.5) * 16
-blaze = 12 + 78 * ss(170, 262, yy) ** 1.4                                                            # ひたいの白い筋：上は細く、目の高さで 目の内がわまで
-g = (du > blaze).astype(np.float32) * ss(290, 250, yy - (du - 80) * 0.5)                             # 目より下は白、外がわほど 灰色が下まで
-head = soft(hm, hl, cv2.GaussianBlur(g, (0, 0), 9), np.where((yy > 285) & (np.abs(xx - HX) > 50), 20.0, 7.0).astype(np.float32), 0.25 * ss(330, 372, yy))
-clumps(head, hm, 10, (300, 372), size=(22, 40), strength=0.4)
+blaze = 11 + 62 * ss(125, 222, yy) ** 1.4                                                            # ひたいの白い筋：上は細く、目の高さで 目の内がわまで
+g = (du > blaze).astype(np.float32) * ss(256, 224, yy - (du - 74) * 0.5)                             # 目より下は白、外がわほど 灰色が下まで
+head = soft(hm, hl, cv2.GaussianBlur(g, (0, 0), 9), np.where((yy > 238) & (np.abs(xx - HX) > 46), 18.0, 6.0).astype(np.float32), 0.22 * ss(272, 308, yy))
+clumps(head, hm, 8, (254, 300), size=(20, 34), strength=0.35)
 
 # ---------- 耳（大きい。外は灰色、中は ピンクの ぼかしと 細い白い毛） ----------
 em = np.zeros((H, W), np.uint8); inner = np.zeros((H, W), np.float32); hairs = []
 for sx in (-1, 1):
     X = lambda d: HX + sx * d
-    pts = np.array([[X(28), 196], [X(118), 34], [X(172), 240]], np.float32); cv2.fillPoly(em, [pts.astype(np.int32)], 1)
+    pts = np.array([[X(26), 150], [X(102), 26], [X(116), 205]], np.float32); cv2.fillPoly(em, [pts.astype(np.int32)], 1)
     cen = pts.mean(axis=0); inn = cen + (pts - cen) * 0.62 + [0, 12]; cv2.fillPoly(inner, [inn.astype(np.int32)], 1.0)
-    for i in range(34): t = rng.uniform(0.05, 0.95); q = inn[0] * (1 - t) + inn[2] * t + [0, -rng.uniform(0, 26)]; hairs.append((q, rng.uniform(22, 52), math.radians(-90 + sx * rng.uniform(6, 62)), sx, (250, 251, 253)))
+    for i in range(34): t = rng.uniform(0.05, 0.95); q = inn[0] * (1 - t) + inn[2] * t + [0, -rng.uniform(0, 22)]; hairs.append((q, rng.uniform(18, 42), math.radians(-90 + sx * rng.uniform(6, 62)), sx, (250, 251, 253)))
     for i in range(7): hairs.append((pts[1] + rng.uniform(-2, 2, 2), rng.uniform(10, 24), math.radians(-90 + sx * rng.uniform(0, 22)), sx, (112, 112, 120)))
-em = cv2.GaussianBlur(em.astype(np.float32), (0, 0), 3) > 0.5; _, el = solid([(HX - 112, 160, 70, 100, 40), (HX + 112, 160, 70, 100, 40)], blur=10)
+em = cv2.GaussianBlur(em.astype(np.float32), (0, 0), 3) > 0.5; _, el = solid([(HX - 100, 120, 70, 100, 40), (HX + 100, 120, 70, 100, 40)], blur=10)
 ears = soft(em, np.clip(el * 0.5 + 0.55, 0, 1), np.ones((H, W), np.float32), 5.0)
-ki = cv2.GaussianBlur(inner, (0, 0), 7)[..., None] * 0.92; pink = lerp(np.zeros((H, W, 3), np.float32) + (176, 162, 222), np.zeros((H, W, 3), np.float32) + (214, 206, 244), ss(120, 230, yy))
+ki = cv2.GaussianBlur(inner, (0, 0), 7)[..., None] * 0.92; pink = lerp(np.zeros((H, W, 3), np.float32) + (176, 162, 222), np.zeros((H, W, 3), np.float32) + (214, 206, 244), ss(70, 180, yy))
 ears[..., :3] = (ears[..., :3] * (1 - ki) + pink * ki).astype(np.uint8)
 eb = np.ascontiguousarray(ears[..., :3]); ea = np.ascontiguousarray(ears[..., 3])
 for q, L, ang, sx, c in hairs:
@@ -110,6 +110,7 @@ for s in np.linspace(0, 1, 200):
     u = 1 - s; x = u * u * 520 + 2 * u * s * 760 + s * s * 790; y = u * u * 850 + 2 * u * s * 880 + s * s * 640
     sp.append((x, y)); cv2.circle(tm, (int(x), int(y)), int(24 + 40 * math.sin(math.pi * min(1, 0.15 + s * 0.9)) ** 0.7), 1, -1)
 _, tl = solid([(x, y, 70, 70, 60) for x, y in sp[::12]], blur=14)
+GREY, DARK = np.array([118, 118, 124], np.float32), np.array([84, 84, 90], np.float32)   # しっぽは こい灰色
 tail = soft(tm > 0, tl * 0.8, np.ones((H, W), np.float32), 26.0)
 
 def save(img, name):
