@@ -728,14 +728,18 @@ function anaH() { return catH * 1.06; }
 // 座標は Tororo のモデルの座標（足もと (1000, 2201)、頭のまん中 (1000, 760)）。長毛の絵は 1 画素 = モデル 2 画素、左上 = モデルの (0, 300)
 async function loadAna(app, william) {
 	try {
-		while (ANA.n < 3) await new Promise((r) => setTimeout(r, 100));
-		const I = ANA.img, T = (im) => PIXI.Texture.from(im), root = new PIXI.Container(); root.pivot.set(1000, 2201);
+		while (ANA.n < 5) await new Promise((r) => setTimeout(r, 100));
+		const I = ANA.img, T = (im) => { const t = PIXI.Texture.from(im); t.baseTexture.mipmap = PIXI.MIPMAP_MODES.ON; return t; }, root = new PIXI.Container(); root.pivot.set(1000, 2201);
 		const spr = (im) => { const sp = new PIXI.Sprite(T(im)); sp.scale.set(2); sp.position.set(0, 300); return sp; };
 		const tail = new PIXI.SimplePlane(T(I.tail), 26, 2); tail.scale.set(2); tail.position.set(0, 300); ANA.tailV = Float32Array.from(tail.geometry.getBuffer('aVertexPosition').data);
 		const back = spr(I.back), mane = spr(I.mane);
 		const mk = async (url) => { const m = await PIXI.live2d.Live2DModel.from(url, { autoInteract: false }); m.internalModel.motionManager.groups.idle = '__none__'; m.internalModel.on('beforeModelUpdate', () => anaParams(m.internalModel.coreModel)); return m; };
 		const body = await mk('w/anabody.model3.json'), face = await mk('w/ana.model3.json');
-		root.addChild(tail, back, body, mane, face); app.stage.addChildAt(root, app.stage.getChildIndex(william));
+		// 耳の先の 竖毛と、耳から外へ出る 白い毛：毎コマ 耳の実際の位置（モデルの頂点）に合わせて置く
+		const ids = Array.from(body.internalModel.coreModel._model.drawables.ids); ANA.earIdx = [ids.indexOf('D_EAR_00'), ids.indexOf('D_EAR_04')];
+		ANA.tips = [0, 1].map(() => { const sp = new PIXI.Sprite(T(I.eartip)); sp.anchor.set(0.5, 104 / 110); sp.scale.set(2); return sp; });
+		ANA.hairs = [-1, 1].map((sx) => { const sp = new PIXI.Sprite(T(I.earhair)); sp.anchor.set(0.5, 104 / 110); sp.scale.set(2 * sx, 2); return sp; });
+		root.addChild(tail, back, ...ANA.tips, body, ...ANA.hairs, mane, face); app.stage.addChildAt(root, app.stage.getChildIndex(william));
 		Object.assign(ANA, { root, tail, back, mane, body, face, blinkAt: performance.now() + 3000, nextLick: performance.now() + 12000 });
 	} catch (e) { console.error(e); }
 }
@@ -767,8 +771,15 @@ function drawAna(t) {
 	const P = ANA.P = { lid, lick, dip, up, lx: reduce ? 0 : sm('lx', (pointer.nx || 0) * 0.9, 5), ly: reduce ? 0 : sm('ly', (pointer.ny || 0) * 0.7, 5), br: reduce ? 0 : Math.sin(t / 1500), sway: reduce ? 0 : Math.sin(t / 4300) * 0.7 + Math.sin(t / 2700 + 1) * 0.3,
 		chew: dip * (0.5 - 0.5 * Math.cos(t / 105)), earL: tw < 1 ? Math.sin(tw * Math.PI) : 0, earR: tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0 };
 	ANA.root.position.set(sp.x, sp.y); ANA.root.scale.set(k);
+	// 耳の毛：耳の頂点から、耳の先（いちばん上の点）と 耳の向きを 求めて 置く（耳が動いても ずれない）
+	{ const dr = ANA.body.internalModel.coreModel._model.drawables;
+	  ANA.earIdx.forEach((di, e) => { const v = dr.vertexPositions[di]; if (!v) return; let tx = 0, ty = 1e9, cx = 0, cy = 0, n = v.length / 2;
+		for (let i = 0; i < v.length; i += 2) { const x = v[i] * 2000 + 1000, y = -v[i + 1] * 2000 + 1250; cx += x / n; cy += y / n; if (y < ty) { ty = y; tx = x; } }
+		const ang = Math.atan2(ty - cy, tx - cx) + Math.PI / 2, tip = ANA.tips[e], hr = ANA.hairs[e], sx = e ? 1 : -1;
+		tip.position.set(tx - Math.sin(ang) * -10, ty + 14); tip.rotation = ang;
+		hr.position.set(cx - sx * 34, cy + 70); hr.rotation = ang * 0.8; }); }  /* 耳の中の 下のほうから 生える */
 	// 長毛の部分は 体の動きに 少しだけ ついていく
-	ANA.mane.position.set(P.lx * 6, 300 + P.br * 3 - P.dip * 4); ANA.back.position.set(P.lx * 3, 300);
+	ANA.mane.position.set(P.lx * 6, 300 + P.br * 3 - P.dip * 4); ANA.back.position.set(P.lx * 9, 300 + P.ly * 4 - P.dip * 0);
 	// しっぽ：つけ根（モデルの (900, 2110)）から先へ 波が伝わるように しなる
 	{ const buf = ANA.tail.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.tailV, A = 0.03 + 0.05 * fast, w = t / (1100 - 650 * fast), bx = 450, by = 905;
 	  for (let i = 0; i < d.length; i += 2) { const u = Math.max(0, Math.min(1, (bx - o[i]) / 380)), a = reduce ? 0 : A * Math.sin(w - u * 2.6) * Math.pow(u, 1.2), dx = o[i] - bx, dy = o[i + 1] - by, cs = Math.cos(a), sn = Math.sin(a); d[i] = bx + dx * cs - dy * sn; d[i + 1] = by + dx * sn + dy * cs; }

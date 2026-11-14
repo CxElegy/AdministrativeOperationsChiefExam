@@ -65,9 +65,10 @@ for (x0, y0, x1, y1, sx) in [(1247, 1432, 1400, 1693, -1), (1427, 1427, 1588, 16
         bx = rng.uniform(0.2, 0.8) * w_; by = h_ - rng.uniform(0.02, 0.3) * h_; L_ = rng.uniform(0.25, 0.6) * h_; dx = rng.uniform(-0.18, 0.18) * L_ + sx * 0.1 * L_
         pts = (np.array([[bx, by], [bx + dx * 0.5, by - L_ * 0.5], [bx + dx, by - L_]]) * 8).astype(np.int32); v = rng.randint(244, 254); cv2.polylines(lay, [pts], False, (v, v, v), 1, cv2.LINE_AA, 3)
     al = reg[..., 3:] > 0; reg[..., :3] = np.where(al, (reg[..., :3].astype(np.float32) * 0.45 + lay.astype(np.float32) * 0.55).astype(np.uint8), reg[..., :3])
-for (x0, y0, x1, y1) in [(1640, 1700, 1830, 1965), (1845, 1700, 2030, 1968)]:                              # 耳のつけ根の毛の房（Tororo では 白）：写真の アナちゃんには 白い房は ない → 頭の上と同じ灰色に
-    reg = A[y0:y1, x0:x1]; Lr = lum(reg[..., :3].astype(np.float32)); sel = reg[..., 3] > 0
-    reg[sel, :3] = ((DARK * 0.35 + GREY * 0.65) * np.clip(Lr[sel] / 245, 0.82, 1.06)[:, None]).clip(0, 255).astype(np.uint8)
+for (x0, y0, x1, y1) in [(1640, 1700, 1830, 1965), (1845, 1700, 2030, 1968)]:                              # 耳の中の毛（Tororo では 白い かたまり）：上は うすい白い毛（耳の中が すけて見える）、つけ根だけ 頭と同じ灰色に とけこむ（写真に 白い房は ない）
+    reg = A[y0:y1, x0:x1]; h_ = reg.shape[0]; v = (np.mgrid[0:h_, 0:reg.shape[1]][0] / h_).astype(np.float32); k = ss(0.5, 0.82, v)[..., None]; sel = reg[..., 3] > 0
+    col = np.array([246, 248, 250], np.float32) * (1 - k) + (DARK * 0.35 + GREY * 0.65) * k; reg[..., :3] = np.where(sel[..., None], col.astype(np.uint8), reg[..., :3])
+    reg[..., 3] = (reg[..., 3].astype(np.float32) * (0.5 + 0.5 * ss(0.45, 0.8, v))).astype(np.uint8)
 for (x0, y0, x1, y1) in [(1598, 1450, 1812, 1706), (1814, 1448, 2028, 1700)]:                              # 耳のうしろ（外がわ）：アナちゃんの灰色に
     reg = A[y0:y1, x0:x1]; Lr = lum(reg[..., :3].astype(np.float32)); sel = (reg[..., 3] > 0) & (np.ptp(reg[..., :3].astype(np.int32), axis=2) < 40)
     reg[sel, :3] = (GREY * np.clip(Lr[sel] / 120, 0.75, 1.2)[:, None]).clip(0, 255).astype(np.uint8)
@@ -85,6 +86,10 @@ drop(a, 1235, 1415, 2040, 2040, lambda s: s[cv2.CC_STAT_AREA] > 3000 and s[cv2.C
 def paint_rim(reg, sel, mx, my):
     g = face_mark(mx, my)[..., None]; col = WHITE * (1 - g) + (DARK * 0.35 + GREY * 0.65) * g; reg[sel, :3] = col[sel].clip(0, 255).astype(np.uint8)
 for pid in ('D_EYE_02', 'D_EYE_03', 'D_EYE_04', 'D_EYE_05'): map_part(B, pid, paint_rim)   # まぶた：顔の土台と 同じ模様の色
+for (x0, y0, x1, y1) in [(545, 1818, 678, 1946), (780, 1818, 908, 1946)]:                               # 目の色：写真に合わせて 少し 金色〜黄色よりに
+    reg = B[y0:y1, x0:x1]; hsv = cv2.cvtColor(reg[..., :3], cv2.COLOR_BGR2HSV).astype(np.float32); sel = (hsv[..., 1] > 70) & (reg[..., 3] > 0)
+    hsv[..., 0] = np.where(sel, hsv[..., 0] * 0.4 + 23 * 0.6, hsv[..., 0]); hsv[..., 1] = np.where(sel, hsv[..., 1] * 0.9, hsv[..., 1]); hsv[..., 2] = np.where(sel, np.clip(hsv[..., 2] * 1.14 + 8, 0, 255), hsv[..., 2])
+    reg[..., :3] = cv2.cvtColor(hsv.clip(0, 255).astype(np.uint8), cv2.COLOR_HSV2BGR)
 os.makedirs(os.path.join(ROOT, 'public', 'w', 'ana.2048'), exist_ok=True)
 cv2.imwrite(os.path.join(ROOT, 'public', 'w', 'ana.2048', 'texture_00.png'), B, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 for nm in ('ana', 'anabody'):
@@ -127,20 +132,27 @@ def save(img, name): Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)).sav
 
 # うしろの毛：体の両わきと下の ふくらみ（灰色のわき、下は白）＋ ほおの毛（頭の下半分から 外へ）
 mb = tuft_shape(1000, 1580, 470, 500, 84, 0.05, 0.6, 0.0, math.pi * 2)
-mc = np.maximum(tuft_shape(790, 900, 124, 132, 22, 0.2, 0.7, math.pi * 0.25, math.pi * 1.35), tuft_shape(1210, 900, 124, 132, 22, 0.2, 0.7, -math.pi * 0.35, math.pi * 0.75))   # ほおの毛：こまかい毛先を たくさん
+mc = np.zeros((CH, CW), np.uint8)                                                        # ほおの毛：耳の下から はじまり、下へ いくほど ひろがる。こまかい房が たくさん
+for sgn in (-1, 1):
+    a0, a1 = (math.pi * 0.2, math.pi * 1.25) if sgn < 0 else (-math.pi * 0.25, math.pi * 0.8)
+    mc = np.maximum(mc, tuft_shape(1000 + sgn * 218, 860, 118, 150, 30, 0.2, 1.0, a0, a1)); mc = np.maximum(mc, tuft_shape(1000 + sgn * 200, 980, 178, 180, 48, 0.2, 1.0, a0, a1))
 m = np.maximum(mb, mc)
-gb = np.maximum(ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY), face_mark(MX, MY - 60) * (MY < 1000) * ss(150, 215, np.abs(MX - 1000)))
-back = fine_hairs(soft_paint(m, gb, edge_shade(m, 30) * 0.4))
+gb = ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY)
+back = soft_paint(m, gb, edge_shade(m, 30) * 0.4)
+GREIGE = np.array([126, 134, 150], np.float32)                                          # ほおの毛の色：うすい あたたかい灰色。毛先（下）だけ 白っぽく（写真）
+ck = (cv2.GaussianBlur((ss(1150, 1010, MY) * (MY < 1160) * (np.abs(MX - 1000) > 150)).astype(np.float32), (0, 0), 8))[..., None] * 0.92
+back[..., :3] = (back[..., :3] * (1 - ck) + GREIGE * ck).clip(0, 255).astype(np.uint8)
+back = fine_hairs(back, 0.55, (5, 14))
 save(back, 'ana_back.webp')
 # 胸のたてがみ：あごの下から 房になって下がる 白い毛。上は 胸に とけこむ（ふちを 見せない）
-mm = tuft_shape(1000, 1300, 300, 330, 30, 0.1, 0.85, 0.0, math.pi)
-mm = np.maximum(mm, tuft_shape(1000, 1240, 270, 240, 26, 0.1, 0.85, 0.0, math.pi))
+mm = tuft_shape(1000, 1330, 350, 400, 34, 0.1, 0.85, 0.0, math.pi)
+mm = np.maximum(mm, tuft_shape(1000, 1250, 310, 280, 30, 0.1, 0.85, 0.0, math.pi))
 rows = np.zeros((CH, CW), np.float32)                                                   # 毛の重なり：房の下がわに うすい影（Tororo の 胸の やわらかい影）
-for (cy, rx, ry, n) in [(1230, 230, 150, 20), (1280, 265, 230, 24)]:
+for (cy, rx, ry, n) in [(1220, 220, 130, 20), (1260, 270, 220, 24), (1310, 315, 310, 28)]:
     r = tuft_shape(1000, cy, rx, ry, n, 0.2, 0.85, 0.0, math.pi).astype(np.float32) / 255; e = cv2.GaussianBlur(r, (0, 0), 7) - cv2.GaussianBlur(r, (0, 0), 2); rows = np.maximum(rows, np.clip(-e * 3.2, 0, 1) * (1 - r) + np.clip(e * 0, 0, 1))
-mane = fine_hairs(soft_paint(mm, np.zeros((CH, CW)), np.clip(edge_shade(mm, 22) * 0.45 * ss(1300, 1420, MY) + rows * 0.45, 0, 1)), 0.7, (4, 12))
+mane = fine_hairs(soft_paint(mm, np.zeros((CH, CW)), np.clip(edge_shade(mm, 22) * 0.45 * ss(1380, 1520, MY) + rows * 0.5, 0, 1)), 0.8, (5, 16))
 fade = ss(1040, 1160, MY) * (1 - ss(0.0, 1.0, np.zeros_like(MY)))                       # 上は 透明に
-mane[..., 3] = (mane[..., 3].astype(np.float32) * ss(1150, 1400, MY) * ss(330, 240, np.abs(MX - 1000) - (MY - 1300) * 0.25)).astype(np.uint8)   # 上と 両はしは 胸に とけこむ
+mane[..., 3] = (mane[..., 3].astype(np.float32) * ss(1090, 1280, MY) * ss(390, 300, np.abs(MX - 1000) - (MY - 1300) * 0.3)).astype(np.uint8)   # 上と 両はしは 胸に とけこむ
 save(mane, 'ana_mane.webp')
 # しっぽ：Tororo と同じく 体のうしろから 左へ 床にそって。長毛なので 太く ふさふさ
 tm = np.zeros((CH, CW), np.uint8); sp = []
@@ -158,4 +170,18 @@ for c in cs:
         pp = (np.array([[x - nx / dd * 2, y - ny / dd * 2], [x + math.cos(ang) * L, y + math.sin(ang) * L]]) * 8).astype(np.int32)
         c3 = tuple(float(v) for v in tail[int(np.clip(y - ny / dd * 2, 0, CH - 1)), int(np.clip(x - nx / dd * 2, 0, CW - 1)), :3]); cv2.polylines(tr, [pp], False, c3, 1, cv2.LINE_AA, 3); cv2.polylines(ta, [pp], False, 230, 1, cv2.LINE_AA, 3)
 save(np.dstack([tr, ta]), 'ana_tail.webp')
+# 耳の先の 竖毛（リンクスティップ）と、耳から 外へ出る 白い長い毛。ページの側で 毎コマ 耳の実際の位置に合わせて置く（100×110 の絵、下のまん中が 根もと）
+def hair_sprite(n, lengths, spread, colfn, width, bend=(-0.15, 0.15), taper=0.0, base=5):
+    """細い毛の束。taper>0 で 先が 1点に あつまる（耳の先の ふさ）。bend で 同じ向きに しなる（耳の中の毛）"""
+    im = np.zeros((110, 100, 4), np.uint8); rgb = np.ascontiguousarray(im[..., :3]); al = np.ascontiguousarray(im[..., 3])
+    for i in range(n):
+        L = rng.uniform(*lengths); ang = math.radians(-90 + rng.uniform(*spread)); x0, y0 = 50 + rng.uniform(-base, base), 104 + rng.uniform(-3, 3); b = rng.uniform(*bend) * L
+        x1, y1 = x0 + math.cos(ang) * L, y0 + math.sin(ang) * L
+        x1 = x1 * (1 - taper) + (50 + (x1 - x0) * 0.3) * taper
+        pts = (np.array([[x0, y0], [(x0 + x1) / 2 - math.sin(ang) * b, (y0 + y1) / 2 + math.cos(ang) * b], [x1, y1]]) * 8).astype(np.int32)
+        cv2.polylines(rgb, [pts], False, colfn(), width, cv2.LINE_AA, 3); cv2.polylines(al, [pts], False, 255, width, cv2.LINE_AA, 3)
+    al = cv2.GaussianBlur(al, (0, 0), 0.5)
+    return np.dstack([rgb, al])
+save(hair_sprite(12, (18, 36), (-6, 6), lambda: tuple(float(v) for v in (DARK * rng.uniform(0.9, 1.3))), 1, (-0.06, 0.06), 0.6, 5), 'ana_eartip.webp')   # 耳の先：根もとは幅があり 先で すぼまる 短い ふさ
+save(hair_sprite(11, (40, 74), (4, 34), lambda: (float(rng.randint(226, 240)), float(rng.randint(234, 246)), float(rng.randint(240, 250))), 1, (0.06, 0.16), 0.0, 8), 'ana_earhair.webp')   # 耳の中から 外へ しなって のびる クリーム色の長い毛
 print('ok')
