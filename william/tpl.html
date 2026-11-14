@@ -729,8 +729,15 @@ function anaH() { return catH * (stacked ? 1.0 : 1.3); }
 // 絵の座標（820×1640）：足もと (330, 1600)、首 (340, 600)、顔のまん中 (340, 365)、目 (258, 335) (425, 335)、口 (340, 452)、耳のつけ根 (190, 235) (500, 235)
 async function loadAna(app, william) {
 	try {
-		while (ANA.n < 1) await new Promise((r) => setTimeout(r, 100));
-		const im = ANA.img.ref, mesh = new PIXI.SimplePlane(PIXI.Texture.from(im), 21, 41), root = new PIXI.Container(); root.pivot.set(330, 1600); root.addChild(mesh);
+		while (ANA.n < 2) await new Promise((r) => setTimeout(r, 100));
+		const im = ANA.img.ref, mesh = new PIXI.SimplePlane(PIXI.Texture.from(im), 21, 41), root = new PIXI.Container(); root.pivot.set(330, 1600);
+		// しっぽ：Tororo と同じく 体のうしろから 横へ。べつの絵（ana_tail.webp）を 体のうしろに置き、網目を曲げて ゆらす
+		const tail = new PIXI.SimplePlane(PIXI.Texture.from(ANA.img.tail), 26, 2); tail.scale.set(0.78); tail.position.set(300 - 860 * 0.78, 1520 - 400 * 0.78); ANA.tailV = Float32Array.from(tail.geometry.getBuffer('aVertexPosition').data);
+		// 顔の部品（目・まぶた・目玉・口・舌・歯・鼻・ひげ）は Tororo と同じ Live2D の仕組み（public/w/ana.model3.json）
+		const face = await PIXI.live2d.Live2DModel.from('w/ana.model3.json', { autoInteract: false });
+		face.internalModel.motionManager.groups.idle = '__none__'; face.internalModel.on('beforeModelUpdate', () => anaParams(face.internalModel.coreModel));
+		face.pivot.set(ANA_FACE.em[0], ANA_FACE.em[1]); face.scale.set(ANA_FACE.s);
+		root.addChild(tail, mesh, face); Object.assign(ANA, { tail, face });
 		ANA.v0 = Float32Array.from(mesh.geometry.getBuffer('aVertexPosition').data);
 		// まぶたの色：目のすぐ上の毛の色を 絵から取る
 		const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
@@ -740,6 +747,14 @@ async function loadAna(app, william) {
 	} catch (e) { console.error(e); }
 }
 const sst = (a, b, v) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+const ANA_FACE = { s: 0.80, em: [993, 755], ea: [341, 345] };  // 顔の部品の大きさ、Tororo の両目のまん中（モデル上）、絵の両目のまん中（make_face_tex.py と同じ）
+function anaParams(c) {
+	const P = ANA.P; if (!P) return; const set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
+	const eye = Math.max(0, 0.9 * (1 - P.lid) + P.up * 0.1); set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
+	set('PARAM_EYE_BALL_X', P.lx); set('PARAM_EYE_BALL_Y', -P.ly); add('PARAM_ANGLE_X', P.lx * 12); add('PARAM_ANGLE_Y', -P.ly * 9 + P.up * 6);
+	if (P.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.08 + P.chew * 0.6); set('PARAM_MOUTH_FORM', 0.5); set('PARAM_TONGUE', P.chew * 0.4); }
+	if (P.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.3 * P.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', P.lick); }
+}
 // 1 点を 今のパラメータで 変形する（網目の頂点にも、上に重ねる まぶた・口にも 同じ式を使う＝ずれない）
 function anaWarp(x, y, P) {
 	const wH = sst(690, 520, y);                                                     // 頭の重み（首より上が 1）
@@ -774,20 +789,18 @@ function drawAna(t) {
 	const tw = (t % 6100) / 260, tw2 = ((t + 2700) % 8300) / 260;
 	const P = { dip, up, lx: reduce ? 0 : sm('lx', (pointer.nx || 0) * 0.9, 5), ly: reduce ? 0 : sm('ly', (pointer.ny || 0) * 0.7, 5), br: reduce ? 0 : Math.sin(t / 1500), sway: reduce ? 0 : Math.sin(t / 4300) * 0.7 + Math.sin(t / 2700 + 1) * 0.3,
 		chew: dip * (0.5 - 0.5 * Math.cos(t / 105)), earL: tw < 1 ? Math.sin(tw * Math.PI) : 0, earR: tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0 };
+	P.lid = lid; P.lick = lick; ANA.P = P;
 	ANA.root.position.set(sp.x, sp.y); ANA.root.scale.set(k);
+	{ const q = anaWarp(ANA_FACE.ea[0], ANA_FACE.ea[1], P); ANA.face.position.set(q[0], q[1]); ANA.face.rotation = P.sway * 0.03 + P.lx * 0.04 - P.dip * 0.07; }
+	{ const buf = ANA.tail.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.tailV, fast = sm('sFast', dip > 0.1 || up > 0.1 ? 1 : 0, 3), A = 0.035 + 0.05 * fast, w = t / (1100 - 650 * fast);
+	  for (let i = 0; i < d.length; i += 2) { const u = Math.max(0, Math.min(1, (860 - o[i]) / 700)), a = reduce ? 0 : A * Math.sin(w - u * 2.6) * Math.pow(u, 1.2), dx = o[i] - 860, dy = o[i + 1] - 400, cs = Math.cos(a), sn = Math.sin(a); d[i] = 860 + dx * cs - dy * sn; d[i + 1] = 400 + dx * sn + dy * cs; }
+	  buf.update(); }
 	{ const buf = ANA.mesh.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.v0; for (let i = 0; i < d.length; i += 2) { const q = anaWarp(o[i], o[i + 1], P); d[i] = q[0]; d[i + 1] = q[1]; } buf.update(); }
 	c.save(); c.translate(sp.x, sp.y);
 	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(0, 2, h * 0.3, h * 0.03, 0, 0, Math.PI * 2); c.fill();
 	c.scale(k, k); c.translate(-330, -1600);
-	// まばたき：まぶた（目のすぐ上の毛の色）が 上から下りる。位置は 網目と同じ式で 変形する
-	if (lid > 0.03) [[258, 335], [425, 335]].forEach(([ex, ey], i) => { const q = anaWarp(ex, ey, P); c.save(); c.translate(q[0], q[1]); c.beginPath(); c.ellipse(0, 0, 41, 37, 0, 0, Math.PI * 2); c.clip();
-		const ly = -38 + lid * 78; c.fillStyle = ANA.lidCol[i]; c.fillRect(-44, -40, 88, ly + 40); c.strokeStyle = 'rgba(60,50,46,.75)'; c.lineWidth = 4; c.beginPath(); c.moveTo(-44, ly - 5); c.quadraticCurveTo(0, ly + 7, 44, ly - 5); c.stroke(); c.restore(); });
-	// 口：食べるときは あけて もぐもぐ、ぺろっ は 舌
-	{ const q = anaWarp(340, 452, P), m = P.chew;
-	  if (m > 0.06) { c.fillStyle = '#8a3a48'; c.beginPath(); c.ellipse(q[0], q[1] + 6 + m * 8, 16 + m * 6, 3 + m * 17, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#ee9aa6'; c.beginPath(); c.ellipse(q[0], q[1] + 12 + m * 14, 10, 2 + m * 8, 0, 0, Math.PI * 2); c.fill(); }
-	  else if (lick > 0.05) { c.fillStyle = '#ee9aa6'; c.strokeStyle = '#d27a88'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(q[0] - 11, q[1] + 2); c.quadraticCurveTo(q[0] - 13, q[1] + 2 + lick * 26, q[0], q[1] + 4 + lick * 30); c.quadraticCurveTo(q[0] + 13, q[1] + 2 + lick * 26, q[0] + 11, q[1] + 2); c.closePath(); c.fill(); c.stroke(); } }
 	// ごはんのおさら（体の左まえ）
-	{ const bx = 0, by = 0; c.save(); c.translate(40, 1585); c.scale(2.9, 2.9); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
+	{ const bx = 0, by = 0; c.save(); c.translate(650, 1588); c.scale(2.6, 2.6); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
 	  c.fillStyle = '#f4ead9'; c.beginPath(); c.moveTo(bx - 46, by - 4); c.quadraticCurveTo(bx - 40, by + 16, bx, by + 16); c.quadraticCurveTo(bx + 40, by + 16, bx + 46, by - 4); c.closePath(); c.fill();
 	  c.fillStyle = '#e3d3bb'; c.beginPath(); c.ellipse(bx, by - 4, 46, 10, 0, 0, Math.PI * 2); c.fill();
 	  if (ANA.food > 0.02) { c.save(); c.beginPath(); c.ellipse(bx, by - 4, 42, 8.5, 0, 0, Math.PI * 2); c.clip(); const n = Math.ceil(26 * ANA.food); for (let i = 0; i < n; i++) { const a = i * 2.39996, r = Math.sqrt((i + 0.5) / 26); c.fillStyle = i % 3 ? '#a86f3e' : '#8f5a30'; c.beginPath(); c.ellipse(bx + Math.cos(a) * r * 38, by - 5 + Math.sin(a) * r * 7 - ANA.food * 3, 5.5, 4, 0, 0, Math.PI * 2); c.fill(); } c.restore(); }
