@@ -19,9 +19,21 @@ def lum(c): return c[..., 0] * 0.11 + c[..., 1] * 0.59 + c[..., 2] * 0.3
 # ---- アナちゃんの模様（モデル上の位置で決める。顔の土台にも まぶたにも 同じ式を使う＝色が つながる） ----
 def face_mark(mx, my):
     du = np.abs(mx - 1000)
-    blaze = 26 + 150 * ss(520, 760, my) ** 1.3                         # ひたいの白い筋：上は細く、目の高さで 目の内がわまで
-    yb = 742 + np.clip(du - 150, 0, 300) * 0.55                        # 灰色の下のふち：目の上まで。外がわほど 下まで
+    blaze = (26 + 34 * ss(520, 700, my) + 150 * ss(770, 880, my))   # 白い筋：ひたい〜両目のあいだは 細い。目より下で 口元へ 広がる（写真）
+    yb = 800 + np.clip(du - 100, 0, 300) * 0.5                         # 灰色の下のふち：目のまわりを つつむ。外がわほど 下まで
     return ss(blaze - 14, blaze + 22, du) * ss(yb + 34, yb - 26, my)
+GREIGE = np.array([150, 160, 172], np.float32); STREAK = np.array([56, 58, 64], np.float32)   # ほおの あたたかい うすい灰色／ひたいの こい すじ（BGR）
+def face_colour(mx, my):
+    """顔の色（写真の アナちゃん）：ひたいは こい灰色に たての こい すじ、目の外がわ〜ほおは うすい あたたかい灰色、まん中と 口元は 白。返すのは (灰色の重み, 灰色の色)"""
+    du = np.abs(mx - 1000); blaze = (26 + 34 * ss(520, 700, my) + 150 * ss(770, 880, my))
+    gt = face_mark(mx, my)
+    streak = (0.5 + 0.5 * np.sin(du * 0.105 + 0.6 + np.sin(my * 0.02) * 0.6)) ** 3 * ss(770, 660, my) * ss(blaze + 6, blaze + 34, du)   # ひたいの すじ（M の字の たて線）
+    inner = np.exp(-((du - (blaze + 10)) / 16.0) ** 2) * ss(760, 690, my) * ss(540, 600, my)                                             # 白い筋の きわは 少し こい（目頭から上へ のびる線）
+    top = (DARK * 0.35 + GREY * 0.65)[None, None] * (1 - np.clip(streak * 1.0 + inner * 0.7, 0, 1))[..., None] + STREAK[None, None] * np.clip(streak * 1.0 + inner * 0.7, 0, 1)[..., None]
+    warm = np.clip(ss(690, 840, my) * 0.75 + ss(170, 290, du) * 0.35, 0, 0.85)[..., None]; top = top * (1 - warm) + GREIGE[None, None] * warm   # 下・外がわへ行くほど うすい あたたかい灰色（写真）
+    cheek = ss(205, 270, du) * ss(1010, 900, my) * ss(690, 770, my) * 0.9                                                                # ほお：うすい あたたかい灰色
+    g = np.maximum(gt, cheek); k = (gt / np.maximum(g, 1e-4))[..., None]
+    return g, top * k + GREIGE[None, None] * (1 - k)
 def body_mark(mx, my):
     return ss(300, 420, np.abs(mx - 1000) + (1700 - my) * 0.06) * ss(1150, 1350, my)   # せなか：体のわきが灰色
 
@@ -44,9 +56,9 @@ def drop(a, x0, y0, x1, y1, pred):
 # ================= 体のテクスチャ（顔の部品は 透明） =================
 A = src.copy()
 def paint_face(reg, sel, mx, my):
-    g = face_mark(mx, my)[..., None]; base = reg[..., :3].astype(np.float32); L = lum(base)[..., None]
+    g, gc = face_colour(mx, my); g = g[..., None]; base = reg[..., :3].astype(np.float32); L = lum(base)[..., None]
     white = np.where(L > 222, base, WHITE * np.clip(L / 250 + 0.12, 0.9, 1))          # William の ぶち は 白に戻す（明るい所の 陰影は 残す）
-    col = white * (1 - g) + (DARK * 0.35 + GREY * 0.65) * g; reg[sel, :3] = col[sel].clip(0, 255).astype(np.uint8)
+    col = white * (1 - g) + gc * g; reg[sel, :3] = col[sel].clip(0, 255).astype(np.uint8)
 map_part(A, 'D_FACE_00', paint_face)
 def paint_back(reg, sel, mx, my):
     g = body_mark(mx, my)[..., None]; base = reg[..., :3].astype(np.float32); L = lum(base)[..., None]
@@ -59,6 +71,12 @@ for x in range(1380, 2030):                                                     
 for (x0, y0, x1, y1) in [(1255, 1695, 1425, 2000), (1640, 1700, 1830, 1965), (1845, 1700, 2030, 1968)]:   # 耳の外がわ：アナちゃんの灰色に
     reg = A[y0:y1, x0:x1]; L = lum(reg[..., :3].astype(np.float32)); sel = (reg[..., 3] > 0) & (L < 190) & (np.ptp(reg[..., :3].astype(np.int32), axis=2) < 40)
     reg[sel, :3] = (GREY * np.clip(L[sel] / 120, 0.75, 1.15)[:, None]).clip(0, 255).astype(np.uint8)
+for (x0, y0, x1, y1, sx) in [(1247, 1432, 1400, 1693, -1), (1427, 1427, 1588, 1692, 1)]:                       # 耳の中：長い白い毛（写真）
+    reg = A[y0:y1, x0:x1]; lay = np.ascontiguousarray(reg[..., :3]); h_, w_ = reg.shape[:2]
+    for i in range(70):
+        bx = rng.uniform(0.15, 0.85) * w_; by = h_ - rng.uniform(0.02, 0.4) * h_; L_ = rng.uniform(0.25, 0.7) * h_; dx = rng.uniform(-0.2, 0.2) * L_ + sx * 0.12 * L_
+        pts = (np.array([[bx, by], [bx + dx * 0.5, by - L_ * 0.5], [bx + dx, by - L_]]) * 8).astype(np.int32); v = rng.randint(240, 254); cv2.polylines(lay, [pts], False, (v, v, v), 2, cv2.LINE_AA, 3)
+    al = reg[..., 3:] > 0; reg[..., :3] = np.where(al, (reg[..., :3].astype(np.float32) * 0.7 + lay.astype(np.float32) * 0.3).astype(np.uint8), reg[..., :3])
 reg = A[575:1060, 250:490]; L = lum(reg[..., :3].astype(np.float32)); sel = (reg[..., 3] > 0) & (L < 226) & (np.ptp(reg[..., :3].astype(np.int32), axis=2) < 18); reg[sel, :3] = (246, 243, 244)   # William の 足の ぶち を消す
 drop(A[..., 3], 410, 1085, 1400, 1390, lambda s: s[cv2.CC_STAT_AREA] > 20000)          # しっぽは 別に描く
 A[1475:, :1240, 3] = 0; A[1270:1475, 495:1240, 3] = 0; A[1960:2040, 1315:1540, 3] = 0   # 顔の部品は 透明
@@ -71,8 +89,15 @@ a[:1085, :] = 0; a[1085:1470, :445] = 0; a[590:1462, 1375:] = 0
 drop(a, 410, 1085, 1400, 1390, lambda s: s[cv2.CC_STAT_AREA] > 20000)
 drop(a, 1235, 1415, 2040, 2040, lambda s: s[cv2.CC_STAT_AREA] > 3000 and s[cv2.CC_STAT_TOP] + 1415 < 1960)
 def paint_rim(reg, sel, mx, my):
-    g = face_mark(mx, my)[..., None]; col = WHITE * (1 - g) + (DARK * 0.35 + GREY * 0.65) * g; reg[sel, :3] = col[sel].clip(0, 255).astype(np.uint8)
+    g, gc = face_colour(mx, my); g = g[..., None]; col = WHITE * (1 - g) + gc * g; reg[sel, :3] = col[sel].clip(0, 255).astype(np.uint8)
 for pid in ('D_EYE_02', 'D_EYE_03', 'D_EYE_04', 'D_EYE_05'): map_part(B, pid, paint_rim)   # まぶた：顔の土台と 同じ模様の色
+# 目：写真の アナちゃんは 明るい 金色〜黄色。目のふちの線は こく はっきり
+for (x0, y0, x1, y1) in [(545, 1818, 678, 1946), (780, 1818, 908, 1946)]:
+    reg = B[y0:y1, x0:x1]; hsv = cv2.cvtColor(reg[..., :3], cv2.COLOR_BGR2HSV).astype(np.float32); sel = (hsv[..., 1] > 70) & (reg[..., 3] > 0)
+    hsv[..., 0] = np.where(sel, 26, hsv[..., 0]); hsv[..., 1] = np.where(sel, hsv[..., 1] * 0.78, hsv[..., 1]); hsv[..., 2] = np.where(sel, np.clip(hsv[..., 2] * 1.3 + 22, 0, 255), hsv[..., 2])
+    reg[..., :3] = cv2.cvtColor(hsv.clip(0, 255).astype(np.uint8), cv2.COLOR_HSV2BGR)
+for (x0, y0, x1, y1) in [(530, 1335, 680, 1530), (775, 1335, 920, 1530)]:
+    reg = B[y0:y1, x0:x1]; sel = reg[..., 3] > 0; reg[sel, :3] = (reg[sel, :3].astype(np.float32) * 0.62 + np.array([52, 48, 46]) * 0.38).astype(np.uint8)
 os.makedirs(os.path.join(ROOT, 'public', 'w', 'ana.2048'), exist_ok=True)
 cv2.imwrite(os.path.join(ROOT, 'public', 'w', 'ana.2048', 'texture_00.png'), B, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 for nm in ('ana', 'anabody'):
@@ -106,8 +131,10 @@ def save(img, name): Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)).sav
 mb = tuft_shape(1000, 1580, 470, 500, 38, 0.07, 0.6, 0.0, math.pi * 2)
 mc = np.maximum(tuft_shape(790, 900, 120, 130, 7, 0.26, 0.7, math.pi * 0.25, math.pi * 1.35), tuft_shape(1210, 900, 120, 130, 7, 0.26, 0.7, -math.pi * 0.35, math.pi * 0.75))
 m = np.maximum(mb, mc)
-gb = np.maximum(ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY), face_mark(MX, MY - 60) * (MY < 1000) * ss(150, 215, np.abs(MX - 1000)))
+gb = np.maximum(ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY), 0 * MX)
 back = soft_paint(m, gb, edge_shade(m, 30) * 0.4)
+cg, cc = face_colour(MX, np.minimum(MY, 960)); ck = (cg * (MY < 1060) * ss(170, 230, np.abs(MX - 1000)))[..., None]   # ほおの毛は 顔と同じ色（うすい あたたかい灰色）
+back[..., :3] = (back[..., :3] * (1 - ck) + cc * ck * 0.97).clip(0, 255).astype(np.uint8)
 save(back, 'ana_back.webp')
 # 胸のたてがみ：あごの下から 房になって下がる 白い毛。上は 胸に とけこむ（ふちを 見せない）
 mm = tuft_shape(1000, 1300, 300, 330, 13, 0.14, 0.85, 0.0, math.pi)
