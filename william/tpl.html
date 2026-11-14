@@ -722,58 +722,36 @@ function anaSpot() {
 	if (stacked) { const p = IMG_PL.top, q = M(p.x + 70, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
 	const p = IMG_PL.floor, q = M(p.x - 20, p.y); return { x: q.x, y: q.y };               // PC：いちばん下の台
 }
-function anaH() { return catH * (stacked ? 1.0 : 1.3); }
-// ベースの絵は 1 枚（お手本の設定画の正面の猫。毛の色だけ アナちゃん：william/ana/make_ref.py）。
-// Live2D と同じ考え方で動かす：絵に 網目（メッシュ）を張り、頂点を パラメータで 変形させる
-//   パラメータ：顔の向き X/Y（頭の輪郭より 顔のまん中が 多く動く＝回って見える）、頭のかたむき、呼吸、耳、うなずき（食べる）、まばたき、口、舌
-// 絵の座標（820×1640）：足もと (330, 1600)、首 (340, 600)、顔のまん中 (340, 365)、目 (258, 335) (425, 335)、口 (340, 452)、耳のつけ根 (190, 235) (500, 235)
+function anaH() { return catH * 1.06; }
+// アナちゃんは William と同じ Tororo の Live2D モデルを そのまま使う（＝同じ絵柄・同じ動き）。変えるのは 毛の色・模様と、長毛の部分だけ（william/ana/make_ana.py）
+// 重ねる順：しっぽ → うしろの毛（体の ふくらみ・ほおの毛）→ 体のモデル（体・足・耳・顔の土台）→ 胸のたてがみ → 顔の部品のモデル（目・口・鼻・ひげ）
+// 座標は Tororo のモデルの座標（足もと (1000, 2201)、頭のまん中 (1000, 760)）。長毛の絵は 1 画素 = モデル 2 画素、左上 = モデルの (0, 300)
 async function loadAna(app, william) {
 	try {
-		while (ANA.n < 2) await new Promise((r) => setTimeout(r, 100));
-		const im = ANA.img.ref, mesh = new PIXI.SimplePlane(PIXI.Texture.from(im), 21, 41), root = new PIXI.Container(); root.pivot.set(330, 1600);
-		// しっぽ：Tororo と同じく 体のうしろから 横へ。べつの絵（ana_tail.webp）を 体のうしろに置き、網目を曲げて ゆらす
-		const tail = new PIXI.SimplePlane(PIXI.Texture.from(ANA.img.tail), 26, 2); tail.scale.set(0.78); tail.position.set(300 - 860 * 0.78, 1520 - 400 * 0.78); ANA.tailV = Float32Array.from(tail.geometry.getBuffer('aVertexPosition').data);
-		// 顔の部品（目・まぶた・目玉・口・舌・歯・鼻・ひげ）は Tororo と同じ Live2D の仕組み（public/w/ana.model3.json）
-		const face = await PIXI.live2d.Live2DModel.from('w/ana.model3.json', { autoInteract: false });
-		face.internalModel.motionManager.groups.idle = '__none__'; face.internalModel.on('beforeModelUpdate', () => anaParams(face.internalModel.coreModel));
-		face.pivot.set(ANA_FACE.em[0], ANA_FACE.em[1]); face.scale.set(ANA_FACE.s);
-		root.addChild(tail, mesh, face); Object.assign(ANA, { tail, face });
-		ANA.v0 = Float32Array.from(mesh.geometry.getBuffer('aVertexPosition').data);
-		// まぶたの色：目のすぐ上の毛の色を 絵から取る
-		const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
-		ANA.lidCol = [[258, 286], [425, 286]].map(([x, y]) => { const d = cx.getImageData(x - 6, y - 4, 12, 8).data; let r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return `rgb(${r / n | 0},${g / n | 0},${b / n | 0})`; });
-		app.stage.addChildAt(root, app.stage.getChildIndex(william));
-		Object.assign(ANA, { root, mesh, blinkAt: performance.now() + 3000, nextLick: performance.now() + 12000 });
+		while (ANA.n < 3) await new Promise((r) => setTimeout(r, 100));
+		const I = ANA.img, T = (im) => PIXI.Texture.from(im), root = new PIXI.Container(); root.pivot.set(1000, 2201);
+		const spr = (im) => { const sp = new PIXI.Sprite(T(im)); sp.scale.set(2); sp.position.set(0, 300); return sp; };
+		const tail = new PIXI.SimplePlane(T(I.tail), 26, 2); tail.scale.set(2); tail.position.set(0, 300); ANA.tailV = Float32Array.from(tail.geometry.getBuffer('aVertexPosition').data);
+		const back = spr(I.back), mane = spr(I.mane);
+		const mk = async (url) => { const m = await PIXI.live2d.Live2DModel.from(url, { autoInteract: false }); m.internalModel.motionManager.groups.idle = '__none__'; m.internalModel.on('beforeModelUpdate', () => anaParams(m.internalModel.coreModel)); return m; };
+		const body = await mk('w/anabody.model3.json'), face = await mk('w/ana.model3.json');
+		root.addChild(tail, back, body, mane, face); app.stage.addChildAt(root, app.stage.getChildIndex(william));
+		Object.assign(ANA, { root, tail, back, mane, body, face, blinkAt: performance.now() + 3000, nextLick: performance.now() + 12000 });
 	} catch (e) { console.error(e); }
 }
-const sst = (a, b, v) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
-const ANA_FACE = { s: 0.80, em: [993, 755], ea: [341, 345] };  // 顔の部品の大きさ、Tororo の両目のまん中（モデル上）、絵の両目のまん中（make_face_tex.py と同じ）
+// 2 つのモデル（体・顔の部品）に 同じパラメータを入れる＝ずれない。動きは William と同じ Tororo のパラメータ
 function anaParams(c) {
 	const P = ANA.P; if (!P) return; const set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
-	const eye = Math.max(0, 0.9 * (1 - P.lid) + P.up * 0.1); set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
-	set('PARAM_EYE_BALL_X', P.lx); set('PARAM_EYE_BALL_Y', -P.ly); add('PARAM_ANGLE_X', P.lx * 12); add('PARAM_ANGLE_Y', -P.ly * 9 + P.up * 6);
-	if (P.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.08 + P.chew * 0.6); set('PARAM_MOUTH_FORM', 0.5); set('PARAM_TONGUE', P.chew * 0.4); }
-	if (P.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.3 * P.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', P.lick); }
-}
-// 1 点を 今のパラメータで 変形する（網目の頂点にも、上に重ねる まぶた・口にも 同じ式を使う＝ずれない）
-function anaWarp(x, y, P) {
-	const wH = sst(690, 520, y);                                                     // 頭の重み（首より上が 1）
-	let dx = 0, dy = 0;
-	// 呼吸：胸が ふくらむ
-	const chest = Math.exp(-(((y - 820) / 260) ** 2)) * (1 - wH); dx += (x - 340) * 0.012 * P.br * chest; dy -= 5 * P.br * chest;
-	// 体は 頭の向きと 少しだけ 逆へ（つながって見える）
-	const torso = sst(1500, 700, y) * (1 - wH); dx += P.lx * 5 * torso;
-	// 頭：首を中心に かたむく・動く
-	const a = (P.sway * 0.03 + P.lx * 0.04 - P.dip * 0.07) * wH, rx = x - 340, ry = y - 600, cs = Math.cos(a), sn = Math.sin(a);
-	dx += (rx * cs - ry * sn - rx) + (P.lx * 12 - P.dip * 10) * wH; dy += (rx * sn + ry * cs - ry) + (P.ly * 8 - P.up * 10 + P.dip * 34 + P.chew * 5) * wH;
-	// 顔の向き：顔のまん中ほど 多く動く（頭が 回って見える）
-	const f = Math.exp(-(((x - 340) / 170) ** 2 + ((y - 365) / 150) ** 2)) * wH; dx += P.lx * 16 * f; dy += P.ly * 10 * f;
-	// 耳：頭と逆へ 少し おくれる＋ぴくっ
-	const ear = sst(260, 110, y) * wH; if (ear > 0) { const L = x < 340, tw = (L ? P.earL : P.earR) + P.dip * 0.5 - P.up * 0.4, ex = x - (L ? 190 : 500), ey = y - 235, ea = (L ? -1 : 1) * tw * 0.16 * ear, c2 = Math.cos(ea), s2 = Math.sin(ea); dx += (ex * c2 - ey * s2 - ex) - P.lx * 9 * ear; dy += (ex * s2 + ey * c2 - ey) - P.ly * 5 * ear; }
-	return [x + dx, y + dy];
+	const eye = Math.max(0, 0.92 * (1 - P.lid) + P.up * 0.08); set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
+	set('PARAM_EYE_BALL_X', P.lx); set('PARAM_EYE_BALL_Y', -P.ly);
+	add('PARAM_ANGLE_X', P.lx * 9 - P.dip * 6); add('PARAM_ANGLE_Y', -P.ly * 8 + P.up * 10 - P.dip * 26); add('PARAM_ANGLE_Z', P.sway * 3);
+	add('PARAM_BODY_ANGLE_X', P.lx * 3); add('PARAM_EAR_L', P.up * 0.5 - P.dip * 0.4 - P.earL * 0.9); add('PARAM_EAR_R', P.up * 0.5 - P.dip * 0.4 - P.earR * 0.9);
+	set('PARAM_BREATH', 0.5 + 0.5 * P.br);
+	if (P.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.1 + P.chew * 0.7); set('PARAM_MOUTH_FORM', 0.6); set('PARAM_TONGUE', P.chew * 0.5); }
+	if (P.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.35 * P.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', P.lick); }
 }
 function drawAna(t) {
-	if (!ANA.root) return; const c = ctx, sp = anaSpot(), h = anaH(), k = h / 1545;
+	if (!ANA.root) return; const c = ctx, sp = anaSpot(), h = anaH(), k = h / 1820;
 	let lid = 0, up = 0, dip = 0, lick = 0;
 	const bk = (t - ANA.blinkAt) / 240; if (bk >= 0 && bk < 1) lid = Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 3000 + Math.random() * 4000;
 	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) up = Math.sin(lk * Math.PI);
@@ -783,29 +761,28 @@ function drawAna(t) {
 	if (t > ANA.nextLick && !(ek >= 0 && ek < 1)) { ANA.lickT = t; ANA.nextLick = t + 16000 + Math.random() * 20000; }
 	const ck = (t - ANA.lickT) / 900; if (ck >= 0 && ck < 1) lick = Math.sin(ck * Math.PI);
 	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
-	// なめらかな動き：どの動きも 目標へ じわっと追いつく
 	const dtS = Math.min(0.05, Math.max(0, (t - (ANA.pt || t)) / 1000)); ANA.pt = t; const sm = (key, v, r) => { const c0 = ANA[key] ?? v; return (ANA[key] = c0 + (v - c0) * (1 - Math.exp(-dtS * r))); };
 	dip = sm('sDip', dip, 5); up = sm('sUp', up, 6); lick = sm('sLick', lick, 14);
-	const tw = (t % 6100) / 260, tw2 = ((t + 2700) % 8300) / 260;
-	const P = { dip, up, lx: reduce ? 0 : sm('lx', (pointer.nx || 0) * 0.9, 5), ly: reduce ? 0 : sm('ly', (pointer.ny || 0) * 0.7, 5), br: reduce ? 0 : Math.sin(t / 1500), sway: reduce ? 0 : Math.sin(t / 4300) * 0.7 + Math.sin(t / 2700 + 1) * 0.3,
+	const tw = (t % 6100) / 260, tw2 = ((t + 2700) % 8300) / 260, fast = sm('sFast', dip > 0.1 || up > 0.1 ? 1 : 0, 3);
+	const P = ANA.P = { lid, lick, dip, up, lx: reduce ? 0 : sm('lx', (pointer.nx || 0) * 0.9, 5), ly: reduce ? 0 : sm('ly', (pointer.ny || 0) * 0.7, 5), br: reduce ? 0 : Math.sin(t / 1500), sway: reduce ? 0 : Math.sin(t / 4300) * 0.7 + Math.sin(t / 2700 + 1) * 0.3,
 		chew: dip * (0.5 - 0.5 * Math.cos(t / 105)), earL: tw < 1 ? Math.sin(tw * Math.PI) : 0, earR: tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0 };
-	P.lid = lid; P.lick = lick; ANA.P = P;
 	ANA.root.position.set(sp.x, sp.y); ANA.root.scale.set(k);
-	{ const q = anaWarp(ANA_FACE.ea[0], ANA_FACE.ea[1], P); ANA.face.position.set(q[0], q[1]); ANA.face.rotation = P.sway * 0.03 + P.lx * 0.04 - P.dip * 0.07; }
-	{ const buf = ANA.tail.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.tailV, fast = sm('sFast', dip > 0.1 || up > 0.1 ? 1 : 0, 3), A = 0.035 + 0.05 * fast, w = t / (1100 - 650 * fast);
-	  for (let i = 0; i < d.length; i += 2) { const u = Math.max(0, Math.min(1, (860 - o[i]) / 700)), a = reduce ? 0 : A * Math.sin(w - u * 2.6) * Math.pow(u, 1.2), dx = o[i] - 860, dy = o[i + 1] - 400, cs = Math.cos(a), sn = Math.sin(a); d[i] = 860 + dx * cs - dy * sn; d[i + 1] = 400 + dx * sn + dy * cs; }
+	// 長毛の部分は 体の動きに 少しだけ ついていく
+	ANA.mane.position.set(P.lx * 6, 300 + P.br * 3 - P.dip * 4); ANA.back.position.set(P.lx * 3, 300);
+	// しっぽ：つけ根（モデルの (900, 2110)）から先へ 波が伝わるように しなる
+	{ const buf = ANA.tail.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.tailV, A = 0.03 + 0.05 * fast, w = t / (1100 - 650 * fast), bx = 450, by = 905;
+	  for (let i = 0; i < d.length; i += 2) { const u = Math.max(0, Math.min(1, (bx - o[i]) / 380)), a = reduce ? 0 : A * Math.sin(w - u * 2.6) * Math.pow(u, 1.2), dx = o[i] - bx, dy = o[i + 1] - by, cs = Math.cos(a), sn = Math.sin(a); d[i] = bx + dx * cs - dy * sn; d[i + 1] = by + dx * sn + dy * cs; }
 	  buf.update(); }
-	{ const buf = ANA.mesh.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.v0; for (let i = 0; i < d.length; i += 2) { const q = anaWarp(o[i], o[i + 1], P); d[i] = q[0]; d[i + 1] = q[1]; } buf.update(); }
 	c.save(); c.translate(sp.x, sp.y);
 	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(0, 2, h * 0.3, h * 0.03, 0, 0, Math.PI * 2); c.fill();
-	c.scale(k, k); c.translate(-330, -1600);
+	c.scale(k, k); c.translate(-1000, -2201);
 	// ごはんのおさら（体の左まえ）
-	{ const bx = 0, by = 0; c.save(); c.translate(650, 1588); c.scale(2.6, 2.6); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
+	{ const bx = 0, by = 0; c.save(); c.translate(1560, 2190); c.scale(3.4, 3.4); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
 	  c.fillStyle = '#f4ead9'; c.beginPath(); c.moveTo(bx - 46, by - 4); c.quadraticCurveTo(bx - 40, by + 16, bx, by + 16); c.quadraticCurveTo(bx + 40, by + 16, bx + 46, by - 4); c.closePath(); c.fill();
 	  c.fillStyle = '#e3d3bb'; c.beginPath(); c.ellipse(bx, by - 4, 46, 10, 0, 0, Math.PI * 2); c.fill();
 	  if (ANA.food > 0.02) { c.save(); c.beginPath(); c.ellipse(bx, by - 4, 42, 8.5, 0, 0, Math.PI * 2); c.clip(); const n = Math.ceil(26 * ANA.food); for (let i = 0; i < n; i++) { const a = i * 2.39996, r = Math.sqrt((i + 0.5) / 26); c.fillStyle = i % 3 ? '#a86f3e' : '#8f5a30'; c.beginPath(); c.ellipse(bx + Math.cos(a) * r * 38, by - 5 + Math.sin(a) * r * 7 - ANA.food * 3, 5.5, 4, 0, 0, Math.PI * 2); c.fill(); } c.restore(); }
 	  c.fillStyle = '#b98a8f'; c.font = '700 11px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.fillText('ANA', bx, by + 10); c.restore(); }
-	const wk = (t - ANA.wantT) / 3200; if (wk >= 0 && wk < 1) { const a = Math.min(1, wk * 6, (1 - wk) * 6); c.globalAlpha = a; c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = '#2b2522'; c.lineWidth = 7; const bx = 640, by = 40; c.beginPath(); c.ellipse(bx, by, 270, 90, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(bx - 110, by + 120, 20, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#2b2522'; c.font = '500 72px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ごはん まだ？', bx, by + 2); c.globalAlpha = 1; }
+	const wk = (t - ANA.wantT) / 3200; if (wk >= 0 && wk < 1) { const a = Math.min(1, wk * 6, (1 - wk) * 6); c.globalAlpha = a; c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = '#2b2522'; c.lineWidth = 8; const bx = 1500, by = 330; c.beginPath(); c.ellipse(bx, by, 320, 105, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(bx - 130, by + 140, 24, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#2b2522'; c.font = '500 86px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ごはん まだ？', bx, by + 2); c.globalAlpha = 1; }
 	c.restore();
 }
 function sm2(o, k, v, t) { const dt = Math.min(0.05, Math.max(0, (t - (o[k + 'T'] || t)) / 1000)); o[k + 'T'] = t; const c0 = o[k] ?? v; return (o[k] = c0 + (v - c0) * (1 - Math.exp(-dt * 3))); }
