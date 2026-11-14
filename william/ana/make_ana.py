@@ -65,6 +65,12 @@ for (x0, y0, x1, y1, sx) in [(1247, 1432, 1400, 1693, -1), (1427, 1427, 1588, 16
         bx = rng.uniform(0.2, 0.8) * w_; by = h_ - rng.uniform(0.02, 0.3) * h_; L_ = rng.uniform(0.25, 0.6) * h_; dx = rng.uniform(-0.18, 0.18) * L_ + sx * 0.1 * L_
         pts = (np.array([[bx, by], [bx + dx * 0.5, by - L_ * 0.5], [bx + dx, by - L_]]) * 8).astype(np.int32); v = rng.randint(244, 254); cv2.polylines(lay, [pts], False, (v, v, v), 1, cv2.LINE_AA, 3)
     al = reg[..., 3:] > 0; reg[..., :3] = np.where(al, (reg[..., :3].astype(np.float32) * 0.45 + lay.astype(np.float32) * 0.55).astype(np.uint8), reg[..., :3])
+for (x0, y0, x1, y1) in [(1640, 1700, 1830, 1965), (1845, 1700, 2030, 1968)]:                              # 耳のつけ根の毛の房（Tororo では 白）：写真の アナちゃんには 白い房は ない → 頭の上と同じ灰色に
+    reg = A[y0:y1, x0:x1]; Lr = lum(reg[..., :3].astype(np.float32)); sel = reg[..., 3] > 0
+    reg[sel, :3] = ((DARK * 0.35 + GREY * 0.65) * np.clip(Lr[sel] / 245, 0.82, 1.06)[:, None]).clip(0, 255).astype(np.uint8)
+for (x0, y0, x1, y1) in [(1598, 1450, 1812, 1706), (1814, 1448, 2028, 1700)]:                              # 耳のうしろ（外がわ）：アナちゃんの灰色に
+    reg = A[y0:y1, x0:x1]; Lr = lum(reg[..., :3].astype(np.float32)); sel = (reg[..., 3] > 0) & (np.ptp(reg[..., :3].astype(np.int32), axis=2) < 40)
+    reg[sel, :3] = (GREY * np.clip(Lr[sel] / 120, 0.75, 1.2)[:, None]).clip(0, 255).astype(np.uint8)
 reg = A[575:1060, 250:490]; L = lum(reg[..., :3].astype(np.float32)); sel = (reg[..., 3] > 0) & (L < 226) & (np.ptp(reg[..., :3].astype(np.int32), axis=2) < 18); reg[sel, :3] = (246, 243, 244)   # William の 足の ぶち を消す
 drop(A[..., 3], 410, 1085, 1400, 1390, lambda s: s[cv2.CC_STAT_AREA] > 20000)          # しっぽは 別に描く
 A[1475:, :1240, 3] = 0; A[1270:1475, 495:1240, 3] = 0; A[1960:2040, 1315:1540, 3] = 0   # 顔の部品は 透明
@@ -99,6 +105,17 @@ def tuft_shape(cx, cy, rx, ry, tufts, depth, grav, a0=0.0, a1=2 * math.pi):
         r = 1 + depth * lens[k] * prof * max(0.35, g)
         pts.append(((cx + math.cos(ang) * rx * r - X0) * SC, (cy + math.sin(ang) * ry * r + depth * ry * 0.3 * prof * lens[k] * max(0, math.sin(ang)) - Y0) * SC))
     m = np.zeros((CH, CW), np.uint8); cv2.fillPoly(m, [(np.array(pts) * 8).astype(np.int32)], 255, cv2.LINE_AA, 3); return m
+def fine_hairs(img, n_per_px=0.9, length=(5, 15)):
+    """ふちに 細い毛を足す（長毛種の こまかい毛先）。色は その場所の毛の色、向きは 外・下"""
+    m = (img[..., 3] > 128).astype(np.uint8); din = cv2.GaussianBlur(cv2.distanceTransform(m, cv2.DIST_L2, 5), (0, 0), 2); gx, gy = cv2.Sobel(din, cv2.CV_32F, 1, 0), cv2.Sobel(din, cv2.CV_32F, 0, 1)
+    rgb = np.ascontiguousarray(img[..., :3]); al = np.ascontiguousarray(img[..., 3]); cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    for c in cs:
+        for (x, y) in c[:, 0]:
+            if rng.rand() > n_per_px: continue
+            nx, ny = -gx[y, x], -gy[y, x]; d = math.hypot(nx, ny) + 1e-6; ang = math.atan2(ny / d + 0.5, nx / d) + rng.uniform(-0.45, 0.45); L = rng.uniform(*length)
+            x0_, y0_ = x - nx / d * 2, y - ny / d * 2; pp = (np.array([[x0_, y0_], [x + math.cos(ang) * L, y + math.sin(ang) * L]]) * 8).astype(np.int32)
+            c3 = tuple(float(v) for v in img[int(np.clip(y0_, 0, CH - 1)), int(np.clip(x0_, 0, CW - 1)), :3]); cv2.polylines(rgb, [pp], False, c3, 1, cv2.LINE_AA, 3); cv2.polylines(al, [pp], False, 235, 1, cv2.LINE_AA, 3)
+    return np.dstack([rgb, al])
 def soft_paint(mask, grey, shade):
     """なめらかな塗り。grey=灰色の模様 0〜1、shade=影 0〜1（白い毛では うすいピンク、灰色では こい灰色）"""
     g = cv2.GaussianBlur(grey.astype(np.float32), (0, 0), 6)[..., None]; s = cv2.GaussianBlur(shade.astype(np.float32), (0, 0), 5)[..., None]
@@ -109,19 +126,19 @@ def edge_shade(mask, width):
 def save(img, name): Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)).save(os.path.join(ROOT, 'william', 'assets', name), quality=94, method=6)
 
 # うしろの毛：体の両わきと下の ふくらみ（灰色のわき、下は白）＋ ほおの毛（頭の下半分から 外へ）
-mb = tuft_shape(1000, 1580, 470, 500, 38, 0.07, 0.6, 0.0, math.pi * 2)
-mc = np.maximum(tuft_shape(790, 900, 120, 130, 7, 0.26, 0.7, math.pi * 0.25, math.pi * 1.35), tuft_shape(1210, 900, 120, 130, 7, 0.26, 0.7, -math.pi * 0.35, math.pi * 0.75))
+mb = tuft_shape(1000, 1580, 470, 500, 84, 0.05, 0.6, 0.0, math.pi * 2)
+mc = np.maximum(tuft_shape(790, 900, 124, 132, 22, 0.2, 0.7, math.pi * 0.25, math.pi * 1.35), tuft_shape(1210, 900, 124, 132, 22, 0.2, 0.7, -math.pi * 0.35, math.pi * 0.75))   # ほおの毛：こまかい毛先を たくさん
 m = np.maximum(mb, mc)
 gb = np.maximum(ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY), face_mark(MX, MY - 60) * (MY < 1000) * ss(150, 215, np.abs(MX - 1000)))
-back = soft_paint(m, gb, edge_shade(m, 30) * 0.4)
+back = fine_hairs(soft_paint(m, gb, edge_shade(m, 30) * 0.4))
 save(back, 'ana_back.webp')
 # 胸のたてがみ：あごの下から 房になって下がる 白い毛。上は 胸に とけこむ（ふちを 見せない）
-mm = tuft_shape(1000, 1300, 300, 330, 13, 0.14, 0.85, 0.0, math.pi)
-mm = np.maximum(mm, tuft_shape(1000, 1240, 270, 240, 11, 0.13, 0.85, 0.0, math.pi))
+mm = tuft_shape(1000, 1300, 300, 330, 30, 0.1, 0.85, 0.0, math.pi)
+mm = np.maximum(mm, tuft_shape(1000, 1240, 270, 240, 26, 0.1, 0.85, 0.0, math.pi))
 rows = np.zeros((CH, CW), np.float32)                                                   # 毛の重なり：房の下がわに うすい影（Tororo の 胸の やわらかい影）
-for (cy, rx, ry, n) in [(1230, 230, 150, 9), (1280, 265, 230, 11)]:
+for (cy, rx, ry, n) in [(1230, 230, 150, 20), (1280, 265, 230, 24)]:
     r = tuft_shape(1000, cy, rx, ry, n, 0.2, 0.85, 0.0, math.pi).astype(np.float32) / 255; e = cv2.GaussianBlur(r, (0, 0), 7) - cv2.GaussianBlur(r, (0, 0), 2); rows = np.maximum(rows, np.clip(-e * 3.2, 0, 1) * (1 - r) + np.clip(e * 0, 0, 1))
-mane = soft_paint(mm, np.zeros((CH, CW)), np.clip(edge_shade(mm, 22) * 0.45 * ss(1300, 1420, MY) + rows * 0.45, 0, 1))
+mane = fine_hairs(soft_paint(mm, np.zeros((CH, CW)), np.clip(edge_shade(mm, 22) * 0.45 * ss(1300, 1420, MY) + rows * 0.45, 0, 1)), 0.7, (4, 12))
 fade = ss(1040, 1160, MY) * (1 - ss(0.0, 1.0, np.zeros_like(MY)))                       # 上は 透明に
 mane[..., 3] = (mane[..., 3].astype(np.float32) * ss(1150, 1400, MY) * ss(330, 240, np.abs(MX - 1000) - (MY - 1300) * 0.25)).astype(np.uint8)   # 上と 両はしは 胸に とけこむ
 save(mane, 'ana_mane.webp')
