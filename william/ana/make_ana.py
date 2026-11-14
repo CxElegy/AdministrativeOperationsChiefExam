@@ -18,10 +18,14 @@ def lum(c): return c[..., 0] * 0.11 + c[..., 1] * 0.59 + c[..., 2] * 0.3
 
 # ---- アナちゃんの模様（モデル上の位置で決める。顔の土台にも まぶたにも 同じ式を使う＝色が つながる） ----
 def face_mark(mx, my):
+    """顔の灰色の こさ（0〜1）。色のさかいは くっきりさせず、毛の流れにそって ぼかす"""
     du = np.abs(mx - 1000)
-    blaze = 26 + 150 * ss(520, 760, my) ** 1.3                         # ひたいの白い筋：上は細く、目の高さで 目の内がわまで
-    yb = 742 + np.clip(du - 150, 0, 300) * 0.55                        # 灰色の下のふち：目の上まで。外がわほど 下まで
-    return ss(blaze - 14, blaze + 22, du) * ss(yb + 34, yb - 26, my)
+    th = np.arctan2(my - 900, mx - 1000); streak = 0.5 + 0.5 * np.sin(th * 44 + np.sin(th * 13) * 2.2)      # 毛の流れ（鼻から 放射状）：さかいを 毛すじで ゆらす
+    blaze = 30 + 48 * ss(500, 720, my) + streak * 14                   # ひたいの白い筋（八の字）：上は細く、目頭の 上のふち で 目に まじわる
+    yb = 716 + np.clip(du - 150, 0, 300) * 0.7 + streak * 22           # 灰色の下のふち：目頭の上 → 上まぶたにそって → 目じりの外から ほおへ下がる
+    edge = ss(blaze - 34, blaze + 46, du) * ss(yb + 62, yb - 40, my)
+    depth = 0.74 + 0.26 * ss(yb + 20, yb - 190, my)                    # 下・外へ いくほど うすい灰色に（グラデーション）
+    return edge * depth * (0.9 + 0.1 * streak)
 def body_mark(mx, my):
     return ss(300, 420, np.abs(mx - 1000) + (1700 - my) * 0.06) * ss(1150, 1350, my)   # せなか：体のわきが灰色
 
@@ -141,6 +145,8 @@ gb = ss(300, 420, np.abs(MX - 1000) + (1700 - MY) * 0.06) * ss(1150, 1350, MY)
 back = soft_paint(m, gb, edge_shade(m, 30) * 0.4)
 GREIGE = np.array([126, 134, 150], np.float32)                                          # ほおの毛の色：うすい あたたかい灰色。毛先（下）だけ 白っぽく（写真）
 ck = (cv2.GaussianBlur((ss(1150, 1010, MY) * (MY < 1160) * (np.abs(MX - 1000) > 150)).astype(np.float32), (0, 0), 8))[..., None] * 0.92
+_th = np.arctan2(MY - 900, MX - 1000); _st = (0.5 + 0.5 * np.sin(_th * 60 + np.sin(_th * 17) * 2.5))[..., None]    # ほおの毛も 毛すじで 白と灰色が まじる（べた塗りに しない）
+ck = ck * (0.5 + 0.5 * _st) * (0.55 + 0.45 * ss(180, 330, np.abs(MX - 1000)))[..., None]
 back[..., :3] = (back[..., :3] * (1 - ck) + GREIGE * ck).clip(0, 255).astype(np.uint8)
 back = fine_hairs(back, 0.55, (5, 14))
 save(back, 'ana_back.webp')
