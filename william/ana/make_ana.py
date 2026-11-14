@@ -49,6 +49,34 @@ def soft(mask, lit, grey, fuzz, extra_shadow=None):
                 cv2.polylines(rgb, [p], False, c3, 1, cv2.LINE_AA, 3); cv2.polylines(al, [p], False, 235, 1, cv2.LINE_AA, 3)
     return np.dstack([rgb, al])
 
+def strands(img, mask, n, length, flow, alpha=0.5, width=1.3):
+    """毛の質感：なめらかな塗りの上に、細い毛の流れを うすく重ねる（明るい毛と 影の毛）。お手本の設定画の 毛並み"""
+    rgb = np.ascontiguousarray(img[..., :3]); base = rgb.astype(np.float32).copy(); lay = rgb.copy(); cov = np.zeros((H, W), np.uint8)
+    ys, xs = np.where(mask & (img[..., 3] > 200)); idx = rng.randint(0, len(xs), n)
+    for i in idx:
+        x, y = int(xs[i]), int(ys[i]); fx, fy = flow(x, y); ang = math.atan2(fy, fx) + rng.uniform(-0.3, 0.3)
+        L = (length[y, x] if isinstance(length, np.ndarray) else length) * rng.uniform(0.5, 1.2); bend = rng.uniform(-0.18, 0.18) * L
+        p = (np.array([[x, y], [x + math.cos(ang) * L * 0.5 - math.sin(ang) * bend, y + math.sin(ang) * L * 0.5 + math.cos(ang) * bend], [x + math.cos(ang) * L, y + math.sin(ang) * L]]) * 8).astype(np.int32)
+        c = base[y, x] * (1.06 if rng.rand() < 0.45 else 0.9)
+        cv2.polylines(lay, [p], False, tuple(float(v) for v in c.clip(0, 255)), 1 if width < 1.5 else 2, cv2.LINE_AA, 3); cv2.polylines(cov, [p], False, 255, 1 if width < 1.5 else 2, cv2.LINE_AA, 3)
+    k = (cov.astype(np.float32) / 255 * alpha)[..., None] * (img[..., 3:] > 0)
+    img[..., :3] = (base * (1 - k) + lay.astype(np.float32) * k).astype(np.uint8)
+
+def tufts(img, mask, col_from, n, length, flow, width=9):
+    """輪郭の毛の束：ふちの近くから 外へ、先の とがった 太めの束を出す（長毛種の もこもこした輪郭）"""
+    m = mask.astype(np.uint8); din = cv2.distanceTransform(m, cv2.DIST_L2, 5); ys, xs = np.where((din > 2) & (din < 10))
+    rgb = np.ascontiguousarray(img[..., :3]); al = np.ascontiguousarray(img[..., 3]); src = col_from.astype(np.float32)
+    for i in rng.randint(0, len(xs), n):
+        x, y = int(xs[i]), int(ys[i]); fx, fy = flow(x, y); ang = math.atan2(fy, fx) + rng.uniform(-0.35, 0.35)
+        L = (length[y, x] if isinstance(length, np.ndarray) else length) * rng.uniform(0.6, 1.2); w = width * rng.uniform(0.6, 1.2); nx, ny = -math.sin(ang) * w / 2, math.cos(ang) * w / 2
+        tx, ty = x + math.cos(ang) * L, y + math.sin(ang) * L + L * 0.12
+        p = (np.array([[x + nx, y + ny], [(x + tx) / 2 + nx * 0.7, (y + ty) / 2 + ny * 0.7], [tx, ty], [(x + tx) / 2 - nx * 0.7, (y + ty) / 2 - ny * 0.7], [x - nx, y - ny]]) * 8).astype(np.int32)
+        c = tuple(float(v) for v in (src[y, x] * rng.uniform(0.96, 1.02)).clip(0, 255))
+        cv2.fillConvexPoly(rgb, p, c, cv2.LINE_AA, 3); cv2.fillConvexPoly(al, p, 255, cv2.LINE_AA, 3)
+    img[..., :3] = rgb; img[..., 3] = al
+
+def down(x, y): return ((x - CX) / 260.0, 1.0)
+
 def clumps(img, mask, n, ybox, size=(34, 64), strength=0.5):
     """長い毛の重なり：うすいピンクの影で 毛の束の先（下向きの「く」）を ぼかして描く"""
     lay = np.zeros((H, W), np.float32); ys, xs = np.where(mask & (yy > ybox[0]) & (yy < ybox[1]))
@@ -61,21 +89,27 @@ def clumps(img, mask, n, ybox, size=(34, 64), strength=0.5):
     kk = (lay * white)[..., None]; img[..., :3] = (img[..., :3] * (1 - kk) + (SHADOW * 0.96) * kk).astype(np.uint8)
 
 # ---------- 体（Tororo と同じく たて長。胸の毛が ゆたかで、前足は 毛の下から出る） ----------
-bm, bl = solid([(CX, 385, 150, 115, 150), (296, 340, 74, 62, 70), (444, 340, 74, 62, 70), (CX, 540, 180, 175, 180), (CX, 700, 208, 178, 180)])   # 首まわりの ゆたかな毛で、ほおと体を なだらかに つなぐ
-legs_m, legs_l = solid([(322, 760, 50, 125, 60), (418, 760, 50, 125, 60), (318, 862, 62, 30, 50), (422, 862, 62, 30, 50)], blur=8)
-flank = ss(145, 195, np.abs(xx - CX) + n1 * 30 + (700 - yy) * 0.05) * ss(470, 560, yy)                 # 体のわきは灰色
-shadow = 0.45 * ss(390, 310, yy) * ss(140, 40, np.abs(xx - CX)) + 0.25 * ss(820, 890, yy) + 0.3 * ss(690, 780, yy) * ss(60, 120, np.abs(xx - CX)) * ss(190, 130, np.abs(xx - CX))             # あごの下・体の下の影
-body = soft(bm, bl, cv2.GaussianBlur(flank, (0, 0), 12), np.where(yy < 600, 22.0, 16.0).astype(np.float32), shadow)
-clumps(body, bm, 34, (360, 680), strength=0.38)
-legs = soft(legs_m, legs_l * 0.6 + 0.4, np.zeros((H, W), np.float32), 5.0, 0.55 * ss(760, 660, yy) + 0.6 * ss(16, 0, np.abs(xx - CX)) * (yy < 846) + 0.3 * ss(60, 100, np.abs(xx - CX)) * (yy < 840))   # 胸の毛の影・足のあいだの影・足の外がわの影
+bm, bl = solid([(CX, 400, 158, 120, 150), (290, 345, 80, 66, 70), (450, 345, 80, 66, 70), (CX, 520, 190, 170, 180), (CX, 610, 176, 120, 170)])   # 胸の たてがみ（足の途中まで たれる）
+legs_m, legs_l = solid([(318, 740, 52, 140, 60), (422, 740, 52, 140, 60), (314, 862, 62, 30, 50), (426, 862, 62, 30, 50)], blur=8)   # 前足（まっすぐ 太い）と まるい足先
+hind_m, hind_l = solid([(226, 730, 70, 150, 60), (514, 730, 70, 150, 60), (214, 866, 54, 26, 40), (526, 866, 54, 26, 40)], blur=10)   # うしろ足（体の両わきに見える）
+flank = ss(120, 175, np.abs(xx - CX) + n1 * 36 + (560 - yy) * 0.06) * ss(430, 520, yy)                 # 体のわきは灰色
+shadow = 0.45 * ss(390, 310, yy) * ss(140, 40, np.abs(xx - CX)) + 0.3 * ss(640, 720, yy)             # あごの下・たてがみの下の影
+body = soft(bm, bl, cv2.GaussianBlur(flank, (0, 0), 12), 10.0, shadow)
+body_base = body.copy(); tufts(body, bm, body_base[..., :3], 240, np.where(yy > 560, 40.0, 24.0).astype(np.float32), down, 15)
+strands(body, bm, 5200, np.where(yy > 480, 34.0, 24.0).astype(np.float32), down, 0.5)
+clumps(body, bm, 26, (380, 660), strength=0.3)
+legs = soft(legs_m, legs_l * 0.6 + 0.4, np.zeros((H, W), np.float32), 6.0, 0.5 * ss(720, 640, yy) + 0.5 * ss(14, 0, np.abs(xx - CX)) * (yy < 846))
+strands(legs, legs_m, 700, 16.0, lambda x, y: (0.0, 1.0), 0.4)
+hind = soft(hind_m, hind_l * 0.5 + 0.2, ((np.abs(xx - CX) > 170 + n1 * 20) & (yy < 800)).astype(np.float32), 10.0, 0.35 * ss(120, 190, 310 - np.abs(xx - CX)))
+tufts(hind, hind_m, hind[..., :3].copy(), 40, 22.0, lambda x, y: ((x - CX) / 200.0, 0.7), 9); strands(hind, hind_m, 900, 20.0, down, 0.45)
 lb = np.ascontiguousarray(legs[..., :3])
-for cx in (318, 422):
+for cx in (314, 426):
     for dx in (-19, 0, 19): cv2.line(lb, (int((cx + dx) * 8), 864 * 8), (int((cx + dx * 1.1) * 8), 889 * 8), (206, 196, 216), 2, cv2.LINE_AA, 3)   # 指のあいだ（うすい線）
 legs[..., :3] = lb
 # 胸の毛が 足の上に かぶさる：足は 体の毛より下の部分だけ 見える
-cover = cv2.GaussianBlur(((bm) & (yy < 668 + 20 * np.sin(xx * 0.09))).astype(np.float32), (0, 0), 3)
-k = legs[..., 3:].astype(np.float32) / 255 * (1 - cover[..., None])
-out = body.astype(np.float32); out[..., :3] = out[..., :3] * (1 - k) + legs[..., :3] * k; out[..., 3] = np.maximum(out[..., 3], k[..., 0] * 255); body = out.astype(np.uint8)
+cover = cv2.GaussianBlur(cv2.dilate((body[..., 3] > 128).astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32), (0, 0), 1.5)   # 胸の たてがみ（毛の束ごと）が 足の上に かぶさる
+under = hind.astype(np.float32); ka = legs[..., 3:].astype(np.float32) / 255; under[..., :3] = under[..., :3] * (1 - ka) + legs[..., :3] * ka; under[..., 3] = np.maximum(under[..., 3], legs[..., 3])   # うしろ足 → 前足
+kb = body[..., 3:].astype(np.float32) / 255; out = under.copy(); out[..., :3] = under[..., :3] * (1 - kb) + body[..., :3] * kb; out[..., 3] = np.maximum(under[..., 3], body[..., 3]); body = out.astype(np.uint8)   # その上に 胸と体
 
 # ---------- 頭（小さめの まるい頭＋ほおの ゆたかな毛） ----------
 HX, HY = CX, 208
@@ -86,7 +120,8 @@ g = (du > blaze).astype(np.float32) * ss(256, 224, yy - (du - 74) * 0.5)        
 streak = np.clip(np.sin((du - blaze) * 0.21 + n1 * 3) * 1.6 - 0.5, 0, 1) * ss(250, 200, yy) * (du > blaze + 4) * (du < blaze + 70)   # ひたいの こい すじ（しま）
 hl = hl * (1 - 0.75 * cv2.GaussianBlur(streak.astype(np.float32), (0, 0), 2.5))
 head = soft(hm, hl, cv2.GaussianBlur(g, (0, 0), 9), np.where((yy > 238) & (np.abs(xx - HX) > 46), 18.0, 6.0).astype(np.float32), 0.22 * ss(272, 308, yy))
-clumps(head, hm, 8, (254, 300), size=(20, 34), strength=0.35)
+head_base = head.copy(); tufts(head, hm & (yy > 232) & (np.abs(xx - HX) > 40), head_base[..., :3], 60, 26.0, lambda x, y: ((x - HX) / 110.0, 0.9), 9)   # ほおの毛の束
+strands(head, hm, 2600, np.where(yy > 240, 20.0, 9.0).astype(np.float32), lambda x, y: ((x - HX), (y - 262) * 0.9 + 14), 0.4)
 
 # ---------- 耳（大きい。外は灰色、中は ピンクの ぼかしと 細い白い毛） ----------
 em = np.zeros((H, W), np.uint8); inner = np.zeros((H, W), np.float32); hairs = []
@@ -113,7 +148,11 @@ for s in np.linspace(0, 1, 200):
     sp.append((x, y)); cv2.circle(tm, (int(x), int(y)), int(24 + 40 * math.sin(math.pi * min(1, 0.15 + s * 0.9)) ** 0.7), 1, -1)
 _, tl = solid([(x, y, 70, 70, 60) for x, y in sp[::12]], blur=14)
 GREY, DARK = np.array([118, 118, 124], np.float32), np.array([84, 84, 90], np.float32)   # しっぽは こい灰色
-tail = soft(tm > 0, tl * 0.8, np.ones((H, W), np.float32), 26.0)
+tail = soft(tm > 0, tl * 0.8, np.ones((H, W), np.float32), 14.0)
+spA = np.array(sp, np.float32)
+def tflow(x, y):
+    i = int(np.argmin((spA[:, 0] - x) ** 2 + (spA[:, 1] - y) ** 2)); j = min(len(spA) - 1, i + 4); return (spA[j, 0] - spA[max(0, i - 4), 0]) * 0.5 + (x - spA[i, 0]) * 1.4, (spA[j, 1] - spA[max(0, i - 4), 1]) * 0.5 + (y - spA[i, 1]) * 1.4
+tufts(tail, tm > 0, tail[..., :3].copy(), 260, 22.0, tflow, 15); strands(tail, tm > 0, 2600, 30.0, tflow, 0.5)
 
 def save(img, name):
     from PIL import Image
