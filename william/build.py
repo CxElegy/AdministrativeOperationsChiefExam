@@ -78,7 +78,7 @@ def main():
             '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n')
     out = head + s[:i] + '\n</head>\n<body>\n' + s[i:] + '\n</body>\n</html>\n'
     # playground.html：試し中の機能（アナちゃん）を入れたページ。本番（index.html）には出さない
-    open(os.path.join(ROOT, 'public', 'playground.html'), 'w', encoding='utf-8').write(out.replace('__PLAY__', 'true').replace('__ANA__', json.dumps({k: data_uri('ana_' + k + '.webp') for k in ('body', 'head', 'tail', 'ears')})).replace('<title>', '<title>[playground] ', 1))
+    open(os.path.join(ROOT, 'public', 'playground.html'), 'w', encoding='utf-8').write(out.replace('__PLAY__', 'true').replace('__ANA__', json.dumps({k: data_uri('ana_' + k + '.webp') for k in ('ref',)})).replace('<title>', '<title>[playground] ', 1))
     out = out.replace('__PLAY__', 'false').replace('__ANA__', '{}')
     open(os.path.join(ROOT, 'public', 'index.html'), 'w', encoding='utf-8').write(out)
     print('public/index.html', len(out) // 1024, 'KB')
