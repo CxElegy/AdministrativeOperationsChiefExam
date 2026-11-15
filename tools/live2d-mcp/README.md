@@ -12,7 +12,7 @@
 ## 入れ方（Windows）
 
 1. Live2D 公式サイトから Cubism Editor を入れる（native-mcp を使うなら 5.3.03 か 5.3.04）。
-2. このフォルダで：`powershell -ExecutionPolicy Bypass -File setup.ps1`（入れる場所は `-Dir` で変えられる。既定 `D:\Claude\live2d-mcp`）
+2. このフォルダの `install.cmd` を ダブルクリック（Editor・git・claude を 確かめてから setup.ps1 を 動かす）。または：`powershell -ExecutionPolicy Bypass -File setup.ps1`（入れる場所は `-Dir` で変えられる。既定 `D:\Claude\live2d-mcp`）
 3. Cubism Editor：ファイル → 外部アプリケーション連携 を ON（ポート 22033）、`cubism-mcp` / `Cubism53 Native MCP` を「許可・編集」。Editor を 再起動するたびに 必要。
 4. Claude Code を 起動しなおし、`claude mcp list` で 3 つが出ることを確認。
 
