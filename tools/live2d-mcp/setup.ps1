@@ -2,7 +2,8 @@
 # 使い方（PowerShell）：  powershell -ExecutionPolicy Bypass -File setup.ps1
 # 先に Live2D Cubism Editor を 公式サイトから入れておくこと（5.3.03 / 5.3.04、または 5.4）
 # このファイルは UTF-8（BOM つき）で保存すること。BOM が ないと Windows PowerShell 5.1 が 日本語を 読みまちがえる
-param([string]$Dir = "D:\Claude\live2d-mcp")
+# -Workspace（モデルの作業フォルダ）を 指定すると Setup.cmd を 質問なしで 動かす（入力できない ターミナル用）
+param([string]$Dir = "D:\Claude\live2d-mcp", [string]$Workspace = "", [string]$EditorHome = "C:\Program Files\Live2D Cubism 5.3")
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"                                   # Invoke-WebRequest が 遅くならないように
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12   # PowerShell 5.1 で GitHub に つなぐため
@@ -21,6 +22,8 @@ if (-not (Get-Command uvx -ErrorAction SilentlyContinue)) {
   Write-Host "uv を入れます"; powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
   $env:Path = "$env:USERPROFILE\.local\bin;$env:Path"
 }
+# Claude デスクトップアプリ（MSIX）から 動かすと AppData が 仮想化され、uv の Python のリンクが こわれるので、$Dir の中に 入れる
+if (-not $env:UV_PYTHON_INSTALL_DIR) { $env:UV_PYTHON_INSTALL_DIR = Join-Path $Dir "uv-python" }
 $uvx = (Get-Command uvx).Source   # Claude Code が 古い PATH のままでも 動くように フルパスで登録
 
 # ---- 1. cubism-mcp（nana7chi / Cubism Editor 5.4 の 外部連携 API） ----
@@ -40,7 +43,8 @@ Write-Host "公開値 : $want"
 if ($hash -ine $want) { throw "SHA-256 が リリースページの .sha256 と ちがいます。中止します" }
 Expand-Archive $zip $nat -Force
 $setup = Get-ChildItem $nat -Recurse -Filter Setup.cmd | Select-Object -First 1
-Push-Location $setup.DirectoryName; & .\Setup.cmd; $code = $LASTEXITCODE; Pop-Location   # ここで Editor の場所と モデルの作業フォルダを 聞かれる
+if ($Workspace) { New-Item -ItemType Directory -Force $Workspace | Out-Null; $setupArgs = @("--non-interactive", "--editor-home", $EditorHome, "--workspace", $Workspace) } else { $setupArgs = @() }
+Push-Location $setup.DirectoryName; & .\Setup.cmd @setupArgs; $code = $LASTEXITCODE; Pop-Location   # ここで Editor の場所と モデルの作業フォルダを 聞かれる
 if ($code) { throw "Setup.cmd が 失敗しました（終了コード $code）" }
 # Setup.cmd は 設定を %LOCALAPPDATA%\Cubism53MCP\profiles\default\client-configs\mcp.json に 書く（ZIP の中ではない）
 $cfg = Join-Path $env:LOCALAPPDATA "Cubism53MCP\profiles\default\client-configs\mcp.json"
