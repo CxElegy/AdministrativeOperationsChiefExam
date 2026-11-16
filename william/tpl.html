@@ -434,16 +434,16 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .kgrid { display: flex; flex-wrap: wrap; gap: 6px; }
 .kt { position: relative; width: 112px; min-height: 46px; padding: 5px 7px; border-radius: 7px; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 1px; transition: transform .15s; }
 .kt:hover { transform: translateY(-2px); } .kt b { font-size: 12px; } .kt small { font-size: 10px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.kt.need { border: 1px solid #ffe2a0; background: linear-gradient(#fff3c9, #ffd27a); color: #3a2a12; box-shadow: 0 0 12px rgba(255, 207, 102, .75), 0 0 28px rgba(255, 207, 102, .35); animation: kglow 3.2s ease-in-out var(--ph, 0ms) infinite; }
+.kt.need { border: 1px solid #ffe2a0; background: linear-gradient(#fff3c9, #ffd27a); color: #3a2a12; box-shadow: 0 0 6px rgba(255, 207, 102, .3), 0 0 14px rgba(255, 207, 102, .12); animation: kglow 3.2s ease-in-out var(--ph, 0ms) infinite; }
 .kt.need em { position: absolute; right: -6px; top: -7px; font-style: normal; font-size: 10px; font-weight: 700; background: #d9534f; color: #fff; border-radius: 99px; padding: 0 5px; line-height: 16px; }
 .kt.got { border: 1px solid #3a3a52; background: #23233a; color: #6f6c84; } .kt.got b::after { content: " ✓"; color: #7b8a6a; }
 .kt.yet { border: 1px dashed #5f5c78; background: rgba(255, 255, 255, .03); color: #a9a28f; }
-@keyframes kglow { 0%, 100% { box-shadow: 0 0 10px rgba(255, 207, 102, .6), 0 0 22px rgba(255, 207, 102, .25); } 50% { box-shadow: 0 0 12px rgba(255, 210, 110, .72), 0 0 26px rgba(255, 207, 102, .32); } }
+@keyframes kglow { 0%, 100% { box-shadow: 0 0 6px rgba(255, 207, 102, .3), 0 0 14px rgba(255, 207, 102, .12); } 50% { box-shadow: 0 0 8px rgba(255, 210, 110, .38), 0 0 16px rgba(255, 207, 102, .16); } }
 .mtools { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
 .cs { columns: 2 340px; column-gap: 14px; }
 .ci { break-inside: avoid; margin: 0 0 14px; background: linear-gradient(var(--paper), #f3ead6); color: var(--ink); border-radius: 10px; border: 1px solid var(--gold); padding: 11px 13px 10px; font-size: 13px; line-height: 1.6; }
 .ci.got { opacity: .55; filter: saturate(.4); }
-.ci.need { box-shadow: 0 0 0 2px rgba(255, 207, 102, .55), 0 0 18px rgba(255, 207, 102, .35); }
+.ci.need { box-shadow: 0 0 0 2px rgba(255, 207, 102, .45), 0 0 10px rgba(255, 207, 102, .15); }
 .ci .ch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
 .ci .ch .no { font-weight: 700; color: var(--ink); font-size: 13px; }
 .ci .tag { border-radius: 99px; padding: 0 7px; font-size: 10px; font-weight: 700; } .ci .tag.x { background: #d9534f; color: #fff; } .ci .tag.n { background: #ffd27a; color: #3a2a12; } .ci .tag.g { background: #c9d6bd; color: #3a4a2a; }
@@ -468,18 +468,18 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .ci .qa { margin-top: 6px; font-size: 12px; } .ci .qa summary { cursor: pointer; color: #8a6a35; font-weight: 700; } .ci .qa[open] summary { margin-bottom: 4px; } .ci .law { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
 .ci .go { margin-top: 6px; border: 0; background: none; color: #8a6a35; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
 .kgraph { display: block; width: 100%; max-width: 620px; margin: 0 auto; overflow: visible; font-family: inherit; }
-.kgraph .e { fill: none; stroke: #4a4766; stroke-width: 1.5; } .kgraph .e.need { stroke: #ffcf66; stroke-width: 2.4; opacity: .85; } .kgraph .e.got { stroke: #34344c; }
+.kgraph .e { fill: none; stroke: #4a4766; stroke-width: 1.5; } .kgraph .e.need { stroke: #e6c06a; stroke-width: 2.2; opacity: .7; } .kgraph .e.got { stroke: #34344c; }
 .kgraph g[data-mroom], .kgraph g[data-mfloor] { cursor: pointer; }
-.kgraph .n { stroke-width: 1.5; } .kgraph .n.need { fill: #ffe39a; stroke: #fff3c9; } .kgraph .n.got { fill: #23233a; stroke: #3a3a52; } .kgraph .n.yet { fill: #1b1c33; stroke: #6d6a88; stroke-dasharray: 4 3; }
+.kgraph .n { stroke-width: 1.5; } .kgraph .n.need { fill: #f3d995; stroke: #f7e6b8; } .kgraph .n.got { fill: #23233a; stroke: #3a3a52; } .kgraph .n.yet { fill: #1b1c33; stroke: #6d6a88; stroke-dasharray: 4 3; }
 .kgraph text { text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 700; }
 .kgraph .t.need { fill: #3a2a12; } .kgraph .t.got { fill: #8c89a3; } .kgraph .t.yet { fill: #d6cfbb; }
-.kgraph .halo { fill: #ffcf66; opacity: .4; filter: url(#kblur); animation: khalo 3.2s ease-in-out var(--ph, 0ms) infinite; }  /* ぜんぶ 同じ周期・同じ位相で、ほんの少しだけ */
-.kgraph .kglow { fill: #ffe8c0; opacity: .4; filter: url(#kblur); animation: khalo 3.2s ease-in-out var(--ph, 0ms) infinite; }
+.kgraph .halo { fill: #ffcf66; opacity: .2; filter: url(#kblur); animation: khalo 3.2s ease-in-out var(--ph, 0ms) infinite; }  /* ぜんぶ 同じ周期・同じ位相で、ほんの少しだけ */
+.kgraph .kglow { fill: #ffe8c0; opacity: .2; filter: url(#kblur); animation: khalo 3.2s ease-in-out var(--ph, 0ms) infinite; }
 .kgraph .kcore text { font-weight: 700; } .kgraph .kc { fill: #4a2a3a; stroke: #fff6f2; stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; }  /* 月の上でも 読める（縁取り） */
 .kgraph .cnt { fill: #d9534f; } .kgraph .cntt { fill: #fff; }
 .kgraph .fl text.s { font-size: 14px; font-weight: 700; }
 .kgraph g[data-mroom]:hover .n, .kgraph g[data-mfloor]:hover .n { stroke: #fff; }
-@keyframes khalo { 0%, 100% { opacity: .34; } 50% { opacity: .46; } }
+@keyframes khalo { 0%, 100% { opacity: .16; } 50% { opacity: .22; } }
 .mview { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: 2px; } .mview .mbtn { padding: 2px 10px; font-size: 11px; }
 .mtop { position: fixed; z-index: 31; right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); border: 1px solid #e9b44c; border-radius: 99px; padding: 10px 16px; background: rgba(21, 22, 43, .92); color: #ffd57a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s, transform .2s; }
 .mtop.on { opacity: 1; pointer-events: auto; transform: none; }
@@ -1448,8 +1448,8 @@ function kgraphSVG() {
 		edges += `<path class="e ${fs}" d="M0 0L${fx} ${fy}"/>`;
 		f.rooms.forEach((room, r) => { const s = st[fi][r], [x, y] = pt(angs[r], r % 2 ? 350 : 262), [cx, cy] = pt((fa + angs[r]) / 2, 215);
 			edges += `<path class="e ${s.st}" d="M${fx} ${fy}Q${cx} ${cy} ${x} ${y}"/>`;
-			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="36"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text>${s.n ? `<circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text>` : ''}</g>`; });
-		fls += `<g class="fl" data-mfloor="${fi}">${fs === 'need' ? `<circle class="halo" cx="${fx}" cy="${fy}" r="46"/>` : ''}<circle class="n ${fs}" cx="${fx}" cy="${fy}" r="40"/><text class="t ${fs}" x="${fx}" y="${fy - 10}" font-size="21">${f.floor}F</text><text class="t s ${fs}" x="${fx}" y="${fy + 13}">${esc(f.short)}</text></g>`;
+			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="32"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text>${s.n ? `<circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text>` : ''}</g>`; });
+		fls += `<g class="fl" data-mfloor="${fi}">${fs === 'need' ? `<circle class="halo" cx="${fx}" cy="${fy}" r="50"/>` : ''}<circle class="n ${fs}" cx="${fx}" cy="${fy}" r="40"/><text class="t ${fs}" x="${fx}" y="${fy - 10}" font-size="21">${f.floor}F</text><text class="t s ${fs}" x="${fx}" y="${fy + 13}">${esc(f.short)}</text></g>`;
 	});
 	const need = st.flat().filter((x) => x.st === 'need').length, got = st.flat().filter((x) => x.st === 'got').length;
 	return `<svg class="kgraph" viewBox="-400 -400 800 800" role="img" aria-label="知識マップ：要復習 ${need} 室、習得 ${got} 室"><defs><filter id="kblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter><radialGradient id="kmoon" cx="45%" cy="42%" r="60%"><stop offset="0" stop-color="#fff6f2"/><stop offset=".6" stop-color="#f0dde3"/><stop offset=".9" stop-color="#d9c0cf"/><stop offset="1" stop-color="#c9adc0"/></radialGradient></defs>${edges}${nodes}${fls}
