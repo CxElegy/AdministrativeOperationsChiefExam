@@ -504,6 +504,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .rtlist { list-style: none; padding: 0; margin: 10px 0; font-size: 13px; } .rtlist li { padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); color: #d9cfb8; } .rtlist li b { margin: 0 8px; color: #f7e7bf; }
 .rtlist li.o::first-letter { color: #8fd18f; } .rtlist li.x::first-letter { color: #ff9a8f; }
 .rtnote { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: #eaf5e6; color: #2e7d32; font-size: 13px; font-weight: 700; animation: fade .25s both; }
+.pbar { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(233, 180, 76, .3); }
+.pbt { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; font-size: 13px; color: #d9cfb8; } .pbt b { color: #f7e7bf; } .pbt em { font-style: normal; font-size: 18px; font-weight: 700; color: #8fd18f; } .pbt .pc { margin-left: auto; font-weight: 700; color: #f7e7bf; }
+.pbg { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; } .pbg i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #5ca05c, #8fd18f); transition: width .6s var(--ease-io, ease); }
 .mempty { padding: 24px; text-align: center; color: #c9bfa8; }
 @media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {
 	.tower, .room { grid-column: 1; }
@@ -1525,11 +1528,15 @@ function matomeHTML() {
 	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
 		: (many.length ? `<h3>何度もまちがえた<small>${many.length} 問</small></h3><div class="cs">${many.map(card).join('')}</div>` : '') + (once.length ? `<h3>まちがえたことがある<small>${once.length} 問</small></h3><div class="cs">${once.map(card).join('')}</div>` : '');
 	const needN = items.filter((x) => x.need).length;
+	// 進み具合のバー：まちがえた問題 → 克服した数／まちがえた数。全体 → 習得か克服の部屋／全部屋
+	const pbar = (lbl, n, total, sub) => { const pc = total ? Math.round(n / total * 100) : 0; return `<div class="pbar"><div class="pbt"><b>${lbl}</b><span><em>${n}</em> / ${total}${sub}</span><span class="pc">${pc}%</span></div><div class="pbg"><i style="width:${pc}%"></i></div></div>`; };
+	const rsAll = DATA.floors.flatMap((f, fi) => f.rooms.map((_, r) => roomState(fi, r).st)), roomsDone = rsAll.filter((x) => x === 'got' || x === 'kok').length;
+	const prog = mScope === 'all' ? pbar('習得・克服した部屋', roomsDone, rsAll.length, ' 室') : pbar('克服', items.length - needN, items.length, ' 問');
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-kok">克服（緑）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
 		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
-		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : list}</section>`;
+		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${prog}${mScope === 'all' ? allPointsHTML() : list}</section>`;
 }
 // まとめの中で 目的の場所へ：上の固定ヘッダーの 実際の高さぶん 下げて止める（頭が かくれない）
 function mScroll(t) { const el = $('matome'), h = el.querySelector('.mhead')?.offsetHeight || 0, top = t.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - h - 8;
