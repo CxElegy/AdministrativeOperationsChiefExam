@@ -481,6 +481,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .mview { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: 2px; } .mview .mbtn { padding: 2px 10px; font-size: 11px; }
 .mtop { position: fixed; z-index: 31; right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); border: 1px solid #e9b44c; border-radius: 99px; padding: 10px 16px; background: rgba(21, 22, 43, .92); color: #ffd57a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s, transform .2s; }
 .mtop.on { opacity: 1; pointer-events: auto; transform: none; }
+.moonzoom { position: fixed; z-index: 60; border-radius: 50%; pointer-events: none; will-change: transform;
+	background: radial-gradient(circle at 34% 30%, rgba(190, 160, 180, .55) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(185, 150, 172, .5) 0 9%, transparent 10%), radial-gradient(circle at 44% 72%, rgba(190, 160, 180, .4) 0 5%, transparent 6%), radial-gradient(circle at 70% 30%, rgba(195, 165, 185, .35) 0 4%, transparent 5%), radial-gradient(circle at 45% 45%, #fff6f2, #f0dde3 55%, #d9c0cf 85%, #c9adc0);
+	box-shadow: 0 0 40px 16px rgba(255, 232, 200, .7); }  /* 月の表面（クレーターつき） */
 .mempty { padding: 24px; text-align: center; color: #c9bfa8; }
 @media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {
 	.tower, .room { grid-column: 1; }
@@ -669,7 +672,7 @@ DATA.floors.forEach((f, fi) => {
 // 月（絵の右上）：押すと まとめノート
 const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
 	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
-	 b.innerHTML = ['✦', '✦', '✦', '✦', '✨', '✧', '✨', '✦', '✧', '✨'].map((c) => `<i class="sp">${c}</i>`).join(''); b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
+	 b.innerHTML = ['✦', '✦', '✦', '✦', '✨', '✧', '✨', '✦', '✧', '✨'].map((c) => `<i class="sp">${c}</i>`).join(''); b.addEventListener('click', () => { se('tap'); moonZoom(openMatome); }); $('bldg').appendChild(b); return b; })();
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
 function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const cw = wr.clientWidth * 0.95, k = wr.clientHeight > 60 ? Math.min(cw / BW, wr.clientHeight / BH) : cw / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
@@ -1523,6 +1526,16 @@ function drawMatome() {
 	el.querySelectorAll('[data-mroom]').forEach((b) => b.addEventListener('click', () => { se('tap'); const [fi, r] = b.dataset.mroom.split(',').map(Number), c = el.querySelector(`.ci[data-fr="${fi},${r}"]`);
 		const a = el.querySelector(`.ar[data-ar="${fi},${r}"]`); if (mScope === 'all' && a) { mScroll(a); return; }
 		if (c) { mScroll(c); c.animate?.([{ transform: 'scale(1.03)' }, { transform: 'none' }], 600); } else { leaveMatome(); goRoom(fi, r); } }));
+}
+// 月を押したとき：月の表面へ 拡大していき、光がほどけて まとめノートへ
+function moonZoom(then) {
+	if (reduce || document.querySelector('.moonzoom')) { then(); return; }
+	const r = MOON.getBoundingClientRect(), d = Math.max(r.width, 8), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+	const far = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy)) * 2 / d * 1.15;
+	const z = document.createElement('div'); z.className = 'moonzoom'; Object.assign(z.style, { left: cx - d / 2 + 'px', top: cy - d / 2 + 'px', width: d + 'px', height: d + 'px' });
+	document.body.appendChild(z); se('tap');
+	const a = z.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: `scale(${far * 0.35})`, filter: 'brightness(1.15)', offset: 0.55 }, { transform: `scale(${far})`, filter: 'brightness(1.6)' }], { duration: 750, easing: 'cubic-bezier(.55,0,.75,.2)', fill: 'forwards' });
+	a.onfinish = () => { then(); z.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = () => z.remove(); };
 }
 function openMatome() {
 	const el = $('matome'); if (!el.hidden) return; drawMatome(); el.hidden = false; el.scrollTop = 0; app.classList.add('show-matome');
