@@ -443,7 +443,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .mtools { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
 .cs { columns: 2 340px; column-gap: 14px; }
 .ci { break-inside: avoid; margin: 0 0 14px; background: linear-gradient(var(--paper), #f3ead6); color: var(--ink); border-radius: 10px; border: 1px solid var(--gold); padding: 11px 13px 10px; font-size: 13px; line-height: 1.6; }
-.ci.got { opacity: .55; filter: saturate(.4); }
+.ci.got { opacity: .85; filter: saturate(.6); }
 .ci.need { box-shadow: 0 0 0 2px rgba(217, 180, 106, .5); }
 .ci .ch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
 .ci .ch .no { font-weight: 700; color: var(--ink); font-size: 13px; }
@@ -1511,7 +1511,7 @@ function matomeHTML() {
 	const map = DATA.floors.map((f, fi) => `<div class="kfl"><b>${f.floor}F<small>${esc(f.short)}</small></b><div class="kgrid">${f.rooms.map((room, r) => { const s = roomState(fi, r);
 		return `<button type="button" class="kt ${s.st}" data-mroom="${fi},${r}" title="${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}"><b>${roomNo(fi, r)}</b><small>${esc(room.title)}</small>${s.n ? `<em>${s.n}</em>` : ''}</button>`; }).join('')}</div></div>`).join('');
 	const items = []; DATA.floors.forEach((f, fi) => f.rooms.forEach((room, r) => room.qids.forEach((id, i) => { const m = missQ(id); if (m > 0) items.push({ id, fi, r, i, m, need: needQ(id), t: ST.q[id].t }); })));
-	const shown = items.filter((x) => !mOnly || x.need).sort((a, b) => (b.need - a.need) || (b.m - a.m) || (a.fi - b.fi) || (a.r - b.r) || (a.i - b.i));
+	const shown = items.slice().sort(  /* 克服しても 外さない（要復習が上、克服は下） */(a, b) => (b.need - a.need) || (b.m - a.m) || (a.fi - b.fi) || (a.r - b.r) || (a.i - b.i));
 	const card = (x) => { const q = QN(x.id), rec = ST.q[x.id], ans = q.answer.map((a) => esc(choiceText(q, a))).join('<br>'), wrong = !rec.last && rec.p && !q.answer.includes(rec.p) ? esc(choiceText(q, rec.p)) : '';
 		const stem = String(q.stem || '').replace(/\s+/g, ' '), short = stem.length > 90 ? stem.slice(0, 90) + '…' : stem;
 		return `<article class="ci ${x.need ? 'need' : 'got'}" id="ci-${esc(x.id)}" data-fr="${x.fi},${x.r}"><div class="ch"><span class="no">${roomNo(x.fi, x.r)}-${x.i + 1}</span><span>${esc(DATA.floors[x.fi].short)}・${esc(q.set || '')} 問${esc(q.no)}</span><span class="tag x">×${x.m}</span>${x.need ? '<span class="tag n">要復習</span>' : '<span class="tag g">克服</span>'}</div>
@@ -1519,14 +1519,13 @@ function matomeHTML() {
 			<details class="qa"><summary>問題と答えを見る</summary>${qaHTML(q, rec)}</details><button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };  /* 主役は 知識のポイント（箇条書き）。問題文は たたんでおく */
 	const many = shown.filter((x) => x.m >= 2), once = shown.filter((x) => x.m < 2);
 	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
-		: !shown.length ? '<p class="mempty">要復習の相談は ありません。ぜんぶ 克服しました ✦</p>'
 		: (many.length ? `<h3>何度もまちがえた<small>${many.length} 問</small></h3><div class="cs">${many.map(card).join('')}</div>` : '') + (once.length ? `<h3>まちがえたことがある<small>${once.length} 問</small></h3><div class="cs">${once.map(card).join('')}</div>` : '');
 	const needN = items.filter((x) => x.need).length;
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
 		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
-		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : `<div class="mtools"><button type="button" class="mbtn${mOnly ? ' on' : ''}" data-monly="1">要復習だけ</button><button type="button" class="mbtn${mOnly ? '' : ' on'}" data-monly="0">克服したものも</button></div>${list}`}</section>`;
+		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : list}</section>`;
 }
 // まとめの中で 目的の場所へ：上の固定ヘッダーの 実際の高さぶん 下げて止める（頭が かくれない）
 function mScroll(t) { const el = $('matome'), h = el.querySelector('.mhead')?.offsetHeight || 0, top = t.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - h - 8;
@@ -1575,7 +1574,6 @@ function drawMatome() {
 	el.querySelectorAll('[data-mview]').forEach((b) => b.addEventListener('click', () => { se('tap'); mView = b.dataset.mview; try { localStorage.setItem('kangyo-mview', mView); } catch (e) {} drawMatome(); }));
 	el.querySelectorAll('[data-mfloor]').forEach((b) => b.addEventListener('click', () => { se('tap'); const fi = +b.dataset.mfloor, c = mScope === 'all' ? el.querySelectorAll('.ap')[fi] : el.querySelector(`.ci[data-fr^="${fi},"]`); if (c) mScroll(c); else { leaveMatome(); goRoom(fi, firstOpenRoom(fi)); } }));
 	el.querySelectorAll('[data-mscope]').forEach((b) => b.addEventListener('click', () => { se('tap'); mScope = b.dataset.mscope; try { localStorage.setItem('kangyo-mscope', mScope); } catch (e) {} drawMatome(); }));
-	el.querySelectorAll('[data-monly]').forEach((b) => b.addEventListener('click', () => { se('tap'); mOnly = b.dataset.monly === '1'; drawMatome(); }));
 	el.querySelectorAll('[data-mgo]').forEach((b) => b.addEventListener('click', () => { se('tap'); const p = findQ(b.dataset.mgo); if (p) { leaveMatome(); goQ(p.f, p.k, true); } }));
 	el.querySelectorAll('[data-mroom]').forEach((b) => b.addEventListener('click', () => { se('tap'); const [fi, r] = b.dataset.mroom.split(',').map(Number), c = el.querySelector(`.ci[data-fr="${fi},${r}"]`);
 		const a = el.querySelector(`.ar[data-ar="${fi},${r}"]`); if (mScope === 'all' && a) { mScroll(a); return; }
