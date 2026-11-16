@@ -487,6 +487,19 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .moonzoom { position: fixed; z-index: 60; border-radius: 50%; pointer-events: none; will-change: transform;
 	background: radial-gradient(circle at 34% 30%, rgba(190, 160, 180, .55) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(185, 150, 172, .5) 0 9%, transparent 10%), radial-gradient(circle at 44% 72%, rgba(190, 160, 180, .4) 0 5%, transparent 6%), radial-gradient(circle at 70% 30%, rgba(195, 165, 185, .35) 0 4%, transparent 5%), radial-gradient(circle at 45% 45%, #fff6f2, #f0dde3 55%, #d9c0cf 85%, #c9adc0);
 	box-shadow: 0 0 40px 16px rgba(255, 232, 200, .7); }  /* 月の表面（クレーターつき） */
+.rtgo { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px 18px; border-radius: 12px; border: 1px solid #e9b44c; background: linear-gradient(135deg, #f3d48a, #d9a94c); color: #2b2210; font: inherit; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); text-align: left; }
+.rtgo b { font-size: 18px; letter-spacing: .05em; } .rtgo small { font-size: 12px; color: #4a3a1a; } .rtgo:hover { filter: brightness(1.05); } .rtgo:disabled { opacity: .45; cursor: default; filter: grayscale(.6); }
+.rtbar { position: sticky; top: 64px; z-index: 2; height: 4px; margin: 0 22px; border-radius: 99px; background: rgba(255, 255, 255, .12); overflow: hidden; } .rtbar i { display: block; height: 100%; background: #e9b44c; transition: width .3s; }
+.ci.rtq { font-size: 14px; } .rtstem { margin: 4px 0 8px; font-weight: 700; }
+.rtcs { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.rtc { display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid #d8c69e; background: #fffaf0; color: var(--ink); font: inherit; font-size: 13px; line-height: 1.6; cursor: pointer; }
+.rtc:hover:not(:disabled) { border-color: #c9a45c; background: #fff3d6; } .rtc b { flex: none; width: 1.6em; height: 1.6em; display: grid; place-items: center; border-radius: 50%; background: #e9dcc0; }
+.rtc small { display: block; margin-top: 3px; font-size: 11px; color: var(--ink-soft); } .rtc:disabled { cursor: default; }
+.rtc.ok { border-color: #5ca05c; background: #eaf5e6; } .rtc.ok b { background: #5ca05c; color: #fff; } .rtc.ng { border-color: #c0392b; background: #fbeceb; } .rtc.ng b { background: #c0392b; color: #fff; } .rtc.dim { opacity: .6; }
+.rtres { margin: 8px 0; padding: 8px 12px; border-radius: 8px; font-weight: 700; } .rtres.o { background: #eaf5e6; color: #2e7d32; } .rtres.x { background: #fbeceb; color: #c0392b; }
+.rtend h3 { font-size: 18px; } .rtsum { display: flex; gap: 10px; } .rtsum span { padding: 4px 12px; border-radius: 99px; font-weight: 700; } .rtsum .o { background: #5ca05c; color: #fff; } .rtsum .x { background: #c0392b; color: #fff; }
+.rtlist { list-style: none; padding: 0; margin: 10px 0; font-size: 13px; } .rtlist li { padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); color: #d9cfb8; } .rtlist li b { margin: 0 8px; color: #f7e7bf; }
+.rtlist li.o::first-letter { color: #8fd18f; } .rtlist li.x::first-letter { color: #ff9a8f; }
 .mempty { padding: 24px; text-align: center; color: #c9bfa8; }
 @media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {
 	.tower, .room { grid-column: 1; }
@@ -1509,6 +1522,7 @@ function matomeHTML() {
 		: (many.length ? `<h3>何度もまちがえた<small>${many.length} 問</small></h3><div class="cs">${many.map(card).join('')}</div>` : '') + (once.length ? `<h3>まちがえたことがある<small>${once.length} 問</small></h3><div class="cs">${once.map(card).join('')}</div>` : '');
 	const needN = items.filter((x) => x.need).length;
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
+		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
 		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
 		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : `<div class="mtools"><button type="button" class="mbtn${mOnly ? ' on' : ''}" data-monly="1">要復習だけ</button><button type="button" class="mbtn${mOnly ? '' : ' on'}" data-monly="0">克服したものも</button></div>${list}`}</section>`;
@@ -1519,12 +1533,43 @@ function mScroll(t) { const el = $('matome'), h = el.querySelector('.mhead')?.of
 // マップより下に来たら「マップへ」ボタンを出す
 function mTopBtn() { const el = $('matome'), m = el.querySelector('.kmap'), b = el.querySelector('.mtop'); if (m && b) b.classList.toggle('on', el.scrollTop > m.offsetTop + m.offsetHeight - 120); }
 $('matome').addEventListener('scroll', mTopBtn, { passive: true });
+
+// ---------------- 再テスト：要復習の問題から ランダムに出題。正解したら その場で 克服 ----------------
+const RT_N = 10; let RT = null;
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function startRetest(ids) { const pool = ids || Object.keys(ST.q).filter((id) => DATA.q[id] && needQ(id)); if (!pool.length) return; RT = { ids: shuffle(pool.slice()).slice(0, RT_N), i: 0, ok: [], ng: [], ans: 0 }; drawRetest(); $('matome').scrollTop = 0; }
+function rtHead() { return `<div class="mhead"><button type="button" class="mbtn" data-rtquit>× やめる</button><h2>再テスト<small>${RT.i < RT.ids.length ? `${RT.i + 1} / ${RT.ids.length} 問 ・ ` : ''}克服 ${RT.ok.length} 問</small></h2></div><div class="rtbar"><i style="width:${Math.round(RT.i / RT.ids.length * 100)}%"></i></div>`; }
+function drawRetest() {
+	const el = $('matome');
+	if (RT.i >= RT.ids.length) {
+		const li = (ids, ok) => ids.map((id) => { const p = findQ(id), r = p ? roomOf(p.k, p.f) : 0; return `<li class="${ok ? 'o' : 'x'}">${ok ? '克服' : 'まだ'}<b>${p ? roomNo(p.f, r) + '-' + (p.k - rstart(p.f, r) + 1) : ''}</b>${esc(String(QN(id).stem || '').slice(0, 40))}…</li>`; }).join('');
+		el.innerHTML = rtHead() + `<section class="msec rtend"><h3>${RT.ok.length === RT.ids.length ? 'ぜんぶ 克服！ ✦' : `${RT.ok.length} 問 克服しました`}</h3><p class="rtsum"><span class="o">克服 ${RT.ok.length}</span><span class="x">まだ ${RT.ng.length}</span></p><ul class="rtlist">${li(RT.ok, true)}${li(RT.ng, false)}</ul>
+			<div class="mtools">${RT.ng.length ? '<button type="button" class="mbtn on" data-rtagain>まだの問題を もう一度</button>' : ''}<button type="button" class="mbtn${RT.ng.length ? '' : ' on'}" data-rtquit>まとめに戻る</button></div></section>`;
+	} else {
+		const id = RT.ids[RT.i], q = QN(id), p = findQ(id), r = p ? roomOf(p.k, p.f) : 0, done = RT.ans > 0, ok = done && q.answer.includes(RT.ans);
+		const st = q.statements ? `<ul class="qs">${q.statements.map((x) => { const sn = done && (q.statementNotes || []).find((y) => y.label === x.label); return `<li>${sn ? `<em class="${sn.correct ? 'o' : 'x'}">${sn.correct ? '○' : '×'}</em>` : ''}<b>${esc(x.label)}</b> ${fmt(x.text)}${sn ? `<span class="nt">${fmt(sn.note)}</span>` : ''}</li>`; }).join('')}</ul>` : '';
+		const ch = (q.choices || []).map((c, k) => { const n = k + 1, cls = !done ? '' : q.answer.includes(n) ? 'ok' : n === RT.ans ? 'ng' : 'dim';
+			return `<button type="button" class="rtc ${cls}" data-rta="${n}"${done ? ' disabled' : ''}><b>${n}</b><span>${fmt(c)}${done && q.choiceNotes && q.choiceNotes[k] && !q.statements ? `<small>${fmt(q.choiceNotes[k])}</small>` : ''}</span></button>`; }).join('');
+		const after = done ? `<div class="rtres ${ok ? 'o' : 'x'}">${ok ? '正解！ 克服しました' : `ざんねん。正解は ${q.answer.join('・')}`}</div>${q.points && q.points.length ? `<ul class="kp">${q.points.map((t) => liPt(t) + '</li>').join('')}</ul>` : ''}<div class="mtools"><button type="button" class="mbtn on" data-rtnext>${RT.i + 1 < RT.ids.length ? '次の問題 ›' : '結果を見る ›'}</button></div>` : '';
+		el.innerHTML = rtHead() + `<section class="msec"><article class="ci rtq"><div class="ch"><span class="no">${p ? roomNo(p.f, r) + '-' + (p.k - rstart(p.f, r) + 1) : ''}</span><span>${esc(p ? DATA.floors[p.f].short : '')}・${esc(q.set || '')} 問${esc(q.no)}</span></div><p class="rtstem">${fmt(q.stem || '')}</p>${st}<div class="rtcs">${ch}</div>${after}</article></section>`;
+	}
+	el.querySelectorAll('[data-rtquit]').forEach((b) => b.addEventListener('click', () => { se('tap'); RT = null; drawMatome(); $('matome').scrollTop = 0; }));
+	el.querySelectorAll('[data-rta]').forEach((b) => b.addEventListener('click', () => answerRetest(+b.dataset.rta)));
+	el.querySelector('[data-rtnext]')?.addEventListener('click', () => { se('tap'); RT.i++; RT.ans = 0; drawRetest(); el.scrollTop = 0; });
+	el.querySelector('[data-rtagain]')?.addEventListener('click', () => { se('tap'); startRetest(RT.ng.slice()); });
+}
+function answerRetest(n) {
+	if (!RT || RT.ans) return; const id = RT.ids[RT.i], q = QN(id), ok = q.answer.includes(n); RT.ans = n;
+	recordAnswer(id, ok, n); if (ok) { const r = ST.q[id]; delete r.box; delete r.due; RT.ok.push(id); } else RT.ng.push(id);  /* 再テストで 正解 ＝ 克服 */
+	saveStore(); paintWindows(); se(ok ? 'ok' : 'ng'); drawRetest();
+}
 function drawMatome() {
 	const el = $('matome'), top = el.scrollTop; el.style.setProperty('--ph', `-${Math.round(performance.now() % 3200)}ms`); el.innerHTML = matomeHTML(); el.scrollTop = top;  /* 描きなおしても 光る周期が ずれない */
 	el.querySelector('[data-mclose]').addEventListener('click', () => { se('tap'); closeMatome(true); });
 	el.querySelector('[data-mprint]').addEventListener('click', () => print());
 	el.querySelector('.mtop').addEventListener('click', () => { se('tap'); mScroll(el.querySelector('.kmap')); });
 	mTopBtn();
+	el.querySelector('[data-rtgo]')?.addEventListener('click', () => { se('tap'); startRetest(); });
 	el.querySelectorAll('[data-mview]').forEach((b) => b.addEventListener('click', () => { se('tap'); mView = b.dataset.mview; try { localStorage.setItem('kangyo-mview', mView); } catch (e) {} drawMatome(); }));
 	el.querySelectorAll('[data-mfloor]').forEach((b) => b.addEventListener('click', () => { se('tap'); const fi = +b.dataset.mfloor, c = mScope === 'all' ? el.querySelectorAll('.ap')[fi] : el.querySelector(`.ci[data-fr^="${fi},"]`); if (c) mScroll(c); else { leaveMatome(); goRoom(fi, firstOpenRoom(fi)); } }));
 	el.querySelectorAll('[data-mscope]').forEach((b) => b.addEventListener('click', () => { se('tap'); mScope = b.dataset.mscope; try { localStorage.setItem('kangyo-mscope', mScope); } catch (e) {} drawMatome(); }));
@@ -1560,6 +1605,7 @@ function moonFly() {
 		.onfinish = () => { g.style.visibility = ''; z.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).onfinish = () => z.remove(); };
 }
 function openMatome() {
+	RT = null;
 	const el = $('matome'); if (!el.hidden) return; drawMatome(); el.hidden = false; el.scrollTop = 0; app.classList.add('show-matome');
 	try { history.pushState({ matome: 1 }, '', location.href); } catch (e) {}
 }
