@@ -398,16 +398,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 }
 /* ---------- 月（まとめノートの入口）：マンションの絵の 月を キラキラさせる ---------- */
 .tower, .room { grid-row: 1; } .tower { grid-column: 1; } .room { grid-column: 2; }
-.moon { position: absolute; z-index: 3; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, rgba(255, 246, 214, .55) 0 38%, rgba(255, 226, 160, .22) 52%, rgba(255, 220, 150, 0) 70%); animation: moonGlow 3.2s ease-in-out infinite; }
-.moon::before, .moon::after { content: "✦"; position: absolute; color: #fff4cf; text-shadow: 0 0 6px #ffe3a0; pointer-events: none; animation: twinkle 2.4s ease-in-out infinite; }
-.moon::before { left: 8%; top: -40%; font-size: calc(var(--k) * 34px); }
-.moon::after { right: -16%; bottom: 0; font-size: calc(var(--k) * 24px); animation-delay: 1.2s; }
-.moon i { position: absolute; left: 76%; top: -10%; font-size: calc(var(--k) * 28px); color: #fff; animation: twinkle 1.9s ease-in-out .6s infinite; pointer-events: none; font-style: normal; }
-.moon b { margin-left: 5px; min-width: 1.5em; padding: 0 .35em; border-radius: 99px; background: #e9b44c; color: #2b2522; font-weight: 700; text-align: center; }
+.moon { position: absolute; z-index: 3; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, rgba(255, 246, 214, .55) 0 38%, rgba(255, 226, 160, .22) 52%, rgba(255, 220, 150, 0) 70%); animation: moonGlow 4s ease-in-out infinite; }
 .moon:hover, .moon:focus-visible { outline: none; filter: brightness(1.25); }
-.moon .lbl { position: absolute; right: calc(100% + 14px); top: 0; display: flex; align-items: center; white-space: nowrap; font-size: 11px; line-height: 1.6; color: #f7e7bf; letter-spacing: .05em; padding: 1px 4px 1px 8px; border-radius: 99px; background: rgba(12, 12, 30, .72); border: 1px solid rgba(233, 180, 76, .5); pointer-events: none; }  /* 月の左の 夜空に 1 つの札（文字を 絵や 星と 重ねない） */
-@keyframes moonGlow { 0%, 100% { box-shadow: 0 0 calc(var(--k) * 40px) calc(var(--k) * 10px) rgba(255, 228, 160, .35); } 50% { box-shadow: 0 0 calc(var(--k) * 90px) calc(var(--k) * 26px) rgba(255, 228, 160, .6); } }
-@keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(20deg); } }
+@keyframes moonGlow { 0%, 100% { filter: brightness(.8); box-shadow: 0 0 calc(var(--k) * 30px) calc(var(--k) * 6px) rgba(255, 228, 160, .2); } 50% { filter: brightness(1.3); box-shadow: 0 0 calc(var(--k) * 90px) calc(var(--k) * 26px) rgba(255, 228, 160, .6); } }
 
 /* ---------- まとめノート（チートシート＋知識マップ）。PC：右の部屋と入れかえ。スマホ：別の画面 ---------- */
 .matome { grid-column: 2; grid-row: 1; z-index: 15; overflow: auto; overscroll-behavior: contain; background: radial-gradient(ellipse at 80% -10%, #3b3560, #15162b 60%); color: #f3ead8; padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 24px); animation: fade .25s both; }
@@ -443,12 +436,20 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .ci .a { margin: 0 0 4px; padding: 5px 8px; border-radius: 6px; background: rgba(92, 160, 92, .13); border-left: 3px solid #5ca05c; }
 .ci .a b, .ci .w b { font-size: 11px; margin-right: 4px; } .ci .w { margin: 0 0 4px; padding: 3px 8px; border-left: 3px solid #d9534f; color: #8a4a46; font-size: 12px; }
 .ci .pt { margin: 4px 0 0; }
-.ci .kp { margin: 2px 0 4px; padding: 0; list-style: none; } .ci .kp li { position: relative; padding-left: 1.1em; margin: 0 0 4px; } .ci .kp li::before { content: "●"; position: absolute; left: 0; top: .05em; font-size: .7em; color: #c9a45c; } .ci .kp b { background: linear-gradient(transparent 60%, #ffe39a 60%); }
+.ci .kp { margin: 2px 0 4px; padding: 0; list-style: none; } .ci .kp li { position: relative; padding-left: 1.1em; margin: 0 0 4px; } .ci .kp li::before { content: "●"; position: absolute; left: 0; top: .05em; font-size: .7em; color: #c9a45c; } .ci .kp b { font-weight: 700; } .ci .kp .pk, .plegend .pk { background: linear-gradient(transparent 55%, #ffe08a 55%); color: #3a2a12; }
+.ci .kp .pn, .plegend .pn { color: #1f5fa8; } .ci .kp .pg, .plegend .pg { color: #c0392b; } .ci .kp .px, .plegend .px { color: #c46a00; }
+.ci .kp .pk .pn, .ci .kp .pk .pg, .ci .kp .pk .px { background: none; }
+.trap { display: inline-block; margin-right: 5px; padding: 0 6px; border-radius: 4px; background: #c0392b; color: #fff; font-size: 10px; font-weight: 700; line-height: 1.6; vertical-align: 1px; }
+.plegend { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 0 0 8px; font-size: 12px; } .plegend span { padding: 1px 8px; border-radius: 6px; background: var(--paper); font-weight: 700; } .plegend .trap { margin: 0; font-size: 12px; background: #c0392b; color: #fff; }
 .ci { scroll-margin-top: 84px; }
 .ap h4 { margin: 14px 0 8px; font-size: 14px; color: #f7e7bf; } .ap h4 span { display: inline-block; margin-right: 8px; padding: 0 8px; border-radius: 6px; background: #e9b44c; color: #2b2522; }
 .ci.ar.got { opacity: .6; } .ci.ar .kp li.need { background: linear-gradient(90deg, rgba(255, 207, 102, .35), rgba(255, 207, 102, 0)); border-radius: 4px; } .ci.ar .kp li.need::before { content: "★"; color: #d98b00; }
 .ci .qn { margin-left: 6px; border: 0; padding: 0 5px; border-radius: 4px; background: rgba(138, 106, 53, .12); color: #8a6a35; font: inherit; font-size: 10px; cursor: pointer; vertical-align: 1px; }
 .mscope { margin-top: -2px; }
+.ci .qs { margin: 4px 0 6px; padding: 0; list-style: none; } .ci .qs li { margin: 0 0 6px; padding: 4px 6px; border-radius: 6px; background: rgba(255, 255, 255, .5); }
+.ci .qs li.ok { background: rgba(92, 160, 92, .14); } .ci .qs li.mine:not(.ok) { background: rgba(217, 83, 79, .1); }
+.ci .qs em { font-style: normal; font-weight: 700; margin-right: 4px; } .ci .qs em.o { color: #2e7d32; } .ci .qs em.x { color: #c0392b; }
+.ci .qs .nt { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-soft); } .ci .yp { margin-left: 6px; padding: 0 6px; border-radius: 4px; background: #c0392b; color: #fff; font-size: 10px; font-weight: 700; }
 .ci .qa { margin-top: 6px; font-size: 12px; } .ci .qa summary { cursor: pointer; color: #8a6a35; font-weight: 700; } .ci .qa[open] summary { margin-bottom: 4px; } .ci .law { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
 .ci .go { margin-top: 6px; border: 0; background: none; color: #8a6a35; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
 .kgraph { display: block; width: 100%; max-width: 620px; margin: 0 auto; overflow: visible; font-family: inherit; }
@@ -651,7 +652,7 @@ DATA.floors.forEach((f, fi) => {
 // 月（絵の右上）：押すと まとめノート
 const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
 	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
-	b.innerHTML = '<i>✧</i><span class="lbl">まとめ<b hidden></b></span>'; b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
+	 b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
 function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const cw = wr.clientWidth * 0.95, k = wr.clientHeight > 60 ? Math.min(cw / BW, wr.clientHeight / BH) : cw / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
@@ -1412,7 +1413,7 @@ $('idxBtn').addEventListener('click', () => openIndex()); $('idxBtn2').addEventL
 const needQ = (id) => { const r = ST.q[id]; return !!r && (!r.last || r.box !== undefined); };
 const missQ = (id) => { const r = ST.q[id]; return r ? r.a - r.c : 0; };
 function roomState(fi, r) { const ids = DATA.floors[fi].rooms[r].qids, n = ids.filter(needQ).length; return { n, st: n ? 'need' : isLit(roomStats(fi, r)) ? 'got' : 'yet' }; }
-function paintMoon() { const n = Object.keys(ST.q).filter((id) => DATA.q[id] && needQ(id)).length, b = MOON.querySelector('b'); b.hidden = !n; b.textContent = n; }
+function paintMoon() { const n = Object.keys(ST.q).filter((id) => DATA.q[id] && needQ(id)).length; MOON.setAttribute('aria-label', `まとめノート（要復習 ${n} 問）`); }  /* 月には 文字を出さない（光るだけ） */
 
 // 知識マップ（グラフ）：まん中 → 階 → 部屋 を 線でつなぐ。部屋は 2 重の輪（タップしやすい大きさに）
 function kgraphSVG() {
@@ -1433,13 +1434,36 @@ function kgraphSVG() {
 		<circle r="58" fill="#2b2950" stroke="#e9b44c" stroke-width="2"/><text y="-14" font-size="14" fill="#f7e7bf">知識マップ</text><text y="10" font-size="22" fill="#ffd57a">${need}</text><text y="32" font-size="10" fill="#c9bfa8" font-weight="400">要復習の部屋</text></svg>`;
 }
 let mView = (() => { try { return localStorage.getItem('kangyo-mview') || 'graph'; } catch (e) { return 'graph'; } })();
+
+// 知識のポイントの 色分け：黄＝最重要（**…**）、青＝数字・期限、赤＝否定・禁止（ひっかけ）、橙＝例外。「〜ではない」と わざわざ否定している行は「ひっかけ注意」
+const PT_NUM = /(\d+(?:\.\d+)?(?:分の\d+)?(?:か月|箇月|ヶ月|カ月|日以内|日前|日|年以内|年|週間|時間|万円以下|万円|円|人以上|人|名|割|回|%|％|倍)(?:以上|以下|未満|超|以内|前まで|前)?|\d+分の\d+(?:以上)?|過半数|全員(?:の合意|の同意)?|半数以上)/g;
+const PT_NEG = /(できない|不要|ではない|ではなく|無効|禁止|してはならない|要しない|含まない|されない|ならない|不可|認められない|対抗できない|負わない)/g;
+const PT_EXC = /(例外|ただし|を除き|を除く|でも可|も可)/g;
+function fmtPt(t) {
+	return esc(t).replace(/\*\*(.+?)\*\*/g, '\u0001$1\u0002').replace(PT_NUM, '<b class="pn">$1</b>').replace(PT_NEG, '<b class="pg">$1</b>').replace(PT_EXC, '<b class="px">$1</b>').replace(/\u0001/g, '<b class="pk">').replace(/\u0002/g, '</b>');
+}
+const trapPt = (t) => /ではなく|ではない[）)]|（[^）]*ではない）|と混同|ひっかけ/.test(t);
+const liPt = (t, extra = '') => `<li${extra}>${trapPt(t) ? '<span class="trap">ひっかけ注意</span>' : ''}${fmtPt(t)}`;
+const PT_LEGEND = '<p class="plegend"><span class="pk">最重要</span><span class="pn">数字・期限</span><span class="pg">否定・禁止</span><span class="px">例外</span><span class="trap">ひっかけ注意</span></p>';
 let mOnly = true, mScope = (() => { try { return localStorage.getItem('kangyo-mscope') || 'miss'; } catch (e) { return 'miss'; } })();
 // 全体の復習ポイント：階 → 部屋ごとに、全問題の 知識のポイントを 箇条書きで。要復習の問題から来た行は 光らせる
 function allPointsHTML() {
 	return DATA.floors.map((f, fi) => `<section class="ap"><h4><span>${f.floor}F</span>${esc(f.label)}</h4><div class="cs">${f.rooms.map((room, r) => { const rs = roomState(fi, r), seen = new Set();
 		const lis = room.qids.flatMap((id, i) => { const q = QN(id), pts = q.points && q.points.length ? q.points : q.explanation ? [q.explanation] : [], nd = needQ(id);
-			return pts.filter((t) => !seen.has(t) && seen.add(t)).map((t) => `<li class="${nd ? 'need' : ''}">${fmt(t)}<button type="button" class="qn" data-mgo="${esc(id)}" title="この相談を解く">${roomNo(fi, r)}-${i + 1}</button></li>`); }).join('');
+			return pts.filter((t) => !seen.has(t) && seen.add(t)).map((t) => `${liPt(t, nd ? ' class="need"' : '')}<button type="button" class="qn" data-mgo="${esc(id)}" title="この相談を解く">${roomNo(fi, r)}-${i + 1}</button></li>`); }).join('');
 		return `<article class="ci ar ${rs.st}" id="ar-${fi}-${r}" data-ar="${fi},${r}"><div class="ch"><span class="no">${roomNo(fi, r)}</span><span>${esc(room.title)}</span>${rs.st === 'need' ? `<span class="tag n">要復習 ${rs.n}</span>` : rs.st === 'got' ? '<span class="tag g">習得</span>' : ''}</div><ul class="kp">${lis}</ul></article>`; }).join('')}</div></section>`).join('');
+}
+// 問題と答え：問題文は全文。組合せ問題は ア〜エ の文に ○×と理由、ふつうの問題は 全選択肢に ○×と理由（前回えらんだものに印）
+function qaHTML(q, rec) {
+	const pick = rec && !rec.last ? rec.p : 0, mark = (ok) => `<em class="${ok ? 'o' : 'x'}">${ok ? '○' : '×'}</em>`;
+	let h = `<p class="q">${fmt(q.stem || '')}</p>`;
+	if (q.statements) {
+		h += `<ul class="qs">${q.statements.map((st) => { const sn = (q.statementNotes || []).find((x) => x.label === st.label); return `<li>${sn ? mark(sn.correct) : ''}<b>${esc(st.label)}</b> ${fmt(st.text)}${sn ? `<span class="nt">${fmt(sn.note)}</span>` : ''}</li>`; }).join('')}</ul>`;
+		h += `<p class="a"><b>正解</b>${q.answer.map((a) => `${a}（${esc(q.choices[a - 1])}）`).join('・')}${pick && !q.answer.includes(pick) ? `<span class="yp">前回の答え ${pick}（${esc(q.choices[pick - 1] || '')}）</span>` : ''}</p>`;
+	} else {
+		h += `<ul class="qs">${(q.choices || []).map((c, k) => { const n = k + 1, ok = q.answer.includes(n); return `<li class="${ok ? 'ok' : ''}${n === pick ? ' mine' : ''}">${mark(ok)}<b>${n}</b> ${fmt(c)}${n === pick ? '<span class="yp">前回の答え</span>' : ''}${q.choiceNotes && q.choiceNotes[k] ? `<span class="nt">${fmt(q.choiceNotes[k])}</span>` : ''}</li>`; }).join('')}</ul>`;
+	}
+	return h;
 }
 function choiceText(q, i) { const c = q.choices && q.choices[i - 1]; return c == null ? String(i) : `${i}. ${c}`; }
 function matomeHTML() {
@@ -1450,8 +1474,8 @@ function matomeHTML() {
 	const card = (x) => { const q = QN(x.id), rec = ST.q[x.id], ans = q.answer.map((a) => esc(choiceText(q, a))).join('<br>'), wrong = !rec.last && rec.p && !q.answer.includes(rec.p) ? esc(choiceText(q, rec.p)) : '';
 		const stem = String(q.stem || '').replace(/\s+/g, ' '), short = stem.length > 90 ? stem.slice(0, 90) + '…' : stem;
 		return `<article class="ci ${x.need ? 'need' : 'got'}" id="ci-${esc(x.id)}" data-fr="${x.fi},${x.r}"><div class="ch"><span class="no">${roomNo(x.fi, x.r)}-${x.i + 1}</span><span>${esc(DATA.floors[x.fi].short)}・${esc(q.set || '')} 問${esc(q.no)}</span><span class="tag x">×${x.m}</span>${x.need ? '<span class="tag n">要復習</span>' : '<span class="tag g">克服</span>'}</div>
-			${q.points && q.points.length ? `<ul class="kp">${q.points.map((t) => `<li>${fmt(t)}</li>`).join('')}</ul>` : q.explanation ? `<p class="pt">${fmt(q.explanation)}</p>` : ''}${q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : ''}
-			<details class="qa"><summary>問題と答えを見る</summary><p class="q">${esc(short)}</p><p class="a"><b>正解</b>${ans}</p>${wrong ? `<p class="w"><b>前回の答え</b>${wrong}</p>` : ''}</details><button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };  /* 主役は 知識のポイント（箇条書き）。問題文は たたんでおく */
+			${q.points && q.points.length ? `<ul class="kp">${q.points.map((t) => liPt(t) + '</li>').join('')}</ul>` : q.explanation ? `<p class="pt">${fmt(q.explanation)}</p>` : ''}${q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : ''}
+			<details class="qa"><summary>問題と答えを見る</summary>${qaHTML(q, rec)}</details><button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };  /* 主役は 知識のポイント（箇条書き）。問題文は たたんでおく */
 	const many = shown.filter((x) => x.m >= 2), once = shown.filter((x) => x.m < 2);
 	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
 		: !shown.length ? '<p class="mempty">要復習の相談は ありません。ぜんぶ 克服しました ✦</p>'
@@ -1459,7 +1483,7 @@ function matomeHTML() {
 	const needN = items.filter((x) => x.need).length;
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span><small>光っている部屋が 復習の 必要な ところ</small></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
-		<section class="msec"><h3>チートシート</h3><div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
+		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
 		${mScope === 'all' ? allPointsHTML() : `<div class="mtools"><button type="button" class="mbtn${mOnly ? ' on' : ''}" data-monly="1">要復習だけ</button><button type="button" class="mbtn${mOnly ? '' : ' on'}" data-monly="0">克服したものも</button></div>${list}`}</section>`;
 }
 function drawMatome() {
