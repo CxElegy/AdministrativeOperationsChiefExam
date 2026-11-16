@@ -1609,7 +1609,24 @@ function openMatome() {
 	const el = $('matome'); if (!el.hidden) return; drawMatome(); el.hidden = false; el.scrollTop = 0; app.classList.add('show-matome');
 	try { history.pushState({ matome: 1 }, '', location.href); } catch (e) {}
 }
-function closeMatome(viaUI) { const el = $('matome'); if (el.hidden) return; el.hidden = true; app.classList.remove('show-matome'); requestAnimationFrame(() => { layout(); fitBldg(); }); if (viaUI && history.state && history.state.matome) { matomeBack = true; history.back(); } }
+// まとめを閉じる：中心の月が マンションの月へ 飛んで戻る（行きの逆）。中心の月が見えないとき（再テスト中・一覧）は 画面のまん中から
+function closeMatome(viaUI) {
+	const el = $('matome'); if (el.hidden || el.dataset.closing) return;
+	if (viaUI && history.state && history.state.matome) { matomeBack = true; history.back(); }
+	const fin = () => { delete el.dataset.closing; el.hidden = true; el.style.opacity = ''; app.classList.remove('show-matome'); requestAnimationFrame(() => { layout(); fitBldg(); }); };
+	if (reduce) { fin(); return; }
+	el.dataset.closing = '1'; app.classList.remove('show-matome'); requestAnimationFrame(() => layout());  /* 消えていく まとめの下から 部屋が 見えるように */
+	const core = el.querySelector('.kcore .core'), er = el.getBoundingClientRect(); let r1 = core && core.getBoundingClientRect();
+	if (!r1 || r1.bottom < er.top || r1.top > er.bottom) { const d = 120; r1 = { left: er.left + er.width / 2 - d / 2, top: er.top + er.height / 2 - d / 2, width: d, height: d }; }
+	const z = document.createElement('div'); z.className = 'moonzoom'; Object.assign(z.style, { left: r1.left + 'px', top: r1.top + 'px', width: r1.width + 'px', height: r1.height + 'px' }); document.body.appendChild(z);
+	if (core) core.closest('.kcore').style.visibility = 'hidden';
+	el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 650, easing: 'ease-in', fill: 'forwards' });
+	requestAnimationFrame(() => {
+		const r0 = MOON.getBoundingClientRect(), s0 = r0.width / r1.width, dx = r0.left + r0.width / 2 - (r1.left + r1.width / 2), dy = r0.top + r0.height / 2 - (r1.top + r1.height / 2);
+		z.animate([{ transform: 'none' }, { transform: `translate(${dx * 0.7}px, ${dy * 0.7}px) scale(1.5)`, offset: 0.45 }, { transform: `translate(${dx}px, ${dy}px) scale(${s0})` }], { duration: 900, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' })
+			.onfinish = () => { el.getAnimations().forEach((a) => a.cancel()); fin(); z.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => z.remove(); };
+	});
+}
 let matomeBack = false;
 // まとめから 相談へ：まとめの履歴を 相談の履歴に 置きかえる（「戻る」で マンションへ）
 function leaveMatome() { const el = $('matome'); el.hidden = true; app.classList.remove('show-matome');
