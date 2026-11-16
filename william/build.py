@@ -59,7 +59,12 @@ def build_data():
             rooms.append({'title': '新着の相談', 'qids': rest})
         rooms = [r for r in rooms if r['qids']]
         floors.append({'id': c['id'], 'floor': i + 1, 'label': c['label'], 'short': c['short'], 'rooms': rooms})
-    return {'floors': floors, 'q': qs}
+    # 全体の復習ポイント：教材の章・節の順（src/data/syllabus/*.json：章 → 節 → 要点。要点ごとに 出典の問題ID）
+    syl = sorted((json.load(open(f, encoding='utf-8')) for f in glob.glob(os.path.join(DATA, 'syllabus', '*.json'))), key=lambda c: c.get('order', 0))
+    for ch in syl:
+        for sec in ch['sections']:
+            for it in sec['items']: it['q'] = [q for q in it['q'] if q in qs]
+    return {'floors': floors, 'q': qs, 'syl': syl}
 
 def data_uri(name):
     return 'data:image/webp;base64,' + base64.b64encode(open(os.path.join(W, 'assets', name), 'rb').read()).decode()

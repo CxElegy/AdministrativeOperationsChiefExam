@@ -485,6 +485,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .kgraph g[data-mroom]:hover .n, .kgraph g[data-mfloor]:hover .n { stroke: #fff; }
 @keyframes khalo { 0%, 100% { opacity: .16; } 50% { opacity: .22; } }
 .mview { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: 2px; } .mview .mbtn { padding: 2px 10px; font-size: 11px; }
+.ci .qn.nd { background: #ffd57a; color: #3a2a12; }
 .mtop { position: fixed; z-index: 31; right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); border: 1px solid #e9b44c; border-radius: 99px; padding: 10px 16px; background: rgba(21, 22, 43, .92); color: #ffd57a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s, transform .2s; }
 .mtop.on { opacity: 1; pointer-events: auto; transform: none; }
 .moonzoom { position: fixed; z-index: 60; border-radius: 50%; pointer-events: none; will-change: transform;
@@ -1495,7 +1496,17 @@ const liPt = (t, extra = '') => `<li${extra}>${trapPt(t) ? '<span class="trap">�
 const PT_LEGEND = '<p class="plegend"><span class="pk">最重要</span><span class="pn">数字・期限</span><span class="pg">否定・禁止</span><span class="px">例外</span><span class="trap">ひっかけ注意</span></p>';
 let mOnly = true, mScope = (() => { try { return localStorage.getItem('kangyo-mscope') || 'miss'; } catch (e) { return 'miss'; } })();
 // 全体の復習ポイント：階 → 部屋ごとに、全問題の 知識のポイントを 箇条書きで。要復習の問題から来た行は 光らせる
+// 教材の章・節：要点ごとに 出典の問題。節の状態＝要復習（どれか 要復習）／克服・習得（出典を ぜんぶ解いて 要復習なし）／まだ
+const CH_OF_FLOOR = { minpo: 'minpo', sonota: 'minpo', kubun: 'kubun', kiyaku: 'kiyaku', tekiseika: 'tekiseika', itaku: 'itaku', kaikei: 'kaikei', kenchiku: 'kenchiku' };
+function secState(sec) { const ids = [...new Set(sec.items.flatMap((it) => it.q))], n = ids.filter(needQ).length; return { ids, n, st: n ? 'need' : ids.length && ids.every((id) => ST.q[id]) ? 'got' : 'yet' }; }
+function qLabel(id) { const p = findQ(id); if (!p) return ''; const r = roomOf(p.k, p.f); return `${roomNo(p.f, r)}-${p.k - rstart(p.f, r) + 1}`; }
+function sylHTML() {
+	return DATA.syl.map((ch) => `<section class="ap" data-ch="${esc(ch.id)}"><h4><span>第${ch.order}章</span>${esc(ch.title)}</h4><div class="cs">${ch.sections.map((sec, si) => { const ss = secState(sec);
+		const lis = sec.items.map((it) => { const nd = it.q.some(needQ); return `${liPt(it.t, nd ? ' class="need"' : '')}${it.q.map((id) => `<button type="button" class="qn${needQ(id) ? ' nd' : ''}" data-mgo="${esc(id)}" title="この相談を解く">${qLabel(id)}</button>`).join('')}</li>`; }).join('');
+		return `<article class="ci ar ${ss.st}" data-qs="${ss.ids.join(' ')}"><div class="ch"><span class="no">${si + 1}</span><span>${esc(sec.title)}</span>${ss.st === 'need' ? `<span class="tag n">要復習 ${ss.n}</span>` : ss.st === 'got' ? '<span class="tag g">習得</span>' : ''}</div><ul class="kp">${lis}</ul></article>`; }).join('')}</div></section>`).join('');
+}
 function allPointsHTML() {
+	if (DATA.syl && DATA.syl.length) return sylHTML();
 	return DATA.floors.map((f, fi) => `<section class="ap"><h4><span>${f.floor}F</span>${esc(f.label)}</h4><div class="cs">${f.rooms.map((room, r) => { const rs = roomState(fi, r), seen = new Set();
 		const lis = room.qids.flatMap((id, i) => { const q = QN(id), pts = q.points && q.points.length ? q.points : q.explanation ? [q.explanation] : [], nd = needQ(id);
 			return pts.filter((t) => !seen.has(t) && seen.add(t)).map((t) => `${liPt(t, nd ? ' class="need"' : '')}<button type="button" class="qn" data-mgo="${esc(id)}" title="この相談を解く">${roomNo(fi, r)}-${i + 1}</button></li>`); }).join('');
@@ -1531,7 +1542,7 @@ function matomeHTML() {
 	// 進み具合のバー：まちがえた問題 → 克服した数／まちがえた数。全体 → 習得か克服の部屋／全部屋
 	const pbar = (lbl, n, total, sub) => { const pc = total ? Math.round(n / total * 100) : 0; return `<div class="pbar"><div class="pbt"><b>${lbl}</b><span><em>${n}</em> / ${total}${sub}</span><span class="pc">${pc}%</span></div><div class="pbg"><i style="width:${pc}%"></i></div></div>`; };
 	const rsAll = DATA.floors.flatMap((f, fi) => f.rooms.map((_, r) => roomState(fi, r).st)), roomsDone = rsAll.filter((x) => x === 'got' || x === 'kok').length;
-	const prog = mScope === 'all' ? pbar('習得・克服した部屋', roomsDone, rsAll.length, ' 室') : pbar('克服', items.length - needN, items.length, ' 問');
+	const secs = (DATA.syl || []).flatMap((c) => c.sections).map(secState), prog = mScope === 'all' && secs.length ? pbar('習得した節', secs.filter((x) => x.st === 'got').length, secs.length, ' 節') : mScope === 'all' ? pbar('習得・克服した部屋', roomsDone, rsAll.length, ' 室') : pbar('克服', items.length - needN, items.length, ' 問');
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-kok">克服（緑）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
@@ -1583,11 +1594,11 @@ function drawMatome() {
 	mTopBtn();
 	el.querySelector('[data-rtgo]')?.addEventListener('click', () => { se('tap'); startRetest(); });
 	el.querySelectorAll('[data-mview]').forEach((b) => b.addEventListener('click', () => { se('tap'); mView = b.dataset.mview; try { localStorage.setItem('kangyo-mview', mView); } catch (e) {} drawMatome(); }));
-	el.querySelectorAll('[data-mfloor]').forEach((b) => b.addEventListener('click', () => { se('tap'); const fi = +b.dataset.mfloor, c = mScope === 'all' ? el.querySelectorAll('.ap')[fi] : el.querySelector(`.ci[data-fr^="${fi},"]`); if (c) mScroll(c); else { leaveMatome(); goRoom(fi, firstOpenRoom(fi)); } }));
+	el.querySelectorAll('[data-mfloor]').forEach((b) => b.addEventListener('click', () => { se('tap'); const fi = +b.dataset.mfloor, c = mScope === 'all' ? (el.querySelector(`.ap[data-ch="${CH_OF_FLOOR[DATA.floors[fi].id]}"]`) || el.querySelectorAll('.ap')[fi]) : el.querySelector(`.ci[data-fr^="${fi},"]`); if (c) mScroll(c); else { leaveMatome(); goRoom(fi, firstOpenRoom(fi)); } }));
 	el.querySelectorAll('[data-mscope]').forEach((b) => b.addEventListener('click', () => { se('tap'); mScope = b.dataset.mscope; try { localStorage.setItem('kangyo-mscope', mScope); } catch (e) {} drawMatome(); }));
 	el.querySelectorAll('[data-mgo]').forEach((b) => b.addEventListener('click', () => { se('tap'); const p = findQ(b.dataset.mgo); if (p) { leaveMatome(); goQ(p.f, p.k, true); } }));
 	el.querySelectorAll('[data-mroom]').forEach((b) => b.addEventListener('click', () => { se('tap'); const [fi, r] = b.dataset.mroom.split(',').map(Number), c = el.querySelector(`.ci[data-fr="${fi},${r}"]`);
-		const a = el.querySelector(`.ar[data-ar="${fi},${r}"]`); if (mScope === 'all' && a) { mScroll(a); return; }
+		const rq = DATA.floors[fi].rooms[r].qids, a = el.querySelector(`.ar[data-ar="${fi},${r}"]`) || [...el.querySelectorAll('.ar[data-qs]')].find((x) => rq.some((id) => x.dataset.qs.split(' ').includes(id))); if (mScope === 'all' && a) { mScroll(a); return; }
 		if (c) { mScroll(c); c.animate?.([{ transform: 'scale(1.03)' }, { transform: 'none' }], 600); } else { leaveMatome(); goRoom(fi, r); } }));
 }
 // 月を押したとき：月の表面へ 拡大していき、光がほどけて まとめノートへ
