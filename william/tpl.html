@@ -396,6 +396,68 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 	*, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 	.wipe { display: none; }
 }
+/* ---------- 月（まとめノートの入口）：マンションの絵の 月を キラキラさせる ---------- */
+.tower, .room { grid-row: 1; } .tower { grid-column: 1; } .room { grid-column: 2; }
+.moon { position: absolute; z-index: 3; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, rgba(255, 246, 214, .55) 0 38%, rgba(255, 226, 160, .22) 52%, rgba(255, 220, 150, 0) 70%); animation: moonGlow 3.2s ease-in-out infinite; }
+.moon::before, .moon::after { content: "✦"; position: absolute; color: #fff4cf; text-shadow: 0 0 6px #ffe3a0; pointer-events: none; animation: twinkle 2.4s ease-in-out infinite; }
+.moon::before { left: -18%; top: 4%; font-size: calc(var(--k) * 34px); }
+.moon::after { right: -16%; bottom: 0; font-size: calc(var(--k) * 24px); animation-delay: 1.2s; }
+.moon i { position: absolute; left: 76%; top: -10%; font-size: calc(var(--k) * 28px); color: #fff; animation: twinkle 1.9s ease-in-out .6s infinite; pointer-events: none; font-style: normal; }
+.moon b { position: absolute; right: -30%; top: 64%; min-width: 1.6em; padding: 0 .35em; border-radius: 99px; background: #e9b44c; color: #2b2522; font: 700 11px/1.5 inherit; box-shadow: 0 0 8px rgba(255, 210, 120, .8); }
+.moon:hover, .moon:focus-visible { outline: none; filter: brightness(1.25); }
+.moon .lbl { position: absolute; right: 112%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 11px; color: #f7e7bf; text-shadow: 0 0 6px rgba(255, 220, 150, .9); letter-spacing: .05em; pointer-events: none; }
+@keyframes moonGlow { 0%, 100% { box-shadow: 0 0 calc(var(--k) * 40px) calc(var(--k) * 10px) rgba(255, 228, 160, .35); } 50% { box-shadow: 0 0 calc(var(--k) * 90px) calc(var(--k) * 26px) rgba(255, 228, 160, .6); } }
+@keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.15) rotate(20deg); } }
+
+/* ---------- まとめノート（チートシート＋知識マップ）。PC：右の部屋と入れかえ。スマホ：別の画面 ---------- */
+.matome { grid-column: 2; grid-row: 1; z-index: 15; overflow: auto; overscroll-behavior: contain; background: radial-gradient(ellipse at 80% -10%, #3b3560, #15162b 60%); color: #f3ead8; padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 24px); animation: fade .25s both; }
+.matome[hidden] { display: none; }
+.app.show-matome .room { visibility: hidden; }
+.mhead { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 14px 22px 12px; background: linear-gradient(#15162b 75%, rgba(21, 22, 43, 0)); }
+.mhead h2 { margin: 0; font-size: 20px; letter-spacing: .06em; } .mhead h2 small { display: block; font-size: 11px; font-weight: 400; color: #c9bfa8; letter-spacing: 0; }
+.mhead .sp { flex: 1; }
+.mbtn { white-space: nowrap; flex: none; border: 1px solid rgba(233, 180, 76, .6); background: rgba(255, 255, 255, .06); color: #f3ead8; border-radius: 99px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+.mbtn:hover { background: rgba(233, 180, 76, .2); } .mbtn.on { background: #e9b44c; color: #2b2522; border-color: #e9b44c; }
+.msec { padding: 4px 22px 10px; } .msec > h3 { margin: 12px 0 8px; font-size: 15px; color: #f7e7bf; } .msec > h3 small { font-weight: 400; color: #b8ae98; font-size: 11px; margin-left: 8px; }
+.mlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #c9bfa8; margin: 0 0 8px; } .mlegend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+.mlegend .lg-need::before { background: #ffd57a; box-shadow: 0 0 8px #ffcf66; } .mlegend .lg-got::before { background: #2a2a3e; border: 1px solid #44445e; } .mlegend .lg-yet::before { background: transparent; border: 1px dashed #77748f; }
+.kfl { display: grid; grid-template-columns: 74px 1fr; gap: 8px; align-items: start; margin: 0 0 8px; }
+.kfl > b { font-size: 12px; color: #d9cfb8; padding-top: 6px; } .kfl > b small { display: block; font-weight: 400; color: #9d947f; font-size: 10px; }
+.kgrid { display: flex; flex-wrap: wrap; gap: 6px; }
+.kt { position: relative; width: 112px; min-height: 46px; padding: 5px 7px; border-radius: 7px; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 1px; transition: transform .15s; }
+.kt:hover { transform: translateY(-2px); } .kt b { font-size: 12px; } .kt small { font-size: 10px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.kt.need { border: 1px solid #ffe2a0; background: linear-gradient(#fff3c9, #ffd27a); color: #3a2a12; box-shadow: 0 0 12px rgba(255, 207, 102, .75), 0 0 28px rgba(255, 207, 102, .35); animation: kglow 2.6s ease-in-out infinite; }
+.kt.need em { position: absolute; right: -6px; top: -7px; font-style: normal; font-size: 10px; font-weight: 700; background: #d9534f; color: #fff; border-radius: 99px; padding: 0 5px; line-height: 16px; }
+.kt.got { border: 1px solid #3a3a52; background: #23233a; color: #6f6c84; } .kt.got b::after { content: " ✓"; color: #7b8a6a; }
+.kt.yet { border: 1px dashed #5f5c78; background: rgba(255, 255, 255, .03); color: #a9a28f; }
+@keyframes kglow { 0%, 100% { box-shadow: 0 0 10px rgba(255, 207, 102, .6), 0 0 22px rgba(255, 207, 102, .25); } 50% { box-shadow: 0 0 16px rgba(255, 215, 120, .95), 0 0 36px rgba(255, 207, 102, .5); } }
+.mtools { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.cs { columns: 2 340px; column-gap: 14px; }
+.ci { break-inside: avoid; margin: 0 0 14px; background: linear-gradient(var(--paper), #f3ead6); color: var(--ink); border-radius: 10px; border: 1px solid var(--gold); padding: 11px 13px 10px; font-size: 13px; line-height: 1.6; }
+.ci.got { opacity: .55; filter: saturate(.4); }
+.ci.need { box-shadow: 0 0 0 2px rgba(255, 207, 102, .55), 0 0 18px rgba(255, 207, 102, .35); }
+.ci .ch { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
+.ci .ch .no { font-weight: 700; color: var(--ink); font-size: 13px; }
+.ci .tag { border-radius: 99px; padding: 0 7px; font-size: 10px; font-weight: 700; } .ci .tag.x { background: #d9534f; color: #fff; } .ci .tag.n { background: #ffd27a; color: #3a2a12; } .ci .tag.g { background: #c9d6bd; color: #3a4a2a; }
+.ci .q { margin: 0 0 6px; color: var(--ink-soft); font-size: 12px; }
+.ci .a { margin: 0 0 4px; padding: 5px 8px; border-radius: 6px; background: rgba(92, 160, 92, .13); border-left: 3px solid #5ca05c; }
+.ci .a b, .ci .w b { font-size: 11px; margin-right: 4px; } .ci .w { margin: 0 0 4px; padding: 3px 8px; border-left: 3px solid #d9534f; color: #8a4a46; font-size: 12px; }
+.ci .pt { margin: 4px 0 0; } .ci .law { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
+.ci .go { margin-top: 6px; border: 0; background: none; color: #8a6a35; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
+.mempty { padding: 24px; text-align: center; color: #c9bfa8; }
+@media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {
+	.tower, .room { grid-column: 1; }
+	.app.show-matome .room { visibility: visible; }
+	.matome { position: fixed; inset: 0; z-index: 30; padding-top: env(safe-area-inset-top, 0px); }
+	.mhead { padding: 12px 14px 10px; gap: 10px; } .msec { padding: 4px 14px 10px; } .mhead h2 { font-size: 17px; } .mhead [data-mprint] { display: none; }
+	.kfl { grid-template-columns: 52px 1fr; gap: 6px; } .kgrid { gap: 5px; } .kt { width: calc(25% - 4px); min-height: 34px; padding: 6px 4px; align-items: center; } .kt small { display: none; }
+	.cs { columns: 1; }
+}
+@media print {
+	.tower, .room, .mhead .mbtn, .mtools, .ci .go, .msec.kmap { display: none !important; }
+	.app { position: static; display: block; } .matome { position: static; background: #fff; color: #000; overflow: visible; }
+	.ci { box-shadow: none !important; opacity: 1 !important; filter: none !important; font-size: 11px; }
+}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 	<symbol id="corner" viewBox="0 0 30 30"><path d="M2 28V10a8 8 0 0 1 8-8h18" fill="none" stroke="#c9a45c" stroke-width="2"/><path d="M7 28V14a7 7 0 0 1 7-7h14" fill="none" stroke="#c9a45c" stroke-width="1"/><rect x="2" y="2" width="7" height="7" transform="rotate(45 5.5 5.5)" fill="#f3dfa2" stroke="#8a6a35"/></symbol>
@@ -434,6 +496,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 		<div class="bubble" id="bubble" aria-live="polite"><span class="np">William</span><span id="btext"></span></div>
 		<div class="status" id="status"></div>
 	</section>
+	<section class="matome" id="matome" aria-label="まとめノート" hidden></section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/live2dcubismcore@1.0.2/live2dcubismcore.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/browser/pixi.min.js"></script>
@@ -467,7 +530,7 @@ if (PHONE && !matchMedia(MOBILE_Q).matches) {
 	const st = document.createElement('style'); st.textContent = css.join('\n'); document.head.appendChild(st);
 }
 const DATA = __DATA__;
-const PLAYGROUND = __PLAY__;  // playground.html だけ true（試し中の機能：アナちゃん）
+const PLAYGROUND = __PLAY__;  // playground.html だけ true（試し中の機能用）
 // 新しい版が出ていたら読み込み直す（ブラウザに古いページが残っていても、開いたときに最新になる）
 const BUILD = '__BUILD__';
 (async () => {
@@ -485,7 +548,7 @@ if (isMobile()) app.classList.add('show-tower');
 // スマホ：マンション（索引）の画面 ⇄ 相談の画面。相談の画面に入るときに履歴を1つ積むので、端末の「戻る」でもマンションに戻れる
 function openRoom() { if (!isMobile()) return; if (!app.classList.contains('show-room')) { try { history.pushState({ room: 1 }, '', location.href); } catch (e) {} } app.classList.remove('show-tower'); app.classList.add('show-room'); requestAnimationFrame(() => layout()); }
 let popping = 0;  // 「戻る」でアドレスの #… が変わっても、相談を開き直さない
-addEventListener('popstate', () => { popping = performance.now(); if (isMobile() && app.classList.contains('show-room')) openTower(); try { history.replaceState(history.state, '', location.pathname + location.search + '#' + curQid()); } catch (e) {} });
+addEventListener('popstate', () => { popping = performance.now(); if (typeof matomeBack !== 'undefined' && matomeBack) { matomeBack = false; return; } if (!$('matome').hidden) { closeMatome(false); return; } if (isMobile() && app.classList.contains('show-room')) openTower(); try { history.replaceState(history.state, '', location.pathname + location.search + '#' + curQid()); } catch (e) {} });
 function openTower() { app.classList.remove('show-room'); app.classList.add('show-tower'); requestAnimationFrame(() => { fitBldg(); flushPendingLights(); }); }
 addEventListener('resize', () => { if (!isMobile()) app.classList.remove('show-tower', 'show-room'); else if (!app.classList.contains('show-room')) app.classList.add('show-tower'); });
 
@@ -566,6 +629,10 @@ DATA.floors.forEach((f, fi) => {
 		$('bldg').appendChild(w); return w;
 	});
 });
+// 月（絵の右上）：押すと まとめノート
+const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
+	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
+	b.innerHTML = '<i>✧</i><b hidden></b><span class="lbl">まとめ</span>'; b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
 function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const cw = wr.clientWidth * 0.95, k = wr.clientHeight > 60 ? Math.min(cw / BW, wr.clientHeight / BH) : cw / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
@@ -589,6 +656,7 @@ function paintWindows() {
 		WINS[fi].forEach((w) => w.classList.toggle('curfl', fi === cur.f));
 	});
 	paintInfo();
+	paintMoon();
 }
 function floorStats(fi) { const ids = DATA.floors[fi].qids; return { total: ids.length, ok: ids.filter((id) => ST.q[id]?.last).length, ng: ids.filter((id) => ST.q[id] && !ST.q[id].last).length, done: ids.filter((id) => ST.q[id]).length, rooms: DATA.floors[fi].rooms.length, lit: DATA.floors[fi].rooms.filter((_, r) => isLit(roomStats(fi, r))).length }; }
 // 苦手な部屋：まだ明かりのない部屋で、まちがいが 2 問以上。いちばん多い部屋（同じなら正解の割合が低い部屋）
@@ -708,96 +776,8 @@ XMLHttpRequest.prototype.open = function (m, url, ...rest) { for (const k in MOC
 		model.internalModel.on('beforeModelUpdate', () => applyParams(model.internalModel.coreModel));
 		const _upd = model.internalModel.update.bind(model.internalModel); model.internalModel.update = (dt, now) => { _upd(dt, now); }; // 形は Live2D の元のまま（変えるのはテクスチャ画像だけ）
 		W2D.model = model; W2D.app = app; L.ready = true; paintCollar();
-		if (PLAYGROUND) loadAna(app, model);
 	} catch (e) { console.error(e); }
 })();
-// ---------- アナちゃん（試し中・playground だけ）----------
-// Tororo（William）と同じ絵柄（なめらかな塗り＋やわらかい影、長毛は輪郭の毛の房）で 0 から描いた絵（william/ana/make_ana.py）を、しっぽ・体・耳・頭の部品に分けて動かす。動きも Tororo と同じ考え方（ポインターを追って頭が回る、目玉、まばたき、耳、しっぽ、呼吸）
-// 絵の座標（890×980）：足もと (370, 890)、首 (370, 480)、しっぽのつけ根 (560, 800)、耳のつけ根 (260, 240) (480, 240)、目 (296, 350) (444, 350)、鼻 (370, 395)
-// 性格は食いしん坊：正解すると ごはんがもらえて もぐもぐ。空のときは ときどき ぺろっ、「ごはん まだ？」
-const ANA = { img: {}, n: 0, blinkAt: 0, lookT: -1e9, lickT: -1e9, nextLick: 0, eatT: -1e9, food: 0, taps: 0, wantT: -1e9, nextWant: 0 };
-if (PLAYGROUND) for (const [k, src] of Object.entries(__ANA__)) { const im = new Image(); im.onload = () => { ANA.img[k] = im; ANA.n++; }; im.src = src; }
-function anaFeed() { if (!PLAYGROUND) return; const t = performance.now(); if (t - ANA.eatT < 5200) { ANA.food = 1; return; } ANA.food = 1; ANA.eatT = t + 700; ANA.lookT = t; }
-function anaSpot() {
-	if (stacked) { const p = IMG_PL.top, q = M(p.x + 70, p.y); return { x: q.x, y: q.y }; }  // スマホ：同じ台の右どなり
-	const p = IMG_PL.floor, q = M(p.x - 20, p.y); return { x: q.x, y: q.y };               // PC：いちばん下の台
-}
-function anaH() { return catH * 1.06; }
-// アナちゃんは William と同じ Tororo の Live2D モデルを そのまま使う（＝同じ絵柄・同じ動き）。変えるのは 毛の色・模様と、長毛の部分だけ（william/ana/make_ana.py）
-// 重ねる順：しっぽ → うしろの毛（体の ふくらみ・ほおの毛）→ 体のモデル（体・足・耳・顔の土台）→ 胸のたてがみ → 顔の部品のモデル（目・口・鼻・ひげ）
-// 座標は Tororo のモデルの座標（足もと (1000, 2201)、頭のまん中 (1000, 760)）。長毛の絵は 1 画素 = モデル 2 画素、左上 = モデルの (0, 300)
-async function loadAna(app, william) {
-	try {
-		while (ANA.n < 5) await new Promise((r) => setTimeout(r, 100));
-		const I = ANA.img, T = (im) => { const t = PIXI.Texture.from(im); t.baseTexture.mipmap = PIXI.MIPMAP_MODES.ON; return t; }, root = new PIXI.Container(); root.pivot.set(1000, 2201);
-		const spr = (im) => { const sp = new PIXI.Sprite(T(im)); sp.scale.set(2); sp.position.set(0, 300); return sp; };
-		const tail = new PIXI.SimplePlane(T(I.tail), 26, 2); tail.scale.set(2); tail.position.set(0, 300); ANA.tailV = Float32Array.from(tail.geometry.getBuffer('aVertexPosition').data);
-		const back = spr(I.back), mane = spr(I.mane);
-		const mk = async (url) => { const m = await PIXI.live2d.Live2DModel.from(url, { autoInteract: false }); m.internalModel.motionManager.groups.idle = '__none__'; m.internalModel.on('beforeModelUpdate', () => anaParams(m.internalModel.coreModel)); return m; };
-		const body = await mk('w/anabody.model3.json'), face = await mk('w/ana.model3.json');
-		// 耳の先の 竖毛と、耳から外へ出る 白い毛：毎コマ 耳の実際の位置（モデルの頂点）に合わせて置く
-		const ids = Array.from(body.internalModel.coreModel._model.drawables.ids); ANA.earIdx = [ids.indexOf('D_EAR_00'), ids.indexOf('D_EAR_04')];
-		ANA.tips = [0, 1].map(() => { const sp = new PIXI.Sprite(T(I.eartip)); sp.anchor.set(0.5, 104 / 110); sp.scale.set(2); return sp; });
-		ANA.hairs = [-1, 1].map((sx) => { const sp = new PIXI.Sprite(T(I.earhair)); sp.anchor.set(0.5, 104 / 110); sp.scale.set(2 * sx, 2); return sp; });
-		root.addChild(tail, back, ...ANA.tips, body, ...ANA.hairs, mane, face); app.stage.addChildAt(root, app.stage.getChildIndex(william));
-		Object.assign(ANA, { root, tail, back, mane, body, face, blinkAt: performance.now() + 3000, nextLick: performance.now() + 12000 });
-	} catch (e) { console.error(e); }
-}
-// 2 つのモデル（体・顔の部品）に 同じパラメータを入れる＝ずれない。動きは William と同じ Tororo のパラメータ
-function anaParams(c) {
-	const P = ANA.P; if (!P) return; const set = (id, v) => c.setParameterValueById(id, v), add = (id, v) => c.addParameterValueById(id, v);
-	const eye = Math.max(0, 0.92 * (1 - P.lid) + P.up * 0.08); set('PARAM_EYE_L_OPEN', eye); set('PARAM_EYE_R_OPEN', eye);
-	set('PARAM_EYE_BALL_X', P.lx); set('PARAM_EYE_BALL_Y', -P.ly);
-	add('PARAM_ANGLE_X', P.lx * 9 - P.dip * 6); add('PARAM_ANGLE_Y', -P.ly * 8 + P.up * 10 - P.dip * 26); add('PARAM_ANGLE_Z', P.sway * 3);
-	add('PARAM_BODY_ANGLE_X', P.lx * 3); add('PARAM_EAR_L', P.up * 0.5 - P.dip * 0.4 - P.earL * 0.9); add('PARAM_EAR_R', P.up * 0.5 - P.dip * 0.4 - P.earR * 0.9);
-	set('PARAM_BREATH', 0.5 + 0.5 * P.br);
-	if (P.dip > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.1 + P.chew * 0.7); set('PARAM_MOUTH_FORM', 0.6); set('PARAM_TONGUE', P.chew * 0.5); }
-	if (P.lick > 0.05) { set('PARAM_MOUTH_OPEN_Y', 0.35 * P.lick); set('PARAM_MOUTH_FORM', 1); set('PARAM_TONGUE', P.lick); }
-}
-function drawAna(t) {
-	if (!ANA.root) return; const c = ctx, sp = anaSpot(), h = anaH(), k = h / 1820;
-	let lid = 0, up = 0, dip = 0, lick = 0;
-	const bk = (t - ANA.blinkAt) / 240; if (bk >= 0 && bk < 1) lid = Math.sin(bk * Math.PI); else if (bk >= 1) ANA.blinkAt = t + 3000 + Math.random() * 4000;
-	const lk = (t - ANA.lookT) / 1600; if (lk >= 0 && lk < 1) up = Math.sin(lk * Math.PI);
-	const ek = (t - ANA.eatT) / 4500;
-	if (ek >= 0 && ek < 1) { dip = Math.min(1, ek * 6, (1 - ek) * 6); up = 0; ANA.food = Math.max(0, 1 - ek * 1.05); if (ek > 0.93) ANA.lickT = ANA.eatT + 4500; }
-	else if (ek >= 1 && ANA.food > 0 && ANA.food < 1) ANA.food = 0;
-	if (t > ANA.nextLick && !(ek >= 0 && ek < 1)) { ANA.lickT = t; ANA.nextLick = t + 16000 + Math.random() * 20000; }
-	const ck = (t - ANA.lickT) / 900; if (ck >= 0 && ck < 1) lick = Math.sin(ck * Math.PI);
-	if (t > ANA.nextWant) { if (ANA.nextWant && ANA.food === 0) ANA.wantT = t; ANA.nextWant = t + 70000 + Math.random() * 50000; }
-	const dtS = Math.min(0.05, Math.max(0, (t - (ANA.pt || t)) / 1000)); ANA.pt = t; const sm = (key, v, r) => { const c0 = ANA[key] ?? v; return (ANA[key] = c0 + (v - c0) * (1 - Math.exp(-dtS * r))); };
-	dip = sm('sDip', dip, 5); up = sm('sUp', up, 6); lick = sm('sLick', lick, 14);
-	const tw = (t % 6100) / 260, tw2 = ((t + 2700) % 8300) / 260, fast = sm('sFast', dip > 0.1 || up > 0.1 ? 1 : 0, 3);
-	const P = ANA.P = { lid, lick, dip, up, lx: reduce ? 0 : sm('lx', (pointer.nx || 0) * 0.9, 5), ly: reduce ? 0 : sm('ly', (pointer.ny || 0) * 0.7, 5), br: reduce ? 0 : Math.sin(t / 1500), sway: reduce ? 0 : Math.sin(t / 4300) * 0.7 + Math.sin(t / 2700 + 1) * 0.3,
-		chew: dip * (0.5 - 0.5 * Math.cos(t / 105)), earL: tw < 1 ? Math.sin(tw * Math.PI) : 0, earR: tw2 < 1 ? Math.sin(tw2 * Math.PI) : 0 };
-	ANA.root.position.set(sp.x, sp.y); ANA.root.scale.set(k);
-	// 耳の毛：耳の頂点から、耳の先（いちばん上の点）と 耳の向きを 求めて 置く（耳が動いても ずれない）
-	{ const dr = ANA.body.internalModel.coreModel._model.drawables;
-	  ANA.earIdx.forEach((di, e) => { const v = dr.vertexPositions[di]; if (!v) return; let tx = 0, ty = 1e9, cx = 0, cy = 0, n = v.length / 2;
-		for (let i = 0; i < v.length; i += 2) { const x = v[i] * 2000 + 1000, y = -v[i + 1] * 2000 + 1250; cx += x / n; cy += y / n; if (y < ty) { ty = y; tx = x; } }
-		const ang = Math.atan2(ty - cy, tx - cx) + Math.PI / 2, tip = ANA.tips[e], hr = ANA.hairs[e], sx = e ? 1 : -1;
-		tip.position.set(tx - Math.sin(ang) * -10, ty + 14); tip.rotation = ang;
-		hr.position.set(cx - sx * 34, cy + 70); hr.rotation = ang * 0.8; }); }  /* 耳の中の 下のほうから 生える */
-	// 長毛の部分は 体の動きに 少しだけ ついていく
-	ANA.mane.position.set(P.lx * 6, 300 + P.br * 3 - P.dip * 4); ANA.back.position.set(P.lx * 9, 300 + P.ly * 4 - P.dip * 0);
-	// しっぽ：つけ根（モデルの (900, 2110)）から先へ 波が伝わるように しなる
-	{ const buf = ANA.tail.geometry.getBuffer('aVertexPosition'), d = buf.data, o = ANA.tailV, A = 0.03 + 0.05 * fast, w = t / (1100 - 650 * fast), bx = 450, by = 905;
-	  for (let i = 0; i < d.length; i += 2) { const u = Math.max(0, Math.min(1, (bx - o[i]) / 380)), a = reduce ? 0 : A * Math.sin(w - u * 2.6) * Math.pow(u, 1.2), dx = o[i] - bx, dy = o[i + 1] - by, cs = Math.cos(a), sn = Math.sin(a); d[i] = bx + dx * cs - dy * sn; d[i + 1] = by + dx * sn + dy * cs; }
-	  buf.update(); }
-	c.save(); c.translate(sp.x, sp.y);
-	c.fillStyle = 'rgba(60,30,40,.26)'; c.beginPath(); c.ellipse(0, 2, h * 0.3, h * 0.03, 0, 0, Math.PI * 2); c.fill();
-	c.scale(k, k); c.translate(-1000, -2201);
-	// ごはんのおさら（体の左まえ）
-	{ const bx = 0, by = 0; c.save(); c.translate(1560, 2190); c.scale(3.4, 3.4); c.fillStyle = '#d9c7b0'; c.beginPath(); c.ellipse(bx, by + 6, 46, 11, 0, 0, Math.PI * 2); c.fill();
-	  c.fillStyle = '#f4ead9'; c.beginPath(); c.moveTo(bx - 46, by - 4); c.quadraticCurveTo(bx - 40, by + 16, bx, by + 16); c.quadraticCurveTo(bx + 40, by + 16, bx + 46, by - 4); c.closePath(); c.fill();
-	  c.fillStyle = '#e3d3bb'; c.beginPath(); c.ellipse(bx, by - 4, 46, 10, 0, 0, Math.PI * 2); c.fill();
-	  if (ANA.food > 0.02) { c.save(); c.beginPath(); c.ellipse(bx, by - 4, 42, 8.5, 0, 0, Math.PI * 2); c.clip(); const n = Math.ceil(26 * ANA.food); for (let i = 0; i < n; i++) { const a = i * 2.39996, r = Math.sqrt((i + 0.5) / 26); c.fillStyle = i % 3 ? '#a86f3e' : '#8f5a30'; c.beginPath(); c.ellipse(bx + Math.cos(a) * r * 38, by - 5 + Math.sin(a) * r * 7 - ANA.food * 3, 5.5, 4, 0, 0, Math.PI * 2); c.fill(); } c.restore(); }
-	  c.fillStyle = '#b98a8f'; c.font = '700 11px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.fillText('ANA', bx, by + 10); c.restore(); }
-	const wk = (t - ANA.wantT) / 3200; if (wk >= 0 && wk < 1) { const a = Math.min(1, wk * 6, (1 - wk) * 6); c.globalAlpha = a; c.fillStyle = 'rgba(255,255,255,.95)'; c.strokeStyle = '#2b2522'; c.lineWidth = 8; const bx = 1500, by = 330; c.beginPath(); c.ellipse(bx, by, 320, 105, 0, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(bx - 130, by + 140, 24, 0, Math.PI * 2); c.fill(); c.stroke(); c.fillStyle = '#2b2522'; c.font = '500 86px "Kiwi Maru", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ごはん まだ？', bx, by + 2); c.globalAlpha = 1; }
-	c.restore();
-}
-function sm2(o, k, v, t) { const dt = Math.min(0.05, Math.max(0, (t - (o[k + 'T'] || t)) / 1000)); o[k + 'T'] = t; const c0 = o[k] ?? v; return (o[k] = c0 + (v - c0) * (1 - Math.exp(-dt * 3))); }
-function anaBox() { if (!ANA.root) return null; const sp = anaSpot(), h = anaH(); return { x: sp.x - h * 0.42, y: sp.y - h, w: h * 0.84, h }; }
 W2D.motion = (g, i) => { const m = W2D.model; if (!m) return; const n = (m.internalModel.settings.motions[g] || []).length; if (n) m.motion(g, i ?? Math.floor(Math.random() * n), 3); };
 function applyParams(c) {
 	const P = W2D.P; if (!P) return;
@@ -918,7 +898,7 @@ function drawBg() {
 	const v = c.createRadialGradient(W * 0.6, H * 0.45, Math.min(W, H) * 0.3, W * 0.6, H * 0.45, Math.max(W, H) * 0.8);
 	v.addColorStop(0, 'rgba(20,10,30,0)'); v.addColorStop(1, 'rgba(20,10,30,.3)'); c.fillStyle = v; c.fillRect(0, 0, W, H);
 }
-const plat = (id) => { const p = IMG_PL[id], q = M(p.x - (PLAYGROUND && stacked && id === 'top' ? 40 : 0), p.y); return { x: q.x, y: q.y, w: p.w * SC }; };  /* playground のスマホ：右どなりにアナちゃん */
+const plat = (id) => { const p = IMG_PL[id], q = M(p.x, p.y); return { x: q.x, y: q.y, w: p.w * SC }; };
 function cardRect() { return { x: card.offsetLeft, y: card.offsetTop, w: card.offsetWidth, h: card.offsetHeight }; }
 function perchCard() { const c = cardRect(); if (stacked) return { x: c.x + c.w - catH * 0.45, y: c.y + 8, w: 90 };  // スマホ：題卡の上のふちに座る（体はタワーの帯の中）
 	return { x: c.x + c.w - catH * 0.16, y: c.y + catH + 26, w: 90 }; }
@@ -950,7 +930,7 @@ function sticker(text, o = {}) { S.stk.push({ text, t: performance.now(), dur: o
 function cutin(k, text, sub, icon, small) { const el = document.createElement('div'); el.className = 'cutin' + (icon ? ' withicon' : '') + (small ? ' small' : ''); el.innerHTML = `<div class="band"></div>${icon ? `<span class="icon"><img src="${icon}" alt=""></span>` : `<img src="${CUTIN}" alt="">`}<b>${text}</b><small>${sub || ''}</small>`; room.appendChild(el); setTimeout(() => el.remove(), 1900); }
 function drawWing(c, x, y, s, dir, flap) { c.save(); c.translate(x, y); c.scale(dir, 1); c.rotate(-0.25 - flap * 0.4); c.fillStyle = '#ffffff'; c.strokeStyle = '#7fd3ef'; c.lineWidth = 2.5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(s * 0.3, -s * 0.9, s * 1.1, -s * 0.95, s * 1.28, -s * 0.6); c.quadraticCurveTo(s * 1.0, -s * 0.48, s * 1.14, -s * 0.3); c.quadraticCurveTo(s * 0.82, -s * 0.22, s * 0.94, -s * 0.03); c.quadraticCurveTo(s * 0.58, -0.0, s * 0.62, s * 0.18); c.quadraticCurveTo(s * 0.26, s * 0.12, 0, 0); c.fill(); c.stroke(); c.restore(); }
 function heart(c, x, y, r) { c.beginPath(); c.moveTo(x, y + r * 0.9); c.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45); c.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); c.fill(); }
-const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; if (a === 'correct' || a === 'bigWin') anaFeed(); };
+const start = (a) => { S.act = a; S.actT = performance.now(); if (a === 'hop' || a === 'correct') S.hopT = S.actT; };
 
 // ---------------- William の言葉（場面ごとに何種類か。その都度ランダムに 1 つ） ----------------
 const LINES = {
@@ -1408,6 +1388,52 @@ function openIndex(tab) {
 	sc.addEventListener('click', (e) => { if (e.target === sc) sc.remove(); });
 }
 $('idxBtn').addEventListener('click', () => openIndex()); $('idxBtn2').addEventListener('click', () => openIndex());
+// ---------------- まとめノート：まちがえた相談のチートシート ＋ 知識マップ ----------------
+// 要復習（光らせる）＝ 最後にまちがえた、または 復習の途中（box あり）。習得（暗く）＝ 部屋に明かりがつき、要復習が ない
+const needQ = (id) => { const r = ST.q[id]; return !!r && (!r.last || r.box !== undefined); };
+const missQ = (id) => { const r = ST.q[id]; return r ? r.a - r.c : 0; };
+function roomState(fi, r) { const ids = DATA.floors[fi].rooms[r].qids, n = ids.filter(needQ).length; return { n, st: n ? 'need' : isLit(roomStats(fi, r)) ? 'got' : 'yet' }; }
+function paintMoon() { const n = Object.keys(ST.q).filter((id) => DATA.q[id] && needQ(id)).length, b = MOON.querySelector('b'); b.hidden = !n; b.textContent = n; }
+let mOnly = true;
+function choiceText(q, i) { const c = q.choices && q.choices[i - 1]; return c == null ? String(i) : `${i}. ${c}`; }
+function matomeHTML() {
+	const map = DATA.floors.map((f, fi) => `<div class="kfl"><b>${f.floor}F<small>${esc(f.short)}</small></b><div class="kgrid">${f.rooms.map((room, r) => { const s = roomState(fi, r);
+		return `<button type="button" class="kt ${s.st}" data-mroom="${fi},${r}" title="${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}"><b>${roomNo(fi, r)}</b><small>${esc(room.title)}</small>${s.n ? `<em>${s.n}</em>` : ''}</button>`; }).join('')}</div></div>`).join('');
+	const items = []; DATA.floors.forEach((f, fi) => f.rooms.forEach((room, r) => room.qids.forEach((id, i) => { const m = missQ(id); if (m > 0) items.push({ id, fi, r, i, m, need: needQ(id), t: ST.q[id].t }); })));
+	const shown = items.filter((x) => !mOnly || x.need).sort((a, b) => (b.need - a.need) || (b.m - a.m) || (a.fi - b.fi) || (a.r - b.r) || (a.i - b.i));
+	const card = (x) => { const q = QN(x.id), rec = ST.q[x.id], ans = q.answer.map((a) => esc(choiceText(q, a))).join('<br>'), wrong = !rec.last && rec.p && !q.answer.includes(rec.p) ? esc(choiceText(q, rec.p)) : '';
+		const stem = String(q.stem || '').replace(/\s+/g, ' '), short = stem.length > 90 ? stem.slice(0, 90) + '…' : stem;
+		return `<article class="ci ${x.need ? 'need' : 'got'}" id="ci-${esc(x.id)}" data-fr="${x.fi},${x.r}"><div class="ch"><span class="no">${roomNo(x.fi, x.r)}-${x.i + 1}</span><span>${esc(DATA.floors[x.fi].short)}・${esc(q.set || '')} 問${esc(q.no)}</span><span class="tag x">×${x.m}</span>${x.need ? '<span class="tag n">要復習</span>' : '<span class="tag g">克服</span>'}</div>
+			<p class="q">${esc(short)}</p><p class="a"><b>正解</b>${ans}</p>${wrong ? `<p class="w"><b>前回の答え</b>${wrong}</p>` : ''}${q.explanation ? `<p class="pt">${fmt(q.explanation)}</p>` : ''}${q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : ''}<button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };
+	const many = shown.filter((x) => x.m >= 2), once = shown.filter((x) => x.m < 2);
+	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
+		: !shown.length ? '<p class="mempty">要復習の相談は ありません。ぜんぶ 克服しました ✦</p>'
+		: (many.length ? `<h3>何度もまちがえた<small>${many.length} 問</small></h3><div class="cs">${many.map(card).join('')}</div>` : '') + (once.length ? `<h3>まちがえたことがある<small>${once.length} 問</small></h3><div class="cs">${once.map(card).join('')}</div>` : '');
+	const needN = items.filter((x) => x.need).length;
+	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
+		<section class="msec kmap"><h3>知識マップ<small>部屋ごと。光っている部屋が 復習の 必要な ところ</small></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${map}</section>
+		<section class="msec"><h3>チートシート</h3><div class="mtools"><button type="button" class="mbtn${mOnly ? ' on' : ''}" data-monly="1">要復習だけ</button><button type="button" class="mbtn${mOnly ? '' : ' on'}" data-monly="0">克服したものも</button></div>${list}</section>`;
+}
+function drawMatome() {
+	const el = $('matome'), top = el.scrollTop; el.innerHTML = matomeHTML(); el.scrollTop = top;
+	el.querySelector('[data-mclose]').addEventListener('click', () => { se('tap'); closeMatome(true); });
+	el.querySelector('[data-mprint]').addEventListener('click', () => print());
+	el.querySelectorAll('[data-monly]').forEach((b) => b.addEventListener('click', () => { se('tap'); mOnly = b.dataset.monly === '1'; drawMatome(); }));
+	el.querySelectorAll('[data-mgo]').forEach((b) => b.addEventListener('click', () => { se('tap'); const p = findQ(b.dataset.mgo); if (p) { leaveMatome(); goQ(p.f, p.k, true); } }));
+	el.querySelectorAll('[data-mroom]').forEach((b) => b.addEventListener('click', () => { se('tap'); const [fi, r] = b.dataset.mroom.split(',').map(Number), c = el.querySelector(`.ci[data-fr="${fi},${r}"]`);
+		if (c) { c.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); c.animate?.([{ transform: 'scale(1.03)' }, { transform: 'none' }], 600); } else { leaveMatome(); goRoom(fi, r); } }));
+}
+function openMatome() {
+	const el = $('matome'); if (!el.hidden) return; drawMatome(); el.hidden = false; el.scrollTop = 0; app.classList.add('show-matome');
+	try { history.pushState({ matome: 1 }, '', location.href); } catch (e) {}
+}
+function closeMatome(viaUI) { const el = $('matome'); if (el.hidden) return; el.hidden = true; app.classList.remove('show-matome'); requestAnimationFrame(() => { layout(); fitBldg(); }); if (viaUI && history.state && history.state.matome) { matomeBack = true; history.back(); } }
+let matomeBack = false;
+// まとめから 相談へ：まとめの履歴を 相談の履歴に 置きかえる（「戻る」で マンションへ）
+function leaveMatome() { const el = $('matome'); el.hidden = true; app.classList.remove('show-matome');
+	if (isMobile()) { try { history.replaceState({ room: 1 }, '', location.href); } catch (e) {} app.classList.remove('show-tower'); app.classList.add('show-room'); } else { try { history.replaceState(null, '', location.href); } catch (e) {} }
+	requestAnimationFrame(() => layout()); }
+
 
 // 進度をリセット（確認の画面を出してから）
 function resetRoom() {
@@ -1470,7 +1496,6 @@ addEventListener('pointermove', (e) => {
 	room.style.cursor = over ? 'grab' : '';
 }, { passive: true });
 room.addEventListener('pointerdown', (e) => {
-	if (PLAYGROUND) { const b = anaBox(), p = local(e); if (b && inBox(p, b)) { const now = performance.now(); ANA.lookT = now; ANA.lickT = now + 500; if (++ANA.taps % 3 === 0) anaFeed(); return; } }
 	unhide();
 	const p = local(e);
 	if (inBox(p, catBox()) && !S.jump) {
@@ -1553,7 +1578,7 @@ function frame(t) {
 	const calm = isLateNight();
 	if (free && t > S.nextIdle && calm && Math.random() < 0.5) S.nextIdle = t + 4000 + Math.random() * 4000;  // 夜はしぐさを半分に
 	if (free && t > S.nextIdle) { const pool = ['lookAround', 'earTwitch', 'tailSwish', 'headTilt', 'knead', 'doubleBlink', 'earTwitch', 'groom']; start(pool[Math.floor(Math.random() * pool.length)]); S.nextIdle = t + 2600 + Math.random() * 2600; }
-	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on && !(PLAYGROUND && i === 'floor')); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
+	if (free && t > S.nextWander && S.on !== 'card' && !calm) { const ids = (stacked ? [] : ['top', 'mid', 'roof', 'floor']).filter((i) => i !== S.on); /* スマホは一番上の台にいる */ if (!ids.length) { S.nextWander = t + 1e9; } else jumpTo(ids[Math.floor(Math.random() * ids.length)]); S.nextWander = t + 70000 + Math.random() * 40000; }
 	if (free && t > S.nextMischief && !answered && !calm) { jumpTo('card', () => { setPose('sleepPaper', 9); sayIdle(pick('cardNap'), 2.2); }); S.nextMischief = t + 480000; S.nextWander = t + 60000; }
 	if (!S.sleeping && !S.act && !S.jump && !S.hidden && S.pose === 'rig' && t - S.lastInput > 25000) { S.sleeping = true; setPose('stretch', 3.2, () => { if (S.sleeping) setPose('curl', 0); }); sticker('ねむたい。', { font: '"Kiwi Maru"', size: 20, dx: -0.15, dy: -0.42, rot: 0, dur: 3 }); }
 	if (!answered && (S.hintN || 0) < 3 && t - S.qStart > HINT_AT[S.hintN || 0] && t > sayUntil && !document.hidden && !S.drag && !S.jump && !S.hidden && !document.querySelector('.scrim, .cutin') && (!isMobile() || app.classList.contains('show-room'))) giveHint(free);
@@ -1636,7 +1661,6 @@ function frame(t) {
 	const squashY = 1 - S.crouch * 0.1 - land - Math.max(0, hopLand) + airStretch * 0.08 + hopE * 0.05;
 	const squashX = 1 + S.crouch * 0.04 + land * 0.7 + Math.max(0, hopLand) * 0.8 - airStretch * 0.04;
 
-	if (PLAYGROUND) drawAna(t);
 	if (!S.jump && !S.hidden) { ctx.fillStyle = 'rgba(60,30,40,.28)'; ctx.beginPath(); ctx.ellipse(S.pos.x + 4, S.pos.y + 2, catH * 0.25 * (1 - hopE * 0.3), catH * 0.035, 0, 0, Math.PI * 2); ctx.fill(); }
 	if (S.hidden) { const hc = M(IMG_HOLE.x, IMG_HOLE.y); S.pos.x = hc.x; S.pos.y = hc.y + catH * 0.66 + Math.sin(s * 1.5) * 2; }
 	if (W2D.model) {
