@@ -486,7 +486,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 @keyframes khalo { 0%, 100% { opacity: .16; } 50% { opacity: .22; } }
 .mview { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: 2px; } .mview .mbtn { padding: 2px 10px; font-size: 11px; }
 .ci .qn.nd { background: #ffd57a; color: #3a2a12; }
-.mtop { position: fixed; z-index: 31; right: 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); border: 1px solid #e9b44c; border-radius: 99px; padding: 10px 16px; background: rgba(21, 22, 43, .92); color: #ffd57a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s, transform .2s; }
+.mtop { position: fixed; z-index: 31; right: 36px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); border: 1px solid #e9b44c; border-radius: 99px; padding: 10px 16px; background: rgba(21, 22, 43, .92); color: #ffd57a; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s, transform .2s; }
 .mtop.on { opacity: 1; pointer-events: auto; transform: none; }
 .moonzoom { position: fixed; z-index: 60; border-radius: 50%; pointer-events: none; will-change: transform;
 	background: radial-gradient(circle at 34% 30%, rgba(190, 160, 180, .55) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(185, 150, 172, .5) 0 9%, transparent 10%), radial-gradient(circle at 44% 72%, rgba(190, 160, 180, .4) 0 5%, transparent 6%), radial-gradient(circle at 70% 30%, rgba(195, 165, 185, .35) 0 4%, transparent 5%), radial-gradient(circle at 45% 45%, #fff6f2, #f0dde3 55%, #d9c0cf 85%, #c9adc0);
@@ -505,9 +505,14 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .rtlist { list-style: none; padding: 0; margin: 10px 0; font-size: 13px; } .rtlist li { padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); color: #d9cfb8; } .rtlist li b { margin: 0 8px; color: #f7e7bf; }
 .rtlist li.o::first-letter { color: #8fd18f; } .rtlist li.x::first-letter { color: #ff9a8f; }
 .rtnote { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: #eaf5e6; color: #2e7d32; font-size: 13px; font-weight: 700; animation: fade .25s both; }
-.pbar { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(233, 180, 76, .3); }
-.pbt { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; font-size: 13px; color: #d9cfb8; } .pbt b { color: #f7e7bf; } .pbt em { font-style: normal; font-size: 18px; font-weight: 700; color: #8fd18f; } .pbt .pc { margin-left: auto; font-weight: 700; color: #f7e7bf; }
-.pbg { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; } .pbg i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #5ca05c, #8fd18f); transition: width .6s var(--ease-io, ease); }
+.matome { scrollbar-width: none; } .matome::-webkit-scrollbar { display: none; }  /* 自前の スクロールバーを使う */
+.msb { position: fixed; right: 2px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: 26px; z-index: 32; touch-action: none; cursor: pointer; }
+.msb.off { display: none; } .msb .trk { position: absolute; top: 0; bottom: 0; left: 11px; width: 4px; border-radius: 99px; background: rgba(255, 255, 255, .12); }
+.msb .thumb { position: absolute; top: 0; left: 7px; width: 12px; border-radius: 99px; background: rgba(233, 180, 76, .75); box-shadow: 0 0 0 1px rgba(21, 22, 43, .6); transition: background .2s; }
+.msb.drag .thumb, .msb:hover .thumb { background: #e9b44c; }
+.msb .tick { position: absolute; left: 6px; width: 14px; height: 2px; border-radius: 2px; background: rgba(247, 231, 191, .55); pointer-events: none; }
+.msb .tip { position: absolute; top: 0; right: 30px; margin-top: -14px; max-width: 60vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 4px 10px; border-radius: 8px; background: rgba(21, 22, 43, .95); border: 1px solid #e9b44c; color: #f7e7bf; font-size: 12px; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.msb.drag .tip:not(:empty) { opacity: 1; }
 .mempty { padding: 24px; text-align: center; color: #c9bfa8; }
 @media (max-width: 760px), (max-width: 1100px) and (orientation: portrait) and (min-height: 900px) {
 	.tower, .room { grid-column: 1; }
@@ -1539,15 +1544,11 @@ function matomeHTML() {
 	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
 		: (many.length ? `<h3>何度もまちがえた<small>${many.length} 問</small></h3><div class="cs">${many.map(card).join('')}</div>` : '') + (once.length ? `<h3>まちがえたことがある<small>${once.length} 問</small></h3><div class="cs">${once.map(card).join('')}</div>` : '');
 	const needN = items.filter((x) => x.need).length;
-	// 進み具合のバー：まちがえた問題 → 克服した数／まちがえた数。全体 → 習得か克服の部屋／全部屋
-	const pbar = (lbl, n, total, sub) => { const pc = total ? Math.round(n / total * 100) : 0; return `<div class="pbar"><div class="pbt"><b>${lbl}</b><span><em>${n}</em> / ${total}${sub}</span><span class="pc">${pc}%</span></div><div class="pbg"><i style="width:${pc}%"></i></div></div>`; };
-	const rsAll = DATA.floors.flatMap((f, fi) => f.rooms.map((_, r) => roomState(fi, r).st)), roomsDone = rsAll.filter((x) => x === 'got' || x === 'kok').length;
-	const secs = (DATA.syl || []).flatMap((c) => c.sections).map(secState), prog = mScope === 'all' && secs.length ? pbar('習得した節', secs.filter((x) => x.st === 'got').length, secs.length, ' 節') : mScope === 'all' ? pbar('習得・克服した部屋', roomsDone, rsAll.length, ' 室') : pbar('克服', items.length - needN, items.length, ' 問');
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
 		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-kok">克服（緑）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
 		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
-		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${prog}${mScope === 'all' ? allPointsHTML() : list}</section>`;
+		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : list}</section>`;
 }
 // まとめの中で 目的の場所へ：上の固定ヘッダーの 実際の高さぶん 下げて止める（頭が かくれない）
 function mScroll(t) { const el = $('matome'), h = el.querySelector('.mhead')?.offsetHeight || 0, top = t.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - h - 8;
@@ -1575,6 +1576,7 @@ function drawRetest() {
 		const after = done ? `<div class="rtres ${ok ? 'o' : 'x'}">${ok ? '正解！ 克服しました' : `ざんねん。正解は ${q.answer.join('・')}`}</div>${q.points && q.points.length ? `<ul class="kp">${q.points.map((t) => liPt(t) + '</li>').join('')}</ul>` : ''}<div class="mtools"><button type="button" class="mbtn on" data-rtnext>${RT.i + 1 < RT.ids.length ? '次の問題 ›' : '結果を見る ›'}</button></div>` : '';
 		el.innerHTML = rtHead() + `<section class="msec"><article class="ci rtq"><div class="ch"><span class="no">${p ? roomNo(p.f, r) + '-' + (p.k - rstart(p.f, r) + 1) : ''}</span><span>${esc(p ? DATA.floors[p.f].short : '')}・${esc(q.set || '')} 問${esc(q.no)}</span></div><p class="rtstem">${fmt(q.stem || '')}</p>${st}<div class="rtcs">${ch}</div>${after}</article></section>`;
 	}
+	requestAnimationFrame(msbSetup);
 	el.querySelectorAll('[data-rtquit]').forEach((b) => b.addEventListener('click', () => { se('tap'); const n = RT.ok.length, mid = RT.i < RT.ids.length; RT = null; drawMatome(); $('matome').scrollTop = 0;
 		if (mid && n) { const t = document.createElement('div'); t.className = 'rtnote'; t.textContent = `克服 ${n} 問を 記録しました`; $('matome').querySelector('.rtgo')?.before(t); setTimeout(() => t.remove(), 3500); } }));  /* 途中でやめても 克服は 記録ずみ（1 問ごとに保存） */
 	el.querySelectorAll('[data-rta]').forEach((b) => b.addEventListener('click', () => answerRetest(+b.dataset.rta)));
@@ -1586,10 +1588,35 @@ function answerRetest(n) {
 	recordAnswer(id, ok, n); if (ok) { const r = ST.q[id]; delete r.box; delete r.due; RT.ok.push(id); } else RT.ng.push(id);  /* 再テストで 正解 ＝ 克服 */
 	saveStore(); paintWindows(); se(ok ? 'ok' : 'ng'); drawRetest();
 }
+// まとめノートの スクロールバー：右はしの つまみを 上下に動かす／溝を タップで その位置へ。動かしている間は 今の章・節の名前
+function msbSetup() {
+	const el = $('matome'); let bar = el.querySelector('.msb'); if (!bar) { bar = document.createElement('div'); bar.className = 'msb'; bar.innerHTML = '<div class="trk"></div><i class="thumb"></i><span class="tip"></span>'; }
+	el.appendChild(bar); bar.querySelectorAll('.tick').forEach((t) => t.remove());
+	const heads = [...el.querySelectorAll('.msec > h3, .ap > h4')], H = el.scrollHeight;
+	heads.forEach((h) => { if (h.closest('.kmap')) return; const t = document.createElement('b'); t.className = 'tick'; t.style.top = (h.offsetTop / H * 100).toFixed(2) + '%'; bar.appendChild(t); });
+	if (!bar.dataset.on) {
+		bar.dataset.on = '1';
+		const toY = (e) => { const r = bar.getBoundingClientRect(), th = bar.querySelector('.thumb').offsetHeight, f = Math.min(1, Math.max(0, (e.clientY - r.top - th / 2) / (r.height - th))); el.scrollTop = f * (el.scrollHeight - el.clientHeight); };
+		bar.addEventListener('pointerdown', (e) => { e.preventDefault(); bar.setPointerCapture(e.pointerId); bar.classList.add('drag'); toY(e); });
+		bar.addEventListener('pointermove', (e) => { if (bar.classList.contains('drag')) toY(e); });
+		const up = () => bar.classList.remove('drag'); bar.addEventListener('pointerup', up); bar.addEventListener('pointercancel', up);
+	}
+	msbPaint();
+}
+function msbPaint() {
+	const el = $('matome'), bar = el.querySelector('.msb'); if (!bar || el.hidden) return;
+	const head = el.querySelector('.mhead'), top = (head ? head.offsetHeight : 0) + 6; bar.style.top = (el.getBoundingClientRect().top + top) + 'px';
+	const max = el.scrollHeight - el.clientHeight; bar.classList.toggle('off', max < 40); if (max < 40) return;
+	const th = bar.querySelector('.thumb'), h = bar.clientHeight, tH = Math.max(36, h * el.clientHeight / el.scrollHeight); th.style.height = tH + 'px'; const y = (h - tH) * el.scrollTop / max; th.style.transform = `translateY(${y}px)`;
+	const at = el.scrollTop + top + 4; let name = ''; el.querySelectorAll('.msec > h3, .ap > h4, .ar .ch span:nth-child(2)').forEach((x) => { const o = x.closest('.ar') || x; if (o.offsetTop <= at) name = (x.closest('.ap')?.querySelector('h4')?.textContent || '') + (x.matches('.ar .ch span') ? ' ・ ' + x.textContent : x.matches('.msec > h3') ? x.textContent : ''); });
+	const tip = bar.querySelector('.tip'); tip.textContent = name.replace(/^(第\d+章)/, '$1 '); tip.style.transform = `translateY(${y + tH / 2}px)`;
+}
+$('matome').addEventListener('scroll', msbPaint, { passive: true }); addEventListener('resize', () => { if (!$('matome').hidden) msbSetup(); });
 function drawMatome() {
 	const el = $('matome'), top = el.scrollTop; el.style.setProperty('--ph', `-${Math.round(performance.now() % 3200)}ms`); el.innerHTML = matomeHTML(); el.scrollTop = top;  /* 描きなおしても 光る周期が ずれない */
 	el.querySelector('[data-mclose]').addEventListener('click', () => { se('tap'); closeMatome(true); });
 	el.querySelector('[data-mprint]').addEventListener('click', () => print());
+	requestAnimationFrame(msbSetup);
 	el.querySelector('.mtop').addEventListener('click', () => { se('tap'); mScroll(el.querySelector('.kmap')); });
 	mTopBtn();
 	el.querySelector('[data-rtgo]')?.addEventListener('click', () => { se('tap'); startRetest(); });
