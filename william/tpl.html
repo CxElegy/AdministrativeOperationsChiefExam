@@ -45,8 +45,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .tower > * { position: relative; }
 .bldgwrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 18px) 5%;  /* 下の 18px はクレジットの行（1F の窓にかけない） */  /* 左の 5% は階の札の場所（札が窓にかからないように、建物を少し右へ） */ background: linear-gradient(transparent calc(100% - 8px), #0b070d calc(100% - 8px)); }
 /* 建物は絵（夜のマンション）。窓のボタンを絵の窓の上に重ねる。最初は全部暗く、正解すると明かりがつく */
-.bldg { --k: .5; position: relative; left: 3%; flex: none; }  /* 札の文字のぶん左が重く見えるので、少し右へ（右は空なので はみ出してよい） */
-.bldg::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: url(__BLDG__) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); mask-composite: intersect; }  /* 絵だけぼかす（上と左の空のふちを夜空になじませる）（はみ出した階の札は消さない） */
+.bldg { --bimg: url(__BLDG__); --k: .5; position: relative; left: 3%; flex: none; }  /* 札の文字のぶん左が重く見えるので、少し右へ（右は空なので はみ出してよい） */
+.bldg::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--bimg) center / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 3%), linear-gradient(90deg, transparent, #000 5%); mask-composite: intersect; }  /* 絵だけぼかす（上と左の空のふちを夜空になじませる）（はみ出した階の札は消さない） */
 .ftag { position: absolute; z-index: 3; left: -5%; width: 10.6%; transform: translateY(-50%); border: 0; padding: 3px 0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; background: linear-gradient(#3a3156, #241d3d); color: #f3ead8; box-shadow: 0 0 0 1px var(--gold-lo), 0 3px 8px rgba(0, 0, 0, .35); cursor: pointer; }
 .ftag b { font-family: var(--latin); font-size: max(12px, calc(var(--k) * 28px)); line-height: 1.1; color: var(--gold-hi); }
 .ftag small { font-size: max(9px, calc(var(--k) * 17px)); letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; overflow: hidden; max-width: 96%; }
@@ -399,6 +399,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 }
 /* ---------- 月（まとめノートの入口）：マンションの絵の 月を キラキラさせる ---------- */
 .tower, .room { grid-row: 1; } .tower { grid-column: 1; } .room { grid-column: 2; }
+.bfront { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: var(--bimg) center / 100% 100% no-repeat; }
 .moon { position: absolute; z-index: 3; padding: 0; border: 0; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, rgba(255, 246, 214, .55) 0 38%, rgba(255, 226, 160, .22) 52%, rgba(255, 220, 150, 0) 70%); animation: moonGlow 2.6s ease-in-out infinite; }
 .moon:hover, .moon:focus-visible { outline: none; transform: scale(1.12); filter: brightness(1.4); }
 .moon { transition: transform .2s; }
@@ -469,7 +470,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .ci .go { margin-top: 6px; border: 0; background: none; color: #8a6a35; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
 .kgraph { display: block; width: 100%; max-width: 620px; margin: 0 auto; overflow: visible; font-family: inherit; }
 .kgraph .e { fill: none; stroke: #4a4766; stroke-width: 1.5; } .kgraph .e.need { stroke: #c9a45c; stroke-width: 2; opacity: .6; } .kgraph .e.got { stroke: #34344c; }
-.kgraph g[data-mroom], .kgraph g[data-mfloor] { cursor: pointer; }
+.kgraph g[data-mroom], .kgraph g[data-mfloor] { cursor: pointer; } .kgraph .cnt { stroke: #1b1c33; stroke-width: 2; }
 .kgraph .n { stroke-width: 1.5; } .kgraph .n.need { fill: #d9b46a; stroke: #e6c98a; } .kgraph .n.got { fill: #23233a; stroke: #3a3a52; } .kgraph .n.yet { fill: #1b1c33; stroke: #6d6a88; stroke-dasharray: 4 3; }
 .kgraph text { text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 700; }
 .kgraph .t.need { fill: #2e2210; } .kgraph .t.got { fill: #8c89a3; } .kgraph .t.yet { fill: #d6cfbb; }
@@ -671,6 +672,9 @@ DATA.floors.forEach((f, fi) => {
 		$('bldg').appendChild(w); return w;
 	});
 });
+// 屋根の前の層：月の光の輪や星が 屋根の うしろに まわるように、屋根の部分だけ 同じ絵を 上に重ねる
+{ const pts = [[780, 174], [1000, 174], [1001, 170], [1012, 170], [1013, 199], [1082, 199], [1082, 240], [1068, 240], [1068, 256], [780, 256]];
+  const f = document.createElement('div'); f.className = 'bfront'; f.setAttribute('aria-hidden', 'true'); f.style.clipPath = `polygon(${pts.map(([x, y]) => `${(x / BW * 100).toFixed(2)}% ${(y / BH * 100).toFixed(2)}%`).join(', ')})`; $('bldg').appendChild(f); }
 // 月（絵の右上）：押すと まとめノート
 const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
 	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
@@ -1439,20 +1443,20 @@ function paintMoon() { const n = Object.keys(ST.q).filter((id) => DATA.q[id] && 
 
 // 知識マップ（グラフ）：まん中 → 階 → 部屋 を 線でつなぐ。部屋は 2 重の輪（タップしやすい大きさに）
 function kgraphSVG() {
-	const st = DATA.floors.map((f, fi) => f.rooms.map((_, r) => roomState(fi, r))), N = st.flat().length, GAP = 1.6, tot = N + GAP * DATA.floors.length;
-	let g = 0, edges = '', nodes = '', fls = '';
+	const st = DATA.floors.map((f, fi) => f.rooms.map((_, r) => roomState(fi, r))), N = st.flat().length, GAP = 1.1, tot = N + GAP * DATA.floors.length;
+	let g = 0, edges = '', nodes = '', fls = '', badges = '';  /* 赤い数字は いちばん上の層（となりの部屋に かくれない） */
 	const pt = (a, rad) => [Math.cos(a) * rad, Math.sin(a) * rad].map((v) => +v.toFixed(1));
 	DATA.floors.forEach((f, fi) => {
 		const a0 = g; const angs = f.rooms.map(() => -Math.PI / 2 + ((g++ + 0.5) / tot) * Math.PI * 2); g += GAP;
 		const fa = (angs[0] + angs[angs.length - 1]) / 2, [fx, fy] = pt(fa, 150), fs = st[fi].some((x) => x.st === 'need') ? 'need' : st[fi].every((x) => x.st === 'got') ? 'got' : 'yet';
 		edges += `<path class="e ${fs}" d="M0 0L${fx} ${fy}"/>`;
-		f.rooms.forEach((room, r) => { const s = st[fi][r], [x, y] = pt(angs[r], r % 2 ? 350 : 262), [cx, cy] = pt((fa + angs[r]) / 2, 215);
+		f.rooms.forEach((room, r) => { const s = st[fi][r], [x, y] = pt(angs[r], r % 2 ? 352 : 278), [cx, cy] = pt((fa + angs[r]) / 2, 215);
 			edges += `<path class="e ${s.st}" d="M${fx} ${fy}Q${cx} ${cy} ${x} ${y}"/>`;
-			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="32"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text>${s.n ? `<circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text>` : ''}</g>`; });
+			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="32"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text></g>`; if (s.n) badges += `<g class="bdg" data-mroom="${fi},${r}"><circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text></g>`; });
 		fls += `<g class="fl" data-mfloor="${fi}">${fs === 'need' ? `<circle class="halo" cx="${fx}" cy="${fy}" r="50"/>` : ''}<circle class="n ${fs}" cx="${fx}" cy="${fy}" r="40"/><text class="t ${fs}" x="${fx}" y="${fy - 10}" font-size="21">${f.floor}F</text><text class="t s ${fs}" x="${fx}" y="${fy + 13}">${esc(f.short)}</text></g>`;
 	});
 	const need = st.flat().filter((x) => x.st === 'need').length, got = st.flat().filter((x) => x.st === 'got').length;
-	return `<svg class="kgraph" viewBox="-400 -400 800 800" role="img" aria-label="知識マップ：要復習 ${need} 室、習得 ${got} 室"><defs><filter id="kblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter><radialGradient id="kmoon" cx="45%" cy="42%" r="60%"><stop offset="0" stop-color="#ecdfe2"/><stop offset=".6" stop-color="#dccbd2"/><stop offset=".9" stop-color="#c6b0bd"/><stop offset="1" stop-color="#b59cab"/></radialGradient></defs>${edges}${nodes}${fls}
+	return `<svg class="kgraph" viewBox="-410 -410 820 820" role="img" aria-label="知識マップ：要復習 ${need} 室、習得 ${got} 室"><defs><filter id="kblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter><radialGradient id="kmoon" cx="45%" cy="42%" r="60%"><stop offset="0" stop-color="#ecdfe2"/><stop offset=".6" stop-color="#dccbd2"/><stop offset=".9" stop-color="#c6b0bd"/><stop offset="1" stop-color="#b59cab"/></radialGradient></defs>${edges}${nodes}${fls}${badges}
 		<g class="kcore"><circle class="kglow" r="74"/><circle class="core" r="60" fill="url(#kmoon)"/><circle cx="-44" cy="-22" r="6" fill="#d9bfcf" opacity=".5"/><circle cx="46" cy="18" r="7" fill="#d4b7c9" opacity=".45"/><circle cx="-40" cy="30" r="4" fill="#d9bfcf" opacity=".45"/>
 		<text class="kc" y="-22" font-size="17">知識マップ</text><text class="kc" y="6" font-size="36" fill="#8a2f4f">${need}</text><text class="kc" y="34" font-size="15">要復習の部屋</text></g></svg>`;  /* まん中＝月（マンションの月が ここへ 飛んでくる） */
 }
