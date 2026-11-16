@@ -442,7 +442,9 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .ci .q { margin: 0 0 6px; color: var(--ink-soft); font-size: 12px; }
 .ci .a { margin: 0 0 4px; padding: 5px 8px; border-radius: 6px; background: rgba(92, 160, 92, .13); border-left: 3px solid #5ca05c; }
 .ci .a b, .ci .w b { font-size: 11px; margin-right: 4px; } .ci .w { margin: 0 0 4px; padding: 3px 8px; border-left: 3px solid #d9534f; color: #8a4a46; font-size: 12px; }
-.ci .pt { margin: 4px 0 0; } .ci .law { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
+.ci .pt { margin: 4px 0 0; }
+.ci .kp { margin: 2px 0 4px; padding: 0; list-style: none; } .ci .kp li { position: relative; padding-left: 1.1em; margin: 0 0 4px; } .ci .kp li::before { content: "●"; position: absolute; left: 0; top: .05em; font-size: .7em; color: #c9a45c; } .ci .kp b { background: linear-gradient(transparent 60%, #ffe39a 60%); }
+.ci .qa { margin-top: 6px; font-size: 12px; } .ci .qa summary { cursor: pointer; color: #8a6a35; font-weight: 700; } .ci .qa[open] summary { margin-bottom: 4px; } .ci .law { margin: 4px 0 0; font-size: 11px; color: var(--ink-soft); }
 .ci .go { margin-top: 6px; border: 0; background: none; color: #8a6a35; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
 .kgraph { display: block; width: 100%; max-width: 620px; margin: 0 auto; overflow: visible; font-family: inherit; }
 .kgraph .e { fill: none; stroke: #4a4766; stroke-width: 1.5; } .kgraph .e.need { stroke: #ffcf66; stroke-width: 2.4; opacity: .85; } .kgraph .e.got { stroke: #34344c; }
@@ -1436,7 +1438,8 @@ function matomeHTML() {
 	const card = (x) => { const q = QN(x.id), rec = ST.q[x.id], ans = q.answer.map((a) => esc(choiceText(q, a))).join('<br>'), wrong = !rec.last && rec.p && !q.answer.includes(rec.p) ? esc(choiceText(q, rec.p)) : '';
 		const stem = String(q.stem || '').replace(/\s+/g, ' '), short = stem.length > 90 ? stem.slice(0, 90) + '…' : stem;
 		return `<article class="ci ${x.need ? 'need' : 'got'}" id="ci-${esc(x.id)}" data-fr="${x.fi},${x.r}"><div class="ch"><span class="no">${roomNo(x.fi, x.r)}-${x.i + 1}</span><span>${esc(DATA.floors[x.fi].short)}・${esc(q.set || '')} 問${esc(q.no)}</span><span class="tag x">×${x.m}</span>${x.need ? '<span class="tag n">要復習</span>' : '<span class="tag g">克服</span>'}</div>
-			<p class="q">${esc(short)}</p><p class="a"><b>正解</b>${ans}</p>${wrong ? `<p class="w"><b>前回の答え</b>${wrong}</p>` : ''}${q.explanation ? `<p class="pt">${fmt(q.explanation)}</p>` : ''}${q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : ''}<button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };
+			${q.points && q.points.length ? `<ul class="kp">${q.points.map((t) => `<li>${fmt(t)}</li>`).join('')}</ul>` : q.explanation ? `<p class="pt">${fmt(q.explanation)}</p>` : ''}${q.law ? `<p class="law">根拠：${esc(q.law)}</p>` : ''}
+			<details class="qa"><summary>問題と答えを見る</summary><p class="q">${esc(short)}</p><p class="a"><b>正解</b>${ans}</p>${wrong ? `<p class="w"><b>前回の答え</b>${wrong}</p>` : ''}</details><button type="button" class="go" data-mgo="${esc(x.id)}">解き直す ›</button></article>`; };  /* 主役は 知識のポイント（箇条書き）。問題文は たたんでおく */
 	const many = shown.filter((x) => x.m >= 2), once = shown.filter((x) => x.m < 2);
 	const list = !items.length ? '<p class="mempty">まだ まちがえた相談はありません。解いていくと、ここに まとめが できます。</p>'
 		: !shown.length ? '<p class="mempty">要復習の相談は ありません。ぜんぶ 克服しました ✦</p>'
