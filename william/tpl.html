@@ -474,6 +474,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .kgraph text { text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 700; }
 .kgraph .t.need { fill: #3a2a12; } .kgraph .t.got { fill: #5f5c74; } .kgraph .t.yet { fill: #b9b29e; }
 .kgraph .halo { fill: #ffcf66; opacity: .35; filter: url(#kblur); animation: khalo 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kgraph .kglow { fill: #ffe8c0; opacity: .35; filter: url(#kblur); animation: khalo 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.kgraph .kcore text { font-weight: 700; }
 .kgraph .cnt { fill: #d9534f; } .kgraph .cntt { fill: #fff; font-size: 13px; }
 .kgraph .fl text.s { font-size: 11px; font-weight: 400; }
 .kgraph g[data-mroom]:hover .n, .kgraph g[data-mfloor]:hover .n { stroke: #fff; }
@@ -672,7 +674,7 @@ DATA.floors.forEach((f, fi) => {
 // 月（絵の右上）：押すと まとめノート
 const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
 	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
-	 b.innerHTML = ['✦', '✦', '✦', '✦', '✨', '✧', '✨', '✦', '✧', '✨'].map((c) => `<i class="sp">${c}</i>`).join(''); b.addEventListener('click', () => { se('tap'); moonZoom(openMatome); }); $('bldg').appendChild(b); return b; })();
+	 b.innerHTML = ['✦', '✦', '✦', '✦', '✨', '✧', '✨', '✦', '✧', '✨'].map((c) => `<i class="sp">${c}</i>`).join(''); b.addEventListener('click', () => { se('tap'); moonFly(); }); $('bldg').appendChild(b); return b; })();
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
 function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const cw = wr.clientWidth * 0.95, k = wr.clientHeight > 60 ? Math.min(cw / BW, wr.clientHeight / BH) : cw / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
@@ -1450,8 +1452,9 @@ function kgraphSVG() {
 		fls += `<g class="fl" data-mfloor="${fi}">${fs === 'need' ? `<circle class="halo" cx="${fx}" cy="${fy}" r="46"/>` : ''}<circle class="n ${fs}" cx="${fx}" cy="${fy}" r="36"/><text class="t ${fs}" x="${fx}" y="${fy - 8}" font-size="17">${f.floor}F</text><text class="t s ${fs}" x="${fx}" y="${fy + 11}">${esc(f.short)}</text></g>`;
 	});
 	const need = st.flat().filter((x) => x.st === 'need').length, got = st.flat().filter((x) => x.st === 'got').length;
-	return `<svg class="kgraph" viewBox="-400 -400 800 800" role="img" aria-label="知識マップ：要復習 ${need} 室、習得 ${got} 室"><defs><filter id="kblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs>${edges}${nodes}${fls}
-		<circle r="58" fill="#2b2950" stroke="#e9b44c" stroke-width="2"/><text y="-14" font-size="14" fill="#f7e7bf">知識マップ</text><text y="10" font-size="22" fill="#ffd57a">${need}</text><text y="32" font-size="10" fill="#c9bfa8" font-weight="400">要復習の部屋</text></svg>`;
+	return `<svg class="kgraph" viewBox="-400 -400 800 800" role="img" aria-label="知識マップ：要復習 ${need} 室、習得 ${got} 室"><defs><filter id="kblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter><radialGradient id="kmoon" cx="45%" cy="42%" r="60%"><stop offset="0" stop-color="#fff6f2"/><stop offset=".6" stop-color="#f0dde3"/><stop offset=".9" stop-color="#d9c0cf"/><stop offset="1" stop-color="#c9adc0"/></radialGradient></defs>${edges}${nodes}${fls}
+		<g class="kcore"><circle class="kglow" r="74"/><circle class="core" r="60" fill="url(#kmoon)"/><circle cx="-24" cy="-30" r="7" fill="#d9bfcf" opacity=".55"/><circle cx="30" cy="24" r="10" fill="#d4b7c9" opacity=".45"/><circle cx="-30" cy="30" r="5" fill="#d9bfcf" opacity=".5"/><circle cx="26" cy="-28" r="4" fill="#dcc3d2" opacity=".5"/>
+		<text y="-16" font-size="13" fill="#6b4458">知識マップ</text><text y="9" font-size="24" fill="#8a2f4f">${need}</text><text y="31" font-size="10" fill="#7a5a6a">要復習の部屋</text></g></svg>`;  /* まん中＝月（マンションの月が ここへ 飛んでくる） */
 }
 let mView = (() => { try { return localStorage.getItem('kangyo-mview') || 'graph'; } catch (e) { return 'graph'; } })();
 
@@ -1536,6 +1539,21 @@ function moonZoom(then) {
 	document.body.appendChild(z); se('tap');
 	const a = z.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: `scale(${far * 0.35})`, filter: 'brightness(1.15)', offset: 0.55 }, { transform: `scale(${far})`, filter: 'brightness(1.6)' }], { duration: 750, easing: 'cubic-bezier(.55,0,.75,.2)', fill: 'forwards' });
 	a.onfinish = () => { then(); z.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = () => z.remove(); };
+}
+// 月を押したとき：マンションの月が 知識マップの まん中（月）へ 飛んでいく。グラフが無いとき（一覧表示）は 月へ近づく演出
+function moonFly() {
+	if (reduce || document.querySelector('.moonzoom')) { openMatome(); return; }
+	if (mView !== 'graph') { moonZoom(openMatome); return; }
+	const r0 = MOON.getBoundingClientRect(); openMatome(); const el = $('matome'), g = el.querySelector('.kcore'), core = g && g.querySelector('.core');
+	if (!core) return;
+	let r1 = core.getBoundingClientRect(); const vh = innerHeight;
+	if (r1.bottom > vh - 20 || r1.top < 0) { el.scrollTop += r1.top + r1.height / 2 - vh / 2; r1 = core.getBoundingClientRect(); }
+	const z = document.createElement('div'); z.className = 'moonzoom'; Object.assign(z.style, { left: r1.left + 'px', top: r1.top + 'px', width: r1.width + 'px', height: r1.height + 'px' }); document.body.appendChild(z);
+	const s0 = r0.width / r1.width, dx = r0.left + r0.width / 2 - (r1.left + r1.width / 2), dy = r0.top + r0.height / 2 - (r1.top + r1.height / 2);
+	g.style.visibility = 'hidden';
+	el.animate([{ opacity: 0 }, { opacity: 0, offset: 0.3 }, { opacity: 1 }], { duration: 900, easing: 'ease-out' });
+	z.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${s0})` }, { transform: `translate(${dx * 0.3}px, ${dy * 0.3}px) scale(1.9)`, offset: 0.55 }, { transform: 'none' }], { duration: 950, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' })
+		.onfinish = () => { g.style.visibility = ''; z.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).onfinish = () => z.remove(); };
 }
 function openMatome() {
 	const el = $('matome'); if (!el.hidden) return; drawMatome(); el.hidden = false; el.scrollTop = 0; app.classList.add('show-matome');
