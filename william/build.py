@@ -64,6 +64,10 @@ def build_data():
     for ch in syl:
         for sec in ch['sections']:
             for it in sec['items']: it['q'] = [q for q in it['q'] if q in qs]
+    need = {'minpo', 'kubun', 'kiyaku', 'tekiseika', 'itaku', 'kaikei', 'kenchiku'}
+    if {c['id'] for c in syl} != need:  # 章がそろうまでは 使わない（部屋ごとの表示のまま）
+        if syl: print('注意: 教材の章がそろっていないので、全体の復習ポイントは部屋ごとの表示にします', sorted(need - {c['id'] for c in syl}))
+        syl = []
     return {'floors': floors, 'q': qs, 'syl': syl}
 
 def data_uri(name):
