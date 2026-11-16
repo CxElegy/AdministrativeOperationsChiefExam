@@ -407,6 +407,12 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .moon .sp { position: absolute; color: #fff7d6; text-shadow: 0 0 6px #ffe3a0, 0 0 12px #ffd57a; font-size: max(9px, calc(var(--k) * 34px)); line-height: 1; pointer-events: none; animation: moonTw 2.2s ease-in-out infinite; }
 .moon .sp:nth-child(1) { left: -38%; top: -22%; } .moon .sp:nth-child(2) { right: -36%; top: -8%; font-size: max(7px, calc(var(--k) * 24px)); animation-delay: .7s; }
 .moon .sp:nth-child(3) { right: -26%; bottom: -30%; animation-delay: 1.3s; } .moon .sp:nth-child(4) { left: -30%; bottom: -16%; font-size: max(6px, calc(var(--k) * 20px)); animation-delay: 1.8s; }
+.moon .sp:nth-child(5) { left: -80%; top: 10%; font-size: max(10px, calc(var(--k) * 36px)); animation-delay: .3s; animation-duration: 2.8s; }
+.moon .sp:nth-child(6) { left: 30%; top: -75%; font-size: max(8px, calc(var(--k) * 26px)); animation-delay: 1s; }
+.moon .sp:nth-child(7) { right: -70%; top: 40%; font-size: max(9px, calc(var(--k) * 30px)); animation-delay: 1.6s; animation-duration: 3s; }
+.moon .sp:nth-child(8) { left: -60%; top: -60%; font-size: max(6px, calc(var(--k) * 18px)); animation-delay: 2.1s; }
+.moon .sp:nth-child(9) { right: 10%; top: -55%; font-size: max(6px, calc(var(--k) * 18px)); animation-delay: .5s; animation-duration: 1.8s; }
+.moon .sp:nth-child(10) { left: -110%; top: -30%; font-size: max(8px, calc(var(--k) * 26px)); animation-delay: 1.2s; animation-duration: 2.6s; }
 @keyframes moonRing { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(2.6); opacity: 0; } }
 @keyframes moonTw { 0%, 100% { opacity: .1; transform: scale(.5) rotate(0); } 50% { opacity: 1; transform: scale(1.2) rotate(25deg); } }
 @keyframes moonGlow { 0%, 100% { filter: brightness(.9); box-shadow: 0 0 calc(var(--k) * 40px) calc(var(--k) * 10px) rgba(255, 228, 160, .35); } 50% { filter: brightness(1.55); box-shadow: 0 0 calc(var(--k) * 130px) calc(var(--k) * 44px) rgba(255, 232, 170, .85); } }
@@ -663,7 +669,7 @@ DATA.floors.forEach((f, fi) => {
 // 月（絵の右上）：押すと まとめノート
 const MOON = (() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'moon'; b.setAttribute('aria-label', 'まとめノート（まちがえた相談のチートシート）');
 	Object.assign(b.style, { left: pct(1015 - 46, BW), top: pct(126 - 46, BH), width: pct(92, BW), height: pct(92, BH) });
-	 b.innerHTML = '<i class="sp">✦</i><i class="sp">✦</i><i class="sp">✦</i><i class="sp">✦</i>'; b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
+	 b.innerHTML = ['✦', '✦', '✦', '✦', '✨', '✧', '✨', '✦', '✧', '✨'].map((c) => `<i class="sp">${c}</i>`).join(''); b.addEventListener('click', () => { se('tap'); openMatome(); }); $('bldg').appendChild(b); return b; })();
 // 建物の絵を、縦横の比を保ったまま左の欄にいっぱいに置く
 function fitBldg() { const wr = $('bldgwrap'); if (!wr || !wr.clientWidth) return; const cw = wr.clientWidth * 0.95, k = wr.clientHeight > 60 ? Math.min(cw / BW, wr.clientHeight / BH) : cw / BW; /* 高さが取れないときも消えないように */ const b = $('bldg'); b.style.width = BW * k + 'px'; b.style.height = BH * k + 'px'; b.style.setProperty('--k', k); }
 new ResizeObserver(fitBldg).observe($('bldgwrap'));
