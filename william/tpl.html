@@ -437,6 +437,8 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .kt:hover { transform: translateY(-2px); } .kt b { font-size: 12px; } .kt small { font-size: 10px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .kt.need { border: 1px solid #e6c98a; background: linear-gradient(#e8d29c, #d9b46a); color: #2e2210; box-shadow: 0 0 6px rgba(217, 180, 106, .25); }
 .kt.need em { position: absolute; right: -6px; top: -7px; font-style: normal; font-size: 10px; font-weight: 700; background: #d9534f; color: #fff; border-radius: 99px; padding: 0 5px; line-height: 16px; }
+.kt.kok { border: 1px solid #6fae7f; background: #2f4a3a; color: #cfe8d2; } .kt.kok b::after { content: " ✓"; color: #8fd18f; }
+.mlegend .lg-kok::before { background: #2f4a3a; border: 1px solid #6fae7f; }
 .kt.got { border: 1px solid #3a3a52; background: #23233a; color: #6f6c84; } .kt.got b::after { content: " ✓"; color: #7b8a6a; }
 .kt.yet { border: 1px dashed #5f5c78; background: rgba(255, 255, 255, .03); color: #a9a28f; }
 @keyframes kglow { 0%, 100% { box-shadow: 0 0 6px rgba(255, 207, 102, .3), 0 0 14px rgba(255, 207, 102, .12); } 50% { box-shadow: 0 0 8px rgba(255, 210, 110, .38), 0 0 16px rgba(255, 207, 102, .16); } }
@@ -473,6 +475,7 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .kgraph g[data-mroom], .kgraph g[data-mfloor] { cursor: pointer; } .kgraph .cnt { stroke: #1b1c33; stroke-width: 2; }
 .kgraph .n { stroke-width: 1.5; } .kgraph .n.need { fill: #d9b46a; stroke: #e6c98a; } .kgraph .n.got { fill: #23233a; stroke: #3a3a52; } .kgraph .n.yet { fill: #1b1c33; stroke: #6d6a88; stroke-dasharray: 4 3; }
 .kgraph text { text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 700; }
+.kgraph .n.kok { fill: #2f4a3a; stroke: #6fae7f; } .kgraph .t.kok { fill: #cfe8d2; } .kgraph .e.kok { stroke: #4f7a5a; opacity: .8; } 
 .kgraph .t.need { fill: #2e2210; } .kgraph .t.got { fill: #8c89a3; } .kgraph .t.yet { fill: #d6cfbb; }
 .kgraph .halo { fill: #e8c06a; opacity: .14; filter: url(#kblur); }  /* 動かさない・ごく弱い光（まぶしくない） */  /* ぜんぶ 同じ周期・同じ位相で、ほんの少しだけ */
 .kgraph .kglow { fill: #f0dcc0; opacity: .12; filter: url(#kblur); }
@@ -1452,7 +1455,8 @@ $('idxBtn').addEventListener('click', () => openIndex()); $('idxBtn2').addEventL
 // 要復習（光らせる）＝ 最後にまちがえた、または 復習の途中（box あり）。習得（暗く）＝ 部屋に明かりがつき、要復習が ない
 const needQ = (id) => { const r = ST.q[id]; return !!r && (!r.last || r.box !== undefined); };
 const missQ = (id) => { const r = ST.q[id]; return r ? r.a - r.c : 0; };
-function roomState(fi, r) { const ids = DATA.floors[fi].rooms[r].qids, n = ids.filter(needQ).length; return { n, st: n ? 'need' : isLit(roomStats(fi, r)) ? 'got' : 'yet' }; }
+function roomState(fi, r) { const ids = DATA.floors[fi].rooms[r].qids, n = ids.filter(needQ).length, missed = ids.some((id) => missQ(id) > 0); return { n, st: n ? 'need' : missed ? 'kok' : isLit(roomStats(fi, r)) ? 'got' : 'yet' }; }  /* kok＝まちがえた問題を ぜんぶ 克服した部屋 */
+const ST_LABEL = { need: '要復習', kok: '克服', got: '習得', yet: 'まだ' };
 function paintMoon() { const n = Object.keys(ST.q).filter((id) => DATA.q[id] && needQ(id)).length; MOON.setAttribute('aria-label', `まとめノート（要復習 ${n} 問）`); }  /* 月には 文字を出さない（光るだけ） */
 
 // 知識マップ（グラフ）：まん中 → 階 → 部屋 を 線でつなぐ。部屋は 2 重の輪（タップしやすい大きさに）
@@ -1462,11 +1466,11 @@ function kgraphSVG() {
 	const pt = (a, rad) => [Math.cos(a) * rad, Math.sin(a) * rad].map((v) => +v.toFixed(1));
 	DATA.floors.forEach((f, fi) => {
 		const a0 = g; const angs = f.rooms.map(() => -Math.PI / 2 + ((g++ + 0.5) / tot) * Math.PI * 2); g += GAP;
-		const fa = (angs[0] + angs[angs.length - 1]) / 2, [fx, fy] = pt(fa, 150), fs = st[fi].some((x) => x.st === 'need') ? 'need' : st[fi].every((x) => x.st === 'got') ? 'got' : 'yet';
+		const fa = (angs[0] + angs[angs.length - 1]) / 2, [fx, fy] = pt(fa, 150), fs = st[fi].some((x) => x.st === 'need') ? 'need' : st[fi].every((x) => x.st === 'got' || x.st === 'kok') ? 'got' : st[fi].some((x) => x.st === 'kok') ? 'kok' : 'yet';
 		edges += `<path class="e ${fs}" d="M0 0L${fx} ${fy}"/>`;
 		f.rooms.forEach((room, r) => { const s = st[fi][r], [x, y] = pt(angs[r], r % 2 ? 352 : 278), [cx, cy] = pt((fa + angs[r]) / 2, 215);
 			edges += `<path class="e ${s.st}" d="M${fx} ${fy}Q${cx} ${cy} ${x} ${y}"/>`;
-			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="32"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text></g>`; if (s.n) badges += `<g class="bdg" data-mroom="${fi},${r}"><circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text></g>`; });
+			nodes += `<g data-mroom="${fi},${r}" role="button" aria-label="${roomNo(fi, r)}号室 ${esc(room.title)}（${ST_LABEL[s.st]}）"><title>${roomNo(fi, r)} ${esc(room.title)}</title>${s.st === 'need' ? `<circle class="halo" cx="${x}" cy="${y}" r="32"/>` : ''}<circle class="n ${s.st}" cx="${x}" cy="${y}" r="25"/><text class="t ${s.st}" x="${x}" y="${y}" font-size="19">${roomNo(fi, r)}</text></g>`; if (s.st === 'kok') badges += `<g class="bdg" data-mroom="${fi},${r}"><circle cx="${x + 19}" cy="${y - 19}" r="11" fill="#5ca05c" stroke="#1b1c33" stroke-width="2"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="13">✓</text></g>`; if (s.n) badges += `<g class="bdg" data-mroom="${fi},${r}"><circle class="cnt" cx="${x + 19}" cy="${y - 19}" r="12"/><text class="cntt" x="${x + 19}" y="${y - 19}" font-size="14">${s.n}</text></g>`; });
 		fls += `<g class="fl" data-mfloor="${fi}">${fs === 'need' ? `<circle class="halo" cx="${fx}" cy="${fy}" r="50"/>` : ''}<circle class="n ${fs}" cx="${fx}" cy="${fy}" r="40"/><text class="t ${fs}" x="${fx}" y="${fy - 10}" font-size="21">${f.floor}F</text><text class="t s ${fs}" x="${fx}" y="${fy + 13}">${esc(f.short)}</text></g>`;
 	});
 	const need = st.flat().filter((x) => x.st === 'need').length, got = st.flat().filter((x) => x.st === 'got').length;
@@ -1492,7 +1496,7 @@ function allPointsHTML() {
 	return DATA.floors.map((f, fi) => `<section class="ap"><h4><span>${f.floor}F</span>${esc(f.label)}</h4><div class="cs">${f.rooms.map((room, r) => { const rs = roomState(fi, r), seen = new Set();
 		const lis = room.qids.flatMap((id, i) => { const q = QN(id), pts = q.points && q.points.length ? q.points : q.explanation ? [q.explanation] : [], nd = needQ(id);
 			return pts.filter((t) => !seen.has(t) && seen.add(t)).map((t) => `${liPt(t, nd ? ' class="need"' : '')}<button type="button" class="qn" data-mgo="${esc(id)}" title="この相談を解く">${roomNo(fi, r)}-${i + 1}</button></li>`); }).join('');
-		return `<article class="ci ar ${rs.st}" id="ar-${fi}-${r}" data-ar="${fi},${r}"><div class="ch"><span class="no">${roomNo(fi, r)}</span><span>${esc(room.title)}</span>${rs.st === 'need' ? `<span class="tag n">要復習 ${rs.n}</span>` : rs.st === 'got' ? '<span class="tag g">習得</span>' : ''}</div><ul class="kp">${lis}</ul></article>`; }).join('')}</div></section>`).join('');
+		return `<article class="ci ar ${rs.st}" id="ar-${fi}-${r}" data-ar="${fi},${r}"><div class="ch"><span class="no">${roomNo(fi, r)}</span><span>${esc(room.title)}</span>${rs.st === 'need' ? `<span class="tag n">要復習 ${rs.n}</span>` : rs.st === 'kok' ? '<span class="tag g">克服</span>' : rs.st === 'got' ? '<span class="tag g">習得</span>' : ''}</div><ul class="kp">${lis}</ul></article>`; }).join('')}</div></section>`).join('');
 }
 // 問題と答え：問題文は全文。組合せ問題は ア〜エ の文に ○×と理由、ふつうの問題は 全選択肢に ○×と理由（前回えらんだものに印）
 function qaHTML(q, rec) {
@@ -1509,7 +1513,7 @@ function qaHTML(q, rec) {
 function choiceText(q, i) { const c = q.choices && q.choices[i - 1]; return c == null ? String(i) : `${i}. ${c}`; }
 function matomeHTML() {
 	const map = DATA.floors.map((f, fi) => `<div class="kfl"><b>${f.floor}F<small>${esc(f.short)}</small></b><div class="kgrid">${f.rooms.map((room, r) => { const s = roomState(fi, r);
-		return `<button type="button" class="kt ${s.st}" data-mroom="${fi},${r}" title="${s.st === 'need' ? '要復習' : s.st === 'got' ? '習得' : 'まだ'}"><b>${roomNo(fi, r)}</b><small>${esc(room.title)}</small>${s.n ? `<em>${s.n}</em>` : ''}</button>`; }).join('')}</div></div>`).join('');
+		return `<button type="button" class="kt ${s.st}" data-mroom="${fi},${r}" title="${ST_LABEL[s.st]}"><b>${roomNo(fi, r)}</b><small>${esc(room.title)}</small>${s.n ? `<em>${s.n}</em>` : ''}</button>`; }).join('')}</div></div>`).join('');
 	const items = []; DATA.floors.forEach((f, fi) => f.rooms.forEach((room, r) => room.qids.forEach((id, i) => { const m = missQ(id); if (m > 0) items.push({ id, fi, r, i, m, need: needQ(id), t: ST.q[id].t }); })));
 	const shown = items.slice().sort(  /* 克服しても 外さない（要復習が上、克服は下） */(a, b) => (b.need - a.need) || (b.m - a.m) || (a.fi - b.fi) || (a.r - b.r) || (a.i - b.i));
 	const card = (x) => { const q = QN(x.id), rec = ST.q[x.id], ans = q.answer.map((a) => esc(choiceText(q, a))).join('<br>'), wrong = !rec.last && rec.p && !q.answer.includes(rec.p) ? esc(choiceText(q, rec.p)) : '';
@@ -1523,7 +1527,7 @@ function matomeHTML() {
 	const needN = items.filter((x) => x.need).length;
 	return `<div class="mhead"><button type="button" class="mbtn" data-mclose>‹ ${isMobile() ? 'マンション' : 'William の部屋'}</button><h2>まとめノート<small>要復習 ${needN} 問 ・ まちがえた ${items.length} 問</small></h2><span class="sp"></span><button type="button" class="mbtn" data-mprint>印刷</button></div>
 		<section class="msec"><button type="button" class="rtgo" data-rtgo${needN ? '' : ' disabled'}><b>▶ 再テスト</b><small>${needN ? `要復習 ${needN} 問から ${Math.min(RT_N, needN)} 問をランダムに。正解すると 克服` : '要復習の問題は ありません'}</small></button></section>
-		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
+		<section class="msec kmap"><h3>知識マップ<span class="mview"><button type="button" class="mbtn${mView === 'graph' ? ' on' : ''}" data-mview="graph">グラフ</button><button type="button" class="mbtn${mView === 'list' ? ' on' : ''}" data-mview="list">一覧</button></span></h3><div class="mlegend"><span class="lg-need">要復習（光る）</span><span class="lg-kok">克服（緑）</span><span class="lg-got">習得（暗い）</span><span class="lg-yet">まだ</span></div>${mView === 'graph' ? kgraphSVG() : map}</section>
 		<section class="msec"><h3>チートシート</h3>${PT_LEGEND}<div class="mtools mscope"><button type="button" class="mbtn${mScope === 'miss' ? ' on' : ''}" data-mscope="miss">まちがえた問題のポイント</button><button type="button" class="mbtn${mScope === 'all' ? ' on' : ''}" data-mscope="all">全体の復習ポイント</button></div>
 		<button type="button" class="mtop" aria-label="知識マップへ戻る">▲ マップへ</button>${mScope === 'all' ? allPointsHTML() : list}</section>`;
 }
