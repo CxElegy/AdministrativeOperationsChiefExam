@@ -83,6 +83,8 @@ def main():
     s = s.replace('__ROOM__', json.dumps(data_uri('room.webp'))).replace('__TALL__', json.dumps(data_uri('tall.webp')))
     maji = sorted(os.path.basename(f) for f in glob.glob(os.path.join(W, 'assets', 'maji*.webp'))) or ['cutin.webp']  # 全問正解のアイコン（ランダムで1枚。無ければカットインの絵）
     s = s.replace('__MAJI__', json.dumps([data_uri(m) for m in maji]))
+    photos = sorted(os.path.basename(f) for f in glob.glob(os.path.join(W, 'assets', 'photo*.webp')))  # 部屋に明かりがついたときの William の実写真（4:3）
+    s = s.replace('__PHOTOS__', json.dumps([data_uri(m) for m in photos]))
     s = s.replace('__BLDG__', data_uri('bldg.webp')).replace('__CUTIN__', json.dumps(data_uri('cutin.webp'))).replace('__POSES__', '{}')
     i = s.index('</style>') + len('</style>')
     head = ('<!doctype html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
