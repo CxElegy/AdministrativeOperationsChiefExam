@@ -70,5 +70,5 @@ description: 資格試験（管理業務主任者・宅建・マンション管�
 
 - `src/data/kakomon/<年度>.json`（問題・選択肢・答え・解説・選択肢ごとの解説・根拠・法改正・要確認）、`rooms.json`（部屋割り）、`hints/`、`points/`、`syllabus/`（章 → 節 → 要点＋出典 ID）、`drills/`。
 - `build.py` が テンプレート 1 枚（`tpl.html`）にデータと画像（data URI）を埋め込み、`public/index.html` を出力。GitHub Pages へデプロイ。画像は CSS 変数で 1 回だけ埋め込む。
-- 設計の考え方（没入 × 専門性）と協作のしかたは スキル  に。両方いっしょに使う。
+- 設計の考え方（没入 × 専門性）と協作のしかたは スキル `immersive-study-design` に。両方いっしょに使う。
 - 詳しいデータ形式とビルドの約束は `references/data-and-build.md`、まとめノートの判定式は `references/review-logic.md`。
