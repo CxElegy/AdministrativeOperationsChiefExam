@@ -295,6 +295,15 @@ button:focus-visible { outline: 3px solid #ffe7a8; outline-offset: 2px; }
 .nw { white-space: nowrap; }
 .was { display: inline-block; white-space: nowrap; line-height: 1.6; font-style: normal; font-family: var(--maru); font-size: 11px; font-weight: 700; padding: 0 7px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; color: #fff; }
 .was.ok { background: var(--ok); } .was.ng { background: var(--ng); }
+/* playground：ドラッグ */
+.choices button, .stmts li.sortable { transition: transform .18s ease, opacity .2s, background .2s; } .choices button.dragging, .stmts li.dragging { transition: none; }
+.choices button.elim { opacity: .45; } .choices button.elim > span:last-child { text-decoration: line-through; text-decoration-color: #c0392b; text-decoration-thickness: 2px; }
+.choices button.pull-l, .stmts li.pull-l { box-shadow: inset 4px 0 0 #c0392b; } .stmts li.pull-r { box-shadow: inset -4px 0 0 #2e7d32; }
+.choices button.sug { border-color: #e9b44c; box-shadow: 0 0 0 3px rgba(233, 180, 76, .45); }
+.stmts li.sortable { position: relative; cursor: grab; user-select: none; padding-right: 34px; } .stmts li .sv { position: absolute; right: 8px; top: 50%; translate: 0 -50%; width: 22px; text-align: center; font-style: normal; font-weight: 800; font-size: 18px; }
+.stmts li.so { background: rgba(92, 160, 92, .14); border-color: #5ca05c; } .stmts li.so .sv { color: #2e7d32; } .stmts li.sx { background: rgba(192, 57, 43, .08); border-color: #c0392b; } .stmts li.sx .sv { color: #c0392b; }
+.stmts li.smiss { outline: 2px solid #c0392b; } .stmts li .smsg { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: #c0392b; } .stmts li.smiss .sv { top: 14px; translate: none; }
+.sortres { margin-left: 8px; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; } .sortres.o { background: #eaf5e6; color: #2e7d32; } .sortres.x { background: #fbeceb; color: #c0392b; }
 .stmts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .stmts li { display: grid; grid-template-columns: 26px 1fr; gap: 6px; font-size: 14px; padding: 6px 10px 6px 6px; border-radius: 10px; background: rgba(255, 250, 240, .7); border: 1px dashed rgba(138, 106, 53, .45); }
 .stmts li > b { font-family: var(--mincho); color: var(--gold-lo); text-align: center; }
@@ -1347,7 +1356,51 @@ function renderQ(show) {
 		b.addEventListener('click', () => answer(+b.dataset.i));
 	});
 	if (show && rec && rec.p) showAnswer(rec.p, true);
+	if (PLAYGROUND) playDrag(q);
 	requestAnimationFrame(layout);
+}
+
+// ---------------- playground：ドラッグで解く（本番の解き方の練習になる操作だけ） ----------------
+// ① 組合せ・個数問題：文（ア〜エ）を 右へ＝○ 左へ＝× に仕分け → 対応する選択肢を自動で示す → 答えたあと 仕分けミスに印
+// ② 選択肢：左へずらすと「消去」（消去法）。もう一度ずらすと戻る。タップで回答は これまでどおり
+function hDrag(el, onEnd, onMove) {  /* 横方向だけのドラッグ（縦スクロールは邪魔しない） */
+	let x0 = 0, y0 = 0, dx = 0, on = false, moved = false;
+	el.style.touchAction = 'pan-y';
+	el.addEventListener('pointerdown', (e) => { if (answered) return; x0 = e.clientX; y0 = e.clientY; dx = 0; on = true; moved = false; });
+	el.addEventListener('pointermove', (e) => { if (!on) return; dx = e.clientX - x0; const dy = e.clientY - y0;
+		if (!moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.3) { moved = true; try { el.setPointerCapture(e.pointerId); } catch (_) {} el.classList.add('dragging'); }
+		if (moved) { el.style.transform = `translateX(${Math.max(-90, Math.min(90, dx))}px)`; onMove && onMove(dx); } });
+	const end = () => { if (!on) return; on = false; el.classList.remove('dragging'); el.style.transform = ''; if (moved) { onEnd(dx); el.dataset.dragged = '1'; setTimeout(() => delete el.dataset.dragged, 50); } };
+	el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+	el.addEventListener('click', (e) => { if (el.dataset.dragged) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);  /* ドラッグのあとの クリックで 答えない */
+}
+const KANJI_N = ['なし', '一つ', '二つ', '三つ', '四つ', '五つ'];
+function playDrag(q) {
+	const bar = $('bar'), tip = (t) => { const h = bar && bar.querySelector('.hint'); if (h && !answered) h.textContent = t; };
+	// ② 消去法
+	card.querySelectorAll('.choices button').forEach((b) => hDrag(b, (dx) => { if (dx < -50) { b.classList.toggle('elim'); se('tap'); } }, (dx) => b.classList.toggle('pull-l', dx < -50)));
+	if (!q.statements) { tip('タップで答える ・ 選択肢を ← にずらすと 消去法'); return; }
+	// ① 仕分け
+	const neg = /不適切|誤っている|誤り|適切でない|正しくない/.test(q.stem), sort = {};
+	const lis = [...card.querySelectorAll('.stmts li')];
+	lis.forEach((li) => { li.classList.add('sortable'); li.insertAdjacentHTML('beforeend', '<em class="sv"></em>');
+		hDrag(li, (dx) => { if (Math.abs(dx) < 50) return; const v = dx > 0 ? 'o' : 'x'; sort[li.dataset.l] = sort[li.dataset.l] === v ? undefined : v; if (!sort[li.dataset.l]) delete sort[li.dataset.l];
+			li.classList.toggle('so', sort[li.dataset.l] === 'o'); li.classList.toggle('sx', sort[li.dataset.l] === 'x'); li.querySelector('.sv').textContent = sort[li.dataset.l] === 'o' ? '○' : sort[li.dataset.l] === 'x' ? '×' : ''; se('tap'); suggest(); },
+			(dx) => { li.classList.toggle('pull-r', dx > 50); li.classList.toggle('pull-l', dx < -50); }); });
+	tip(`文を → で ○、← で × に仕分けると、答えの番号が わかります（${neg ? '×' : '○'} の文を数える問題）`);
+	function suggest() {
+		card.querySelectorAll('.choices button.sug').forEach((b) => b.classList.remove('sug'));
+		const done = lis.every((li) => sort[li.dataset.l]); if (!done) { tip(`あと ${lis.filter((li) => !sort[li.dataset.l]).length} つ 仕分けよう`); return; }
+		const pick = lis.filter((li) => sort[li.dataset.l] === (neg ? 'x' : 'o')).map((li) => li.dataset.l);
+		let idx = q.choices.findIndex((c) => { const ls = [...String(c)].filter((ch) => 'アイウエオ'.includes(ch)); return ls.length && ls.length === pick.length && ls.every((l) => pick.includes(l)); });
+		if (idx < 0) idx = q.choices.findIndex((c) => String(c).trim() === KANJI_N[pick.length]);
+		const b = idx >= 0 && card.querySelector(`.choices button[data-i="${idx + 1}"]`);
+		if (b) { b.classList.add('sug'); tip(`仕分けの結果 → ${idx + 1}（${q.choices[idx]}）。よければ 押して答えよう`); } else tip(`${neg ? '×' : '○'} が ${pick.length} つ。合う選択肢が ありません。仕分けを 見直そう`);
+	}
+	// 答えたあと：正しい ○× と くらべて 仕分けミスに印
+	card.querySelectorAll('.choices button').forEach((b) => b.addEventListener('click', () => setTimeout(() => { if (!answered || !Object.keys(sort).length) return;
+		let miss = 0; lis.forEach((li) => { const sn = (q.statementNotes || []).find((x) => x.label === li.dataset.l); if (!sn || !sort[li.dataset.l]) return; const ok = (sort[li.dataset.l] === 'o') === !!sn.correct; li.classList.add(ok ? 'sok' : 'smiss'); if (!ok) { miss++; li.insertAdjacentHTML('beforeend', `<span class="smsg">仕分けミス：あなた ${sort[li.dataset.l] === 'o' ? '○' : '×'} → 正しくは ${sn.correct ? '○' : '×'}</span>`); } });
+		const h = $('bar') && $('bar').querySelector('.hint'); if (h) h.insertAdjacentHTML('afterend', `<span class="sortres ${miss ? 'x' : 'o'}">${miss ? `仕分けミス ${miss} つ（赤い文）` : '仕分けは 全部正しい ✦'}</span>`); }, 30)));
 }
 function bindTabs() { card.querySelectorAll('.rt').forEach((b) => b.addEventListener('click', () => { const k = +b.dataset.k; if (k !== cur.k) { se('tap'); goQ(cur.f, k, true); } })); }
 // 解答と解説を見せる（quiet = 窓や一覧から、前に答えた相談を開いたとき）
