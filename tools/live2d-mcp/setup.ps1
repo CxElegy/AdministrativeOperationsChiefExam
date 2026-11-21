@@ -24,11 +24,16 @@ if (-not (Get-Command uvx -ErrorAction SilentlyContinue)) {
 }
 # Claude デスクトップアプリ（MSIX）から 動かすと AppData が 仮想化され、uv の Python のリンクが こわれるので、$Dir の中に 入れる
 if (-not $env:UV_PYTHON_INSTALL_DIR) { $env:UV_PYTHON_INSTALL_DIR = Join-Path $Dir "uv-python" }
-$uvx = (Get-Command uvx).Source   # Claude Code が 古い PATH のままでも 動くように フルパスで登録
+# Claude デスクトップアプリは PYTHONDONTWRITEBYTECODE=1 で サーバーを 起動するので、.pyc が 残らず 毎回 全部を コンパイルして
+# 30 秒の 起動制限（MCP_TIMEOUT は 効かない）を こえる。先に コンパイルしておく（--compile-bytecode）
+$env:UV_COMPILE_BYTECODE = "1"
 
 # ---- 1. cubism-mcp（nana7chi / Cubism Editor 5.4 の 外部連携 API） ----
+# uvx は 起動のたびに 依存を 解決して 遅いので、uv tool で $Dir に 入れて exe を 直接 登録する
+$env:UV_TOOL_DIR = Join-Path $Dir "uv-tools"; $env:UV_TOOL_BIN_DIR = Join-Path $Dir "uv-tools\bin"
+uv tool install cubism-mcp --force; Ok "uv tool install cubism-mcp"
 Unreg cubism-mcp
-& $claude mcp add cubism-mcp -s user -e NO_PROXY=localhost,127.0.0.1 -- $uvx cubism-mcp; Ok "cubism-mcp の登録"
+& $claude mcp add cubism-mcp -s user -e NO_PROXY=localhost,127.0.0.1 -- (Join-Path $env:UV_TOOL_BIN_DIR "cubism-mcp.exe"); Ok "cubism-mcp の登録"
 Write-Host "[1/3] cubism-mcp を登録しました"
 
 # ---- 2. cubism53-native-mcp（OranImp / Cubism Editor 5.3.03・5.3.04、メッシュとテクスチャを編集できる） ----
